@@ -46,9 +46,9 @@ export default function WalletConnect() {
 
         {/* 和美人 Wa-bijin Logo — traditional Japanese beauty portrait */}
         <div className="hero-logo" style={{
-          width: 88, height: 88, margin: "0 auto 24px",
+          width: 150, height: 200, margin: "0 auto 8px",
         }}>
-          <WaBijinSVG size={88} />
+          <WaBijinSVG size={150} height={200} />
         </div>
 
         {/* 題字 Title — Mincho heading */}

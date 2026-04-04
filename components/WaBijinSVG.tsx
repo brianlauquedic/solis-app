@@ -2,16 +2,17 @@
 
 interface WaBijinSVGProps {
   size?: number;
+  height?: number;
   className?: string;
 }
 
-export default function WaBijinSVG({ size = 32, className }: WaBijinSVGProps) {
+export default function WaBijinSVG({ size = 32, height, className }: WaBijinSVGProps) {
   return (
     <div
       className={className}
       style={{
         width: size,
-        height: size,
+        height: height ?? size,
         overflow: "hidden",
         position: "relative",
         flexShrink: 0,
@@ -23,12 +24,12 @@ export default function WaBijinSVG({ size = 32, className }: WaBijinSVGProps) {
         alt="Sakura"
         style={{
           position: "absolute",
-          width: "78%",
-          height: "auto",
-          objectFit: "cover",
+          width: "100%",
+          height: "100%",
+          objectFit: "contain",
           objectPosition: "50% top",
-          top: "2%",
-          left: "11%",
+          top: "0%",
+          left: "0%",
           filter: "contrast(1.05) brightness(1.0)",
           pointerEvents: "none",
         }}
