@@ -1,5 +1,52 @@
 @import "tailwindcss";
 
+/* ══════════════════════════════════════════════════════════════
+   和色 Wa-iro — Japanese Classical Color System
+   墨・朱・金・白磁・常磐
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  /* 背景 */
+  --bg-base:      #0E0C0A;   /* 墨色 Sumi-iro  — warm ink black */
+  --bg-card:      #141210;   /* 鉄黒 Tetsu-guro */
+  --bg-card-2:    #1A1714;   /* 濡羽色 Nureba */
+  --bg-header:    rgba(14,12,10,0.93);
+
+  /* 境界線 Border */
+  --border:       #2E2820;   /* 煤竹色 Susu-take */
+  --border-light: #3D3530;   /* 焦茶 Kogecha */
+
+  /* 文字 Text */
+  --text-primary:   #EDE8DF; /* 白磁 Hakuji — porcelain white */
+  --text-secondary: #8B7D72; /* 白茶 Shiracha */
+  --text-muted:     #4A4038; /* 利休鼠 Rikyu-nezumi */
+
+  /* 朱色 Shu-iro — vermillion seal red (唯一の強調色) */
+  --accent:       #C0392B;
+  --accent-soft:  rgba(192, 57, 43, 0.09);
+  --accent-mid:   rgba(192, 57, 43, 0.20);
+
+  /* 金色 Kin-iro — gold for numbers */
+  --gold:         #C9A84C;
+  --gold-soft:    rgba(201, 168, 76, 0.10);
+
+  /* 常磐色 Tokiwa — evergreen */
+  --green:        #3D7A5C;
+  --green-soft:   rgba(61, 122, 92, 0.12);
+
+  /* 紅 Kurenai — deep crimson */
+  --red:          #A8293A;
+  --red-soft:     rgba(168, 41, 58, 0.12);
+
+  /* 黄朽葉 Ki-kuchiba */
+  --orange:       #B8832A;
+  --orange-soft:  rgba(184, 131, 42, 0.12);
+
+  /* 字体 Typography */
+  --font-heading: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  --font-body:    'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  --font-mono:    'JetBrains Mono', 'Osaka-Mono', 'Courier New', monospace;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -7,109 +54,101 @@
 }
 
 body {
-  background: #0A0A0F;
-  color: #E2E8F0;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.85;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0A0A0F; }
-::-webkit-scrollbar-thumb { background: #1E1E2E; border-radius: 3px; }
-
-/* ── Hero animations ── */
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 40px #8B5CF640, 0 0 80px #06B6D420; }
-  50%       { box-shadow: 0 0 60px #8B5CF660, 0 0 120px #06B6D440; }
+/* ── 等幅数字 Monospace numbers ── */
+.jp-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+  letter-spacing: 0.02em;
 }
+
+/* ── 見出し Heading (明朝体 Mincho) ── */
+.jp-heading {
+  font-family: var(--font-heading);
+  letter-spacing: 0.05em;
+  font-weight: 400;
+}
+
+/* ── 区切り線 Section divider (水墨画風) ── */
+.jp-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 24px 0;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+/* ══════════════════════════════════════════════════════════════
+   動作 Animations — 静寂 Seijaku (tranquil, unhurried)
+   ══════════════════════════════════════════════════════════════ */
+
+/* 印章が押されるような浮動 — seal floating */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-6px); }
+  50%       { transform: translateY(-4px); }
 }
+
+/* 朱色の境界線が呼吸する — vermillion border breathes */
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(192,57,43,0.15); }
+  50%       { box-shadow: 0 0 0 2px rgba(192,57,43,0.30); }
+}
+
+/* 上から静かに現れる — quietly appears from above */
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.hero-logo {
-  animation: pulse-glow 3s ease-in-out infinite, float 4s ease-in-out infinite;
-}
-.fade-in-up {
-  animation: fade-in-up 0.6s ease-out both;
-}
-.fade-in-up-1 { animation-delay: 0.1s; }
-.fade-in-up-2 { animation-delay: 0.2s; }
-.fade-in-up-3 { animation-delay: 0.3s; }
-.fade-in-up-4 { animation-delay: 0.4s; }
-
-/* ── Shimmer animation ── */
 @keyframes shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
 @keyframes bounce {
   0%, 80%, 100% { transform: translateY(0); }
-  40%            { transform: translateY(-6px); }
+  40%            { transform: translateY(-5px); }
 }
 
-/* ── Mobile responsive ── */
-@media (max-width: 640px) {
-  /* Feature cards: 1 column on mobile */
-  .feature-grid { grid-template-columns: 1fr !important; }
-
-  /* Stats row: 2x2 */
-  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
-
-  /* Token analysis: hide sidebar on mobile */
-  .token-grid { grid-template-columns: 1fr !important; }
-  .token-sidebar { display: none !important; }
-
-  /* Header: hide label on mobile */
-  .header-label { display: none !important; }
-
-  /* Hero title smaller */
-  .hero-title { font-size: 36px !important; }
-  .hero-subtitle { font-size: 24px !important; }
-
-  /* Tabs: smaller text */
-  .tab-btn { font-size: 11px !important; padding: 8px 10px !important; }
-
-  /* Quick stats: wrap */
-  .quick-stats { flex-wrap: wrap; gap: 12px !important; }
-
-  /* HealthReport opportunity alert: stack vertically */
-  .opportunity-alert { flex-direction: column !important; align-items: flex-start !important; }
-  .opportunity-alert a { margin-left: 0 !important; margin-top: 10px !important; width: 100% !important; text-align: center !important; }
-
-  /* Verify page: 3-col steps → 1 col */
-  .verify-steps { grid-template-columns: 1fr !important; }
-
-  /* DefiAssistant wallet summary: wrap */
-  .wallet-summary { flex-wrap: wrap !important; gap: 10px !important; }
-
-  /* ProofPanel: hash text smaller */
-  .proof-hash { font-size: 9px !important; }
-
-  /* Ecosystem badges: wrap tightly */
-  .ecosystem-badges { gap: 6px !important; }
-
-  /* Quick actions: 1 col on very small screens */
-  .quick-actions-grid { grid-template-columns: 1fr !important; }
+/* 印章 Hero logo */
+.hero-logo {
+  animation: float 8s ease-in-out infinite, pulse-border 4s ease-in-out infinite;
 }
 
-/* ── Streaming cursor ── */
+.fade-in-up {
+  animation: fade-in-up 0.7s ease-out both;
+}
+.fade-in-up-1 { animation-delay: 0.08s; }
+.fade-in-up-2 { animation-delay: 0.18s; }
+.fade-in-up-3 { animation-delay: 0.28s; }
+.fade-in-up-4 { animation-delay: 0.38s; }
+
+/* ── Streaming cursor (朱色) ── */
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
 .streaming-cursor {
   display: inline-block;
-  width: 2px;
-  height: 14px;
-  background: #8B5CF6;
+  width: 1.5px;
+  height: 13px;
+  background: var(--accent);
   margin-left: 2px;
   vertical-align: middle;
-  animation: blink 0.8s ease-in-out infinite;
+  animation: blink 1s ease-in-out infinite;
 }
 
 /* ── Reasoning pulse ── */
@@ -122,4 +161,26 @@ body {
 @keyframes slideIn {
   from { transform: translateX(100%); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Mobile 移動端
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .feature-grid   { grid-template-columns: 1fr !important; }
+  .stats-grid     { grid-template-columns: repeat(2, 1fr) !important; }
+  .token-grid     { grid-template-columns: 1fr !important; }
+  .token-sidebar  { display: none !important; }
+  .header-label   { display: none !important; }
+  .hero-title     { font-size: 32px !important; }
+  .hero-subtitle  { font-size: 20px !important; }
+  .tab-btn        { font-size: 11px !important; padding: 8px 8px !important; }
+  .quick-stats    { flex-wrap: wrap; gap: 12px !important; }
+  .opportunity-alert { flex-direction: column !important; align-items: flex-start !important; }
+  .opportunity-alert a { margin-left: 0 !important; margin-top: 10px !important; width: 100% !important; text-align: center !important; }
+  .verify-steps   { grid-template-columns: 1fr !important; }
+  .wallet-summary { flex-wrap: wrap !important; gap: 10px !important; }
+  .proof-hash     { font-size: 9px !important; }
+  .ecosystem-badges { gap: 6px !important; }
+  .quick-actions-grid { grid-template-columns: 1fr !important; }
 }

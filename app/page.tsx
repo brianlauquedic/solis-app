@@ -63,36 +63,59 @@ function AppContent() {
     : null;
 
   return (
-    <main className="min-h-screen" style={{ background: "#0A0A0F" }}>
-      {/* Header */}
+    <main className="min-h-screen" style={{ background: "var(--bg-base)" }}>
+      {/* ── 頭部 Header ── */}
       <header style={{
-        borderBottom: "1px solid #1E1E2E",
-        padding: "14px 32px",
+        borderBottom: "1px solid var(--border)",
+        padding: "12px 32px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
         position: "sticky", top: 0, zIndex: 50,
-        background: "rgba(10,10,15,0.92)",
-        backdropFilter: "blur(12px)",
+        background: "var(--bg-header)",
+        backdropFilter: "blur(16px)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* 印章 Hanko-style logo */}
           <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
+            width: 32, height: 32, borderRadius: 6,
+            background: "var(--accent)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 16, fontWeight: 900, color: "#fff",
-          }}>S</div>
-          <span style={{ fontSize: 20, fontWeight: 800, color: "#fff" }}>Solis</span>
+            flexShrink: 0,
+          }}>
+            {/* Cute Japanese girl SVG avatar */}
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              {/* Hair */}
+              <ellipse cx="11" cy="8" rx="7" ry="5.5" fill="#1a0a0a"/>
+              <rect x="4" y="7" width="2" height="7" rx="1" fill="#1a0a0a"/>
+              <rect x="16" y="7" width="2" height="7" rx="1" fill="#1a0a0a"/>
+              {/* Face */}
+              <ellipse cx="11" cy="11" rx="5" ry="5.5" fill="#FDDBB4"/>
+              {/* Eyes */}
+              <ellipse cx="8.8" cy="10.5" rx="1.1" ry="1.3" fill="#2d1a0e"/>
+              <ellipse cx="13.2" cy="10.5" rx="1.1" ry="1.3" fill="#2d1a0e"/>
+              {/* Eye shine */}
+              <circle cx="9.2" cy="10" r="0.35" fill="white"/>
+              <circle cx="13.6" cy="10" r="0.35" fill="white"/>
+              {/* Blush */}
+              <ellipse cx="7.5" cy="12" rx="1.2" ry="0.6" fill="#F4A0A0" opacity="0.6"/>
+              <ellipse cx="14.5" cy="12" rx="1.2" ry="0.6" fill="#F4A0A0" opacity="0.6"/>
+              {/* Smile */}
+              <path d="M9 13 Q11 14.5 13 13" stroke="#c07060" strokeWidth="0.8" strokeLinecap="round" fill="none"/>
+              {/* Hair highlight */}
+              <ellipse cx="9" cy="6.5" rx="2" ry="1" fill="#3d1a1a" opacity="0.4"/>
+            </svg>
+          </div>
+          <span className="jp-heading" style={{ fontSize: 18, fontWeight: 500, color: "var(--text-primary)", letterSpacing: "0.08em" }}>Solis</span>
           <span style={{
-            fontSize: 10, color: "#8B5CF6", border: "1px solid #8B5CF660",
-            borderRadius: 4, padding: "2px 6px", letterSpacing: 1,
+            fontSize: 9, color: "var(--accent)", border: "1px solid var(--accent-mid)",
+            borderRadius: 3, padding: "1px 5px", letterSpacing: 1.5, fontFamily: "var(--font-mono)",
           }}>BETA</span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <PriceTicker />
 
-          {/* Subscription badge (only when wallet connected) */}
           {walletAddress && (
             <SubscriptionBanner
               walletAddress={walletAddress}
@@ -101,18 +124,19 @@ function AppContent() {
           )}
 
           {/* Language switcher */}
-          <div style={{ display: "flex", gap: 3, background: "#13131A", border: "1px solid #1E1E2E", borderRadius: 8, padding: 3 }}>
+          <div style={{ display: "flex", gap: 2, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 6, padding: 3 }}>
             {LANG_OPTIONS.map(opt => (
               <button
                 key={opt.code}
                 onClick={() => setLang(opt.code)}
                 style={{
-                  padding: "3px 8px", borderRadius: 5, border: "none",
-                  fontSize: 11, fontWeight: 700, cursor: "pointer",
-                  background: lang === opt.code ? "linear-gradient(135deg, #8B5CF630, #06B6D430)" : "transparent",
-                  color: lang === opt.code ? "#E2E8F0" : "#475569",
-                  transition: "all 0.15s",
+                  padding: "3px 8px", borderRadius: 4, border: "none",
+                  fontSize: 11, fontWeight: 500, cursor: "pointer",
+                  background: lang === opt.code ? "var(--accent-soft)" : "transparent",
+                  color: lang === opt.code ? "var(--text-primary)" : "var(--text-muted)",
+                  transition: "all 0.2s",
                   whiteSpace: "nowrap",
+                  borderBottom: lang === opt.code ? "1px solid var(--accent)" : "1px solid transparent",
                 }}
               >
                 {opt.flag} {opt.label}
@@ -120,18 +144,19 @@ function AppContent() {
             ))}
           </div>
 
-          {/* Wallet connect / connected state */}
+          {/* Wallet */}
           {walletAddress ? (
             <button
               onClick={disconnect}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
-                padding: "5px 12px", borderRadius: 8,
-                background: "#13131A", border: "1px solid #1E1E2E",
-                fontSize: 12, fontWeight: 700, color: "#10B981", cursor: "pointer",
+                padding: "5px 12px", borderRadius: 6,
+                background: "var(--bg-card)", border: "1px solid var(--border)",
+                fontSize: 12, fontWeight: 500, color: "var(--green)", cursor: "pointer",
+                fontFamily: "var(--font-mono)",
               }}
             >
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", display: "inline-block" }} />
+              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />
               {shortAddr}
             </button>
           ) : (
@@ -139,16 +164,16 @@ function AppContent() {
               onClick={connectPhantom}
               disabled={phantomLoading || !phantomAvailable}
               style={{
-                padding: "6px 14px", borderRadius: 8, border: "none",
-                background: phantomAvailable
-                  ? "linear-gradient(135deg, #8B5CF6, #06B6D4)"
-                  : "#1E1E2E",
-                fontSize: 12, fontWeight: 700, color: phantomAvailable ? "#fff" : "#475569",
+                padding: "6px 16px", borderRadius: 6, border: "1px solid var(--accent)",
+                background: phantomAvailable ? "var(--accent)" : "var(--bg-card)",
+                fontSize: 12, fontWeight: 500,
+                color: phantomAvailable ? "#fff" : "var(--text-muted)",
                 cursor: phantomAvailable ? "pointer" : "not-allowed",
                 whiteSpace: "nowrap",
+                letterSpacing: "0.03em",
               }}
             >
-              {phantomLoading ? "..." : phantomAvailable ? `👻 ${t("connectBtn")}` : "Install Phantom"}
+              {phantomLoading ? "…" : phantomAvailable ? `👻 ${t("connectBtn")}` : "Install Phantom"}
             </button>
           )}
 
@@ -159,13 +184,12 @@ function AppContent() {
             style={{
               display: "flex", alignItems: "center", justifyContent: "center",
               width: 28, height: 28,
-              background: "#000", border: "1px solid #333",
-              borderRadius: 6,
-              textDecoration: "none", flexShrink: 0,
+              background: "var(--bg-card)", border: "1px solid var(--border)",
+              borderRadius: 5, textDecoration: "none", flexShrink: 0,
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 1200 1227" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.163 519.284ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.828Z" fill="white"/>
+            <svg width="13" height="13" viewBox="0 0 1200 1227" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.163 519.284ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.828Z" fill="var(--text-secondary)"/>
             </svg>
           </a>
         </div>
@@ -177,11 +201,10 @@ function AppContent() {
           <WalletConnect />
         ) : (
           <>
-            {/* Tab Navigation */}
+            {/* ── 索引 Tab Navigation (日系底線スタイル) ── */}
             <div style={{
-              display: "flex", gap: 6, marginBottom: 28,
-              background: "#0D0D14", border: "1px solid #1E1E2E",
-              borderRadius: 14, padding: 5,
+              display: "flex", gap: 0, marginBottom: 32,
+              borderBottom: "1px solid var(--border)",
             }}>
               <TabButton label={t("tabHealth")} active={activeTab === "health"} onClick={() => setActiveTab("health")} />
               <TabButton label={t("tabToken")} active={activeTab === "token"} onClick={() => setActiveTab("token")} />
@@ -239,15 +262,17 @@ function TabButton({ label, active, onClick }: {
   label: string; active: boolean; onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} style={{
-      flex: 1, padding: "9px 16px", borderRadius: 10, border: "none",
-      fontSize: 13, fontWeight: 600, cursor: "pointer",
-      background: active
-        ? "linear-gradient(135deg, #8B5CF615, #06B6D415)"
-        : "transparent",
-      color: active ? "#E2E8F0" : "#475569",
-      borderBottom: active ? "2px solid #8B5CF6" : "2px solid transparent",
-      transition: "all 0.2s",
+    <button onClick={onClick} className="tab-btn" style={{
+      flex: 1, padding: "10px 16px", border: "none",
+      fontSize: 13, fontWeight: active ? 500 : 400,
+      cursor: "pointer",
+      background: "transparent",
+      color: active ? "var(--text-primary)" : "var(--text-muted)",
+      borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
+      transition: "all 0.25s",
+      fontFamily: "var(--font-body)",
+      letterSpacing: "0.04em",
+      marginBottom: -1,
     }}>
       {label}
     </button>

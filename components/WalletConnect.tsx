@@ -4,274 +4,322 @@ import AnimatedNumber from "@/components/AnimatedNumber";
 import { useLang } from "@/contexts/LanguageContext";
 
 const AGENT_KEYS = [
-  { tag: "Security Agent", titleKey: "agent1Title" as const, descKey: "agent1Desc" as const, icon: "🛡️", color: "#10B981" },
-  { tag: "Portfolio Agent", titleKey: "agent2Title" as const, descKey: "agent2Desc" as const, icon: "📊", color: "#8B5CF6" },
-  { tag: "Advisor Agent",  titleKey: "agent3Title" as const, descKey: "agent3Desc" as const, icon: "💬", color: "#06B6D4" },
-  { tag: "Rebalance Agent",titleKey: "agent4Title" as const, descKey: "agent4Desc" as const, icon: "🤖", color: "#F59E0B" },
+  { tag: "Security Agent",  titleKey: "agent1Title" as const, descKey: "agent1Desc" as const, icon: "護", color: "var(--green)" },
+  { tag: "Portfolio Agent", titleKey: "agent2Title" as const, descKey: "agent2Desc" as const, icon: "覧", color: "var(--gold)" },
+  { tag: "Advisor Agent",   titleKey: "agent3Title" as const, descKey: "agent3Desc" as const, icon: "智", color: "var(--accent)" },
+  { tag: "Rebalance Agent", titleKey: "agent4Title" as const, descKey: "agent4Desc" as const, icon: "衡", color: "var(--orange)" },
 ];
 
 const PROTOCOLS = [
-  { name: "Jupiter",          color: "#06B6D4" },
-  { name: "Marinade",         color: "#10B981" },
-  { name: "Jito",             color: "#F59E0B" },
-  { name: "Kamino",           color: "#8B5CF6" },
-  { name: "GoPlus Security",  color: "#EF4444" },
-  { name: "Helius RPC",       color: "#9945FF" },
-  { name: "Solana Agent Kit", color: "#06B6D4" },
-  { name: "Claude AI",        color: "#CC785C" },
-  { name: "Stripe MPP",       color: "#635BFF" },
+  "Jupiter", "Marinade", "Jito", "Kamino",
+  "GoPlus Security", "Helius RPC", "Solana Agent Kit", "Claude AI", "Stripe MPP",
 ];
 
 const STATS = [
-  { numValue: 5,   suffix: "",        labelKey: "statLabel1" as const },
-  { numValue: 4,   suffix: "",        labelKey: "statLabel2" as const },
-  { numValue: 8.2, suffix: "%",       labelKey: "statLabel3" as const },
-  { numValue: 100, suffix: "%",       labelKey: "statLabel4" as const },
+  { numValue: 5,   suffix: "",  labelKey: "statLabel1" as const },
+  { numValue: 4,   suffix: "",  labelKey: "statLabel2" as const },
+  { numValue: 8.2, suffix: "%", labelKey: "statLabel3" as const },
+  { numValue: 100, suffix: "%", labelKey: "statLabel4" as const },
 ];
 
 export default function WalletConnect() {
   const { t } = useLang();
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto" }}>
+    <div style={{ maxWidth: 760, margin: "0 auto" }}>
 
-      {/* ── Hero ── */}
-      <div style={{ textAlign: "center", marginBottom: 52 }}>
+      {/* ── 題字 Hero ── */}
+      <div style={{ textAlign: "center", marginBottom: 56 }}>
 
-        {/* Badge */}
+        {/* 勲章 Badge */}
         <div className="fade-in-up fade-in-up-1" style={{
           display: "inline-flex", alignItems: "center", gap: 8,
-          background: "#8B5CF610", border: "1px solid #8B5CF640",
-          borderRadius: 20, padding: "6px 14px", marginBottom: 24,
+          background: "var(--accent-soft)", border: "1px solid var(--accent-mid)",
+          borderRadius: 20, padding: "5px 14px", marginBottom: 28,
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", display: "inline-block" }} />
-          <span style={{ fontSize: 11, color: "#8B5CF6", fontWeight: 700, letterSpacing: 0.5 }}>
+          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
+          <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 500, letterSpacing: 1.5, fontFamily: "var(--font-mono)" }}>
             {t("hackathonBadge")}
           </span>
         </div>
 
-        {/* Logo */}
-        <div style={{
-          width: 68, height: 68, borderRadius: 18, margin: "0 auto 20px",
-          background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
+        {/* 印章 Logo — hanko seal style */}
+        <div className="hero-logo" style={{
+          width: 72, height: 72, borderRadius: 14, margin: "0 auto 24px",
+          background: "var(--accent)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 30, fontWeight: 900, color: "#fff",
-          boxShadow: "0 0 40px #8B5CF640",
-        }}>S</div>
-
-        <h1 className="fade-in-up fade-in-up-1" style={{
-          fontSize: 48, fontWeight: 900, color: "#fff",
-          lineHeight: 1.1, marginBottom: 10, letterSpacing: -1.5,
+          flexShrink: 0,
         }}>
-          <span style={{ background: "linear-gradient(135deg, #8B5CF6, #06B6D4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            Solis
-          </span>
+          {/* Japanese girl SVG */}
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Hair back */}
+            <ellipse cx="24" cy="18" rx="15" ry="12" fill="#1a0808"/>
+            {/* Side hair */}
+            <rect x="9" y="15" width="4" height="16" rx="2" fill="#1a0808"/>
+            <rect x="35" y="15" width="4" height="16" rx="2" fill="#1a0808"/>
+            {/* Face */}
+            <ellipse cx="24" cy="24" rx="11" ry="12" fill="#FDDBB4"/>
+            {/* Eyes */}
+            <ellipse cx="19.5" cy="22.5" rx="2.4" ry="2.8" fill="#2d1208"/>
+            <ellipse cx="28.5" cy="22.5" rx="2.4" ry="2.8" fill="#2d1208"/>
+            {/* Eye shine */}
+            <circle cx="20.4" cy="21.4" r="0.8" fill="white"/>
+            <circle cx="29.4" cy="21.4" r="0.8" fill="white"/>
+            {/* Lashes */}
+            <path d="M17 20.5 L15.5 19" stroke="#1a0808" strokeWidth="0.8" strokeLinecap="round"/>
+            <path d="M19 19.8 L18 18" stroke="#1a0808" strokeWidth="0.8" strokeLinecap="round"/>
+            <path d="M31 20.5 L32.5 19" stroke="#1a0808" strokeWidth="0.8" strokeLinecap="round"/>
+            <path d="M29 19.8 L30 18" stroke="#1a0808" strokeWidth="0.8" strokeLinecap="round"/>
+            {/* Blush */}
+            <ellipse cx="16" cy="26" rx="2.5" ry="1.2" fill="#F4A0A0" opacity="0.55"/>
+            <ellipse cx="32" cy="26" rx="2.5" ry="1.2" fill="#F4A0A0" opacity="0.55"/>
+            {/* Mouth */}
+            <path d="M20 29 Q24 31.5 28 29" stroke="#c07060" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+            {/* Hair fringe */}
+            <ellipse cx="24" cy="12" rx="10" ry="5" fill="#1a0808"/>
+            <path d="M14 15 Q16 10 18 14" fill="#1a0808"/>
+            <path d="M34 15 Q32 10 30 14" fill="#1a0808"/>
+            {/* Kimono collar */}
+            <path d="M17 36 L24 32 L31 36" stroke="#C0392B" strokeWidth="2" strokeLinecap="round" fill="none"/>
+          </svg>
+        </div>
+
+        {/* 題字 Title — Mincho heading */}
+        <h1 className="jp-heading fade-in-up fade-in-up-1 hero-title" style={{
+          fontSize: 46, fontWeight: 300, color: "var(--text-primary)",
+          lineHeight: 1.15, marginBottom: 8, letterSpacing: "0.08em",
+        }}>
+          Solis
         </h1>
 
         <div className="fade-in-up fade-in-up-1" style={{
-          fontSize: 18, fontWeight: 700, color: "#94A3B8", marginBottom: 16, letterSpacing: -0.3,
+          fontSize: 13, fontWeight: 400, color: "var(--accent)", marginBottom: 14,
+          letterSpacing: "0.25em", fontFamily: "var(--font-heading)",
         }}>
           {t("heroTagline")}
         </div>
 
         <p className="fade-in-up fade-in-up-2" style={{
-          fontSize: 14, color: "#475569", maxWidth: 520, margin: "0 auto 32px", lineHeight: 1.8,
+          fontSize: 13, color: "var(--text-secondary)", maxWidth: 480,
+          margin: "0 auto 28px", lineHeight: 2.0, letterSpacing: "0.02em",
         }}>
           {t("heroSubtitle")}
         </p>
 
-        {/* Trust signals */}
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
+        {/* 信頼の証 Trust signals */}
+        <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 32 }}>
           {(["trust1", "trust2", "trust3", "trust4"] as const).map(k => (
             <span key={k} style={{
-              fontSize: 11, color: "#475569",
-              background: "#13131A", border: "1px solid #1E1E2E",
-              borderRadius: 20, padding: "4px 12px",
+              fontSize: 11, color: "var(--text-secondary)",
+              background: "var(--bg-card)", border: "1px solid var(--border)",
+              borderRadius: 20, padding: "4px 12px", letterSpacing: "0.03em",
             }}>{t(k)}</span>
           ))}
         </div>
 
-        {/* ── Primary CTA ── */}
+        {/* ── 無料体験 Free CTA ── */}
         <div style={{
-          background: "linear-gradient(135deg, #8B5CF615, #06B6D415)",
-          border: "1px solid #8B5CF640",
-          borderRadius: 20, padding: "28px 32px",
-          marginBottom: 52, maxWidth: 480, margin: "0 auto 52px",
+          background: "var(--bg-card)",
+          border: "1px solid var(--border)",
+          borderTop: "2px solid var(--accent)",
+          borderRadius: 12, padding: "24px 28px",
+          marginBottom: 52, maxWidth: 460, margin: "0 auto 52px",
         }}>
-          <div style={{ fontSize: 15, fontWeight: 800, color: "#E2E8F0", marginBottom: 8 }}>
+          <div className="jp-heading" style={{ fontSize: 14, fontWeight: 400, color: "var(--text-primary)", marginBottom: 6, letterSpacing: "0.06em" }}>
             {t("ctaFreeLabel")}
           </div>
-          <div style={{ fontSize: 12, color: "#64748B", lineHeight: 1.7, marginBottom: 20 }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.8, marginBottom: 18, letterSpacing: "0.02em" }}>
             {t("ctaFreeDesc")}
           </div>
-          {/* Free tier pills */}
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 20 }}>
+          {/* Free tier pills — unified outline style */}
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 18 }}>
             {[
-              { label: "3× 安全分析", color: "#10B981" },
-              { label: "3× AI 顧問", color: "#8B5CF6" },
-              { label: "3× Agent 再平衡", color: "#F59E0B" },
+              { label: "3× 安全分析" },
+              { label: "3× AI 顧問" },
+              { label: "3× Agent 再平衡" },
             ].map(pill => (
               <span key={pill.label} style={{
-                fontSize: 11, fontWeight: 700,
-                color: pill.color, background: `${pill.color}18`,
-                border: `1px solid ${pill.color}35`,
-                borderRadius: 20, padding: "4px 12px",
+                fontSize: 11, fontWeight: 400,
+                color: "var(--text-secondary)",
+                background: "transparent",
+                border: "1px solid var(--border-light)",
+                borderRadius: 4, padding: "4px 10px",
+                letterSpacing: "0.04em",
               }}>✓ {pill.label}</span>
             ))}
           </div>
-          {/* The actual connect button is rendered by the parent (app/page.tsx) —
-              this section just signals users visually what they get for free */}
+          {/* CTA button — vermillion */}
           <div style={{
-            background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
-            borderRadius: 12, padding: "12px 24px",
-            fontSize: 14, fontWeight: 800, color: "#fff",
-            cursor: "default", letterSpacing: 0.3,
-            boxShadow: "0 4px 20px #8B5CF640",
+            background: "var(--accent)",
+            borderRadius: 8, padding: "11px 24px",
+            fontSize: 13, fontWeight: 500, color: "#fff",
+            cursor: "default", letterSpacing: "0.06em",
+            fontFamily: "var(--font-body)",
           }}>
             {t("ctaFreeBtn")}
           </div>
-          <div style={{ fontSize: 10, color: "#334155", marginTop: 10 }}>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 10, letterSpacing: "0.03em" }}>
             {t("ctaSubNote")}
           </div>
         </div>
       </div>
 
-      {/* ── 4 Agent Cards ── */}
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 11, color: "#475569", fontWeight: 700, letterSpacing: 1, marginBottom: 16, textTransform: "uppercase" }}>
+      {/* ── 四大守護 4 Agent Cards ── */}
+      <div style={{ marginBottom: 12 }}>
+        <div className="jp-heading" style={{
+          fontSize: 10, color: "var(--text-muted)", fontWeight: 400,
+          letterSpacing: "0.2em", marginBottom: 16, textTransform: "uppercase",
+        }}>
           {t("agentsTitle")}
         </div>
+        <div className="jp-divider" style={{ margin: "0 0 16px 0" }} />
         <div className="feature-grid" style={{
-          display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12,
+          display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 1,
+          background: "var(--border)", borderRadius: 8, overflow: "hidden",
         }}>
           {AGENT_KEYS.map(a => (
             <div key={a.tag} style={{
-              background: "#13131A", border: "1px solid #1E1E2E",
-              borderRadius: 16, padding: "18px 20px",
-              borderLeft: `3px solid ${a.color}`,
+              background: "var(--bg-card)", padding: "20px 22px",
+              borderTop: `2px solid ${a.color}`,
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 22 }}>{a.icon}</span>
-                <span style={{
-                  fontSize: 9, fontWeight: 800, letterSpacing: 1,
-                  color: a.color, background: `${a.color}15`,
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                {/* 漢字アイコン Kanji icon */}
+                <div style={{
+                  width: 32, height: 32, borderRadius: 6,
+                  background: `${a.color}14`,
                   border: `1px solid ${a.color}30`,
-                  borderRadius: 4, padding: "2px 6px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 14, fontFamily: "var(--font-heading)",
+                  color: a.color, flexShrink: 0,
+                }}>{a.icon}</div>
+                <span style={{
+                  fontSize: 9, fontWeight: 400, letterSpacing: "0.15em",
+                  color: "var(--text-muted)",
+                  fontFamily: "var(--font-mono)",
                 }}>{a.tag}</span>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", marginBottom: 6 }}>{t(a.titleKey)}</div>
-              <div style={{ fontSize: 11, color: "#475569", lineHeight: 1.7 }}>{t(a.descKey)}</div>
+              <div className="jp-heading" style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", marginBottom: 6, letterSpacing: "0.04em" }}>{t(a.titleKey)}</div>
+              <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.85 }}>{t(a.descKey)}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Differentiator ── */}
+      {/* ── 区切り線 ── */}
+      <div className="jp-divider" style={{ margin: "24px 0" }} />
+
+      {/* ── 差別化 Differentiator ── */}
       <div style={{
-        background: "linear-gradient(135deg, #8B5CF608, #06B6D408)",
-        border: "1px solid #8B5CF620",
-        borderRadius: 14, padding: "16px 20px", marginBottom: 16, marginTop: 20,
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+        borderLeft: "2px solid var(--accent)",
+        borderRadius: 8, padding: "16px 20px", marginBottom: 12,
         display: "flex", alignItems: "flex-start", gap: 14,
       }}>
-        <span style={{ fontSize: 20, flexShrink: 0 }}>⛓️</span>
+        <div style={{
+          width: 28, height: 28, borderRadius: 4, flexShrink: 0,
+          background: "var(--accent-soft)", border: "1px solid var(--accent-mid)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 13, fontFamily: "var(--font-heading)", color: "var(--accent)",
+        }}>証</div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", marginBottom: 4 }}>
+          <div className="jp-heading" style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", marginBottom: 4, letterSpacing: "0.04em" }}>
             {t("diffTitle")}
           </div>
-          <div style={{ fontSize: 12, color: "#64748B", lineHeight: 1.7 }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.85, letterSpacing: "0.02em" }}>
             {t("diffDesc")}
           </div>
         </div>
       </div>
 
-      {/* ── Stripe MPP Section ── */}
+      {/* ── Stripe MPP ── */}
       <div style={{
-        background: "linear-gradient(135deg, #635BFF0A, #06B6D408)",
-        border: "1px solid #635BFF35",
-        borderRadius: 14, padding: "18px 20px", marginBottom: 16,
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+        borderLeft: "2px solid #635BFF",
+        borderRadius: 8, padding: "16px 20px", marginBottom: 12,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-          {/* Stripe logo mark */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
           <div style={{
-            width: 28, height: 28, borderRadius: 8, flexShrink: 0,
-            background: "#635BFF", display: "flex", alignItems: "center",
-            justifyContent: "center", fontSize: 14, fontWeight: 900, color: "#fff",
+            width: 28, height: 28, borderRadius: 4, flexShrink: 0,
+            background: "#635BFF20", border: "1px solid #635BFF40",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 13, fontWeight: 700, color: "#8B87FF",
           }}>S</div>
-          <div style={{ fontSize: 13, fontWeight: 800, color: "#E2E8F0" }}>
+          <div className="jp-heading" style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", letterSpacing: "0.04em" }}>
             {t("stripeSectionTitle")}
           </div>
         </div>
-        <div style={{ fontSize: 12, color: "#64748B", lineHeight: 1.75, marginBottom: 12 }}>
+        <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.85, marginBottom: 10, letterSpacing: "0.02em" }}>
           {t("stripeSectionDesc")}
         </div>
-        {/* Three feature pills */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
           {(["stripeFeature1", "stripeFeature2", "stripeFeature3"] as const).map(k => (
             <div key={k} style={{
-              fontSize: 11, fontWeight: 600, color: "#A78BFA",
-              background: "#635BFF10", border: "1px solid #635BFF25",
-              borderRadius: 8, padding: "5px 10px",
+              fontSize: 11, color: "var(--text-secondary)",
+              background: "transparent",
+              border: "1px solid var(--border)",
+              borderRadius: 4, padding: "4px 10px", letterSpacing: "0.03em",
             }}>{t(k)}</div>
           ))}
         </div>
-        {/* MCP endpoint hint */}
         <div style={{
-          marginTop: 12, fontSize: 10, fontFamily: "monospace",
-          color: "#334155", background: "#0A0A0F",
-          border: "1px solid #1E1E2E", borderRadius: 6, padding: "6px 10px",
+          marginTop: 10, fontSize: 10, fontFamily: "var(--font-mono)",
+          color: "var(--text-muted)", background: "var(--bg-base)",
+          border: "1px solid var(--border)", borderRadius: 4, padding: "6px 10px",
+          letterSpacing: "0.05em",
         }}>
           POST /api/mcp · HTTP 402 · x402-payment: USDC · Solana Mainnet
         </div>
       </div>
 
-      {/* ── Stats row ── */}
+      {/* ── 区切り線 ── */}
+      <div className="jp-divider" style={{ margin: "24px 0" }} />
+
+      {/* ── 数値 Stats ── */}
       <div className="stats-grid" style={{
         display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-        gap: 1, background: "#1E1E2E", borderRadius: 14,
-        overflow: "hidden", marginBottom: 20,
+        gap: 1, background: "var(--border)", borderRadius: 8,
+        overflow: "hidden", marginBottom: 12,
       }}>
         {STATS.map(s => (
-          <div key={s.labelKey} style={{ background: "#0D0D14", padding: "16px 0", textAlign: "center" }}>
-            <div style={{ fontSize: 18, fontWeight: 800 }}>
+          <div key={s.labelKey} style={{ background: "var(--bg-card)", padding: "18px 0", textAlign: "center" }}>
+            <div className="jp-mono" style={{ fontSize: 20, fontWeight: 700 }}>
               <AnimatedNumber
                 value={s.numValue}
                 suffix={s.suffix}
                 decimals={s.numValue % 1 !== 0 ? 1 : 0}
                 duration={1400}
-                style={{
-                  background: "linear-gradient(135deg, #8B5CF6, #06B6D4)",
-                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-                }}
+                style={{ color: "var(--gold)", fontFamily: "var(--font-mono)" }}
               />
             </div>
-            <div style={{ fontSize: 11, color: "#475569", marginTop: 2 }}>{t(s.labelKey)}</div>
+            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4, letterSpacing: "0.06em" }}>{t(s.labelKey)}</div>
           </div>
         ))}
       </div>
 
-      {/* ── Protocol ecosystem ── */}
+      {/* ── 連携 Protocol ecosystem ── */}
       <div style={{
-        background: "#0D0D14", border: "1px solid #1E1E2E",
-        borderRadius: 14, padding: "14px 20px", marginBottom: 16,
+        background: "var(--bg-card)", border: "1px solid var(--border)",
+        borderRadius: 8, padding: "14px 18px", marginBottom: 16,
       }}>
-        <div style={{ fontSize: 10, color: "#334155", fontWeight: 700, letterSpacing: 1, marginBottom: 10, textTransform: "uppercase" }}>
+        <div style={{ fontSize: 9, color: "var(--text-muted)", fontWeight: 400, letterSpacing: "0.18em", marginBottom: 10, textTransform: "uppercase", fontFamily: "var(--font-mono)" }}>
           {t("integratedProtocols")}
         </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {PROTOCOLS.map(e => (
-            <span key={e.name} style={{
-              fontSize: 11, fontWeight: 700, color: e.color,
-              background: `${e.color}12`, border: `1px solid ${e.color}25`,
-              borderRadius: 6, padding: "3px 10px",
-            }}>{e.name}</span>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {PROTOCOLS.map(name => (
+            <span key={name} style={{
+              fontSize: 11, fontWeight: 400, color: "var(--text-secondary)",
+              background: "var(--bg-base)", border: "1px solid var(--border)",
+              borderRadius: 4, padding: "3px 10px", letterSpacing: "0.03em",
+            }}>{name}</span>
           ))}
         </div>
       </div>
 
-      <div style={{ textAlign: "center", fontSize: 11, color: "#1E3A5F" }}>
+      <div style={{ textAlign: "center", fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.08em" }}>
         {t("footerText")}
       </div>
     </div>
   );
 }
-
