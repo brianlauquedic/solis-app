@@ -52,6 +52,7 @@ function AppContent() {
   const [phantomLoading, setPhantomLoading] = useState(false);
   const [phantomAvailable, setPhantomAvailable] = useState(false);
   const [timeBg, setTimeBg] = useState(getTimeColor());
+  const [isDayMode, setIsDayMode] = useState(false);
 
   // Update background every minute
   useEffect(() => {
@@ -60,6 +61,25 @@ function AppContent() {
     const id = setInterval(tick, 60_000);
     return () => clearInterval(id);
   }, []);
+
+  // 昼夜 Day/Night CSS variable override
+  const dayVars = isDayMode ? {
+    "--bg-base":      "#F2EBE0",
+    "--bg-card":      "#EAE0D0",
+    "--bg-card-2":    "#E0D4C0",
+    "--bg-header":    "rgba(242,235,224,0.95)",
+    "--border":       "#C8B89A",
+    "--border-light": "#B8A880",
+    "--text-primary": "#2A1A10",
+    "--text-secondary":"#6B5540",
+    "--text-muted":   "#9B8570",
+    "--accent-soft":  "rgba(192,57,43,0.08)",
+    "--accent-mid":   "rgba(192,57,43,0.18)",
+    "--gold":         "#8B6520",
+    "--gold-soft":    "rgba(139,101,32,0.10)",
+    "--green":        "#2D6040",
+    "--green-soft":   "rgba(45,96,64,0.12)",
+  } as React.CSSProperties : {} as React.CSSProperties;
 
   useEffect(() => {
     const t = setTimeout(() => setPhantomAvailable(!!window.solana?.isPhantom), 300);
@@ -89,10 +109,13 @@ function AppContent() {
     ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
     : null;
 
+  const isDay = new Date().getHours() >= 6 && new Date().getHours() < 18;
+
   return (
     <main className="min-h-screen" style={{
-      background: timeBg.bg,
-      transition: "background 3s ease",
+      background: isDayMode ? "var(--bg-base)" : timeBg.bg,
+      transition: "background 1.5s ease, color 1.5s ease",
+      ...dayVars,
     }}>
       {/* ── 頭部 Header ── */}
       <header style={{
@@ -149,6 +172,25 @@ function AppContent() {
           }} title={timeBg.label}>
             {timeBg.name}
           </span>
+          {/* 昼夜切替 Day/Night toggle */}
+          <button
+            onClick={() => setIsDayMode(v => !v)}
+            title={isDayMode ? "夜モードに切替" : "昼モードに切替"}
+            style={{
+              display: "flex", alignItems: "center", gap: 5,
+              padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+              border: "1px solid var(--border)",
+              background: isDayMode ? "#F2EBE0" : "var(--bg-card)",
+              color: isDayMode ? "#2A1A10" : "var(--text-secondary)",
+              fontSize: 12, transition: "all 0.3s ease",
+              fontFamily: "var(--font-body)",
+            }}
+          >
+            <span style={{ fontSize: 14 }}>{isDayMode ? "☀️" : "🌙"}</span>
+            <span style={{ fontSize: 10, letterSpacing: "0.05em" }}>
+              {isDayMode ? (isDay ? "昼" : "昼") : (isDay ? "昼" : "夜")}
+            </span>
+          </button>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
