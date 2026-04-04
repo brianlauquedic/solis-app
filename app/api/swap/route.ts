@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
-// ── Solis 平台手续费钱包 ──────────────────────────────────────────
+// ── Sakura 平台手续费钱包 ──────────────────────────────────────────
 const SOLIS_FEE_WALLET = process.env.SOLIS_FEE_WALLET ?? "Goc5kAMb9NTXjobxzZogAWaHwajmQjw7CdmATWJN1mQh";
 
 // 平台手续费：0.3%（30 bps）

@@ -1,5 +1,5 @@
 /**
- * x402 / Agent Payment client helper for Solis.
+ * x402 / Agent Payment client helper for Sakura.
  * Handles the HTTP 402 → USDC payment → retry flow.
  *
  * Flow:

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Solis — Solana AI 財務顧問",
+  title: "Sakura — Solana AI 財務顧問",
   description: "連接你與 Solana DeFi 生態的智能大腦",
 };
 

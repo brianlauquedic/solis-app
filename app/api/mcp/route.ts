@@ -96,7 +96,7 @@ export async function GET() {
   return NextResponse.json({
     name: "solis-mcp",
     version: "1.0.0",
-    description: "Solis AI DeFi Advisor — Token security analysis and DeFi yield recommendations on Solana",
+    description: "Sakura AI DeFi Advisor — Token security analysis and DeFi yield recommendations on Solana",
     tools: TOOLS,
   });
 }
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
     }
     const paymentValid = await verifyMCPPayment(paymentSig, MCP_CALL_FEE);
     if (!paymentValid) {
-      return jsonrpcError(id, -32001, "Payment verification failed. Send 0.01 USDC to Solis fee wallet.");
+      return jsonrpcError(id, -32001, "Payment verification failed. Send 0.01 USDC to Sakura fee wallet.");
     }
     await markPaymentSigUsed(paymentSig);
 

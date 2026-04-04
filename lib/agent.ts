@@ -1,5 +1,5 @@
 /**
- * Solana Agent Kit — unified initialization for Solis.
+ * Solana Agent Kit — unified initialization for Sakura.
  * All three plugins: TokenPlugin (prices, rug checks), DefiPlugin (stake/lend/swap), MiscPlugin (Jito).
  *
  * Three agent types:

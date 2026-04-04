@@ -160,7 +160,7 @@ function generateResponse(
     case "analyze_token":
       return { text: `切换到「🔍 代币分析」Tab，粘贴合约地址 **${intent.mint.slice(0, 8)}...** 即可获得安全评分和买入建议。` };
     case "rug_check":
-      return { text: `检测 **$${intent.token}** 安全性：切换到「🔍 代币分析」Tab，输入合约地址，Solis 将检测增发权限、持币集中度、蜜罐等 5 项风险。` };
+      return { text: `检测 **$${intent.token}** 安全性：切换到「🔍 代币分析」Tab，输入合约地址，Sakura 将检测增发权限、持币集中度、蜜罐等 5 项风险。` };
     default:
       return { text: `我可以帮你：\n\n💰 **收益** — "帮我质押 2 SOL" / "USDC 存哪里利息最高"\n🔍 **安全** — "分析这个代币 [地址]"\n💱 **交易** — "把 1 SOL 换成 USDC"\n📊 **资产** — "查看我的收益机会"`, actions: [] };
   }
@@ -586,7 +586,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
           amount: challenge.amount ?? 0.50,
           currency: "USDC",
           network: "solana-mainnet",
-          description: "Solis AI 顾问会话 0.50 USDC",
+          description: "Sakura AI 顾问会话 0.50 USDC",
         });
         if ("error" in payResult) {
           setMessages(prev => prev.map(m =>
@@ -759,7 +759,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
             }}
           >
             <span style={{ animation: "pulse 1.5s infinite", display: "inline-block" }}>🧠</span>
-            Solis 正在思考... ({thinkingText.length} chars)
+            Sakura 正在思考... ({thinkingText.length} chars)
             <span style={{ marginLeft: "auto", color: "#475569" }}>{thinkingOpen ? "▲" : "▼"}</span>
           </button>
           {thinkingOpen && (

@@ -46,12 +46,9 @@ export default function WalletConnect() {
 
         {/* 和美人 Wa-bijin Logo — traditional Japanese beauty portrait */}
         <div className="hero-logo" style={{
-          width: 88, height: 88, borderRadius: 16, margin: "0 auto 24px",
-          background: "var(--accent)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          flexShrink: 0,
+          width: 88, height: 88, margin: "0 auto 24px",
         }}>
-          <WaBijinSVG size={68} />
+          <WaBijinSVG size={88} />
         </div>
 
         {/* 題字 Title — Mincho heading */}
@@ -59,7 +56,7 @@ export default function WalletConnect() {
           fontSize: 46, fontWeight: 300, color: "var(--text-primary)",
           lineHeight: 1.15, marginBottom: 8, letterSpacing: "0.08em",
         }}>
-          Solis
+          Sakura
         </h1>
 
         <div className="fade-in-up fade-in-up-1" style={{

@@ -196,7 +196,7 @@ function ruleBasedAnalysis(req: AnalyzeRequest): string {
 
 // ── Build Claude prompt ──────────────────────────────────────────
 function buildPrompt(req: AnalyzeRequest): string {
-  return `你是 Solis，一个 Solana 链上 AI 财务顾问。用简洁的中文给出代币分析建议，不超过150字。
+  return `你是 Sakura，一个 Solana 链上 AI 财务顾问。用简洁的中文给出代币分析建议，不超过150字。
 
 代币信息：
 - 名称：${req.name}（${req.symbol}）
@@ -291,7 +291,7 @@ export async function POST(req: NextRequest) {
     ]);
 
     // Memo: commit hash only — never leak reasoning text on-chain (privacy)
-    const memoPayload = `[Solis] commit:${reasoningHash.slice(0, 32)} | ts:${timestamp}`;
+    const memoPayload = `[Sakura] commit:${reasoningHash.slice(0, 32)} | ts:${timestamp}`;
 
     return NextResponse.json({
       reasoning,

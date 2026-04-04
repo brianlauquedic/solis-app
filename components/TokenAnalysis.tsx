@@ -196,7 +196,7 @@ function ProofPanel({ ai }: { ai: AIAnalysis }) {
       amount: 0.10,
       currency: "USDC",
       network: "solana-mainnet",
-      description: "Solis 链上证明写入 0.10 USDC",
+      description: "Sakura 链上证明写入 0.10 USDC",
     });
     if ("error" in payResult) {
       if (payResult.error === "no_wallet") {
@@ -502,7 +502,7 @@ export default function TokenAnalysis({ walletAddress }: Props) {
             amount: challenge.amount,
             currency: "USDC",
             network: "solana-mainnet",
-            description: "Solis 安全分析 0.10 USDC",
+            description: "Sakura 安全分析 0.10 USDC",
           });
           if (!("error" in payResult)) {
             setAnalyzePaymentSig(payResult.sig);

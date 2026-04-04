@@ -229,7 +229,7 @@ function ShareModal({ data, onClose }: { data: WalletData; onClose: () => void }
   const short = `${data.address.slice(0, 6)}...${data.address.slice(-4)}`;
   const scoreLabel = data.healthScore >= 70 ? `${t("healthy")} ✅` : data.healthScore >= 45 ? `${t("needsAttention")} ⚠️` : `${t("highRisk")} 🚨`;
 
-  const text = `📊 ${t("walletHealthReport")} via Solis AI
+  const text = `📊 ${t("walletHealthReport")} via Sakura AI
 
 🏥 Score: ${data.healthScore}/100 ${scoreLabel}
 💰 ${t("totalAssets")}: $${data.totalUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}

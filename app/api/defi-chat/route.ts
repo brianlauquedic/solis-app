@@ -229,7 +229,7 @@ function ruleBasedResponse(
 
     case "rug_check":
       return {
-        text: `检测 **$${intent.token}** 安全性：切换到「🔍 代币分析」Tab，输入合约地址，Solis 将检测增发权限、持币集中度、蜜罐等 5 项风险。`,
+        text: `检测 **$${intent.token}** 安全性：切换到「🔍 代币分析」Tab，输入合约地址，Sakura 将检测增发权限、持币集中度、蜜罐等 5 项风险。`,
       };
 
     default:
@@ -354,7 +354,7 @@ export async function POST(req: NextRequest) {
             .map(o => `${o.protocol}: ${o.apyDisplay} APY (${o.riskLevel}风险)`)
             .join("、") ?? "暂无实时数据";
           const summaryLine = sessionSummary ? `\n用户历史偏好：${sessionSummary}` : "";
-          const systemPrompt = `你是 Solis，一个 Solana 链上 AI 财务顾问。用简洁的中文回答，不超过120字。
+          const systemPrompt = `你是 Sakura，一个 Solana 链上 AI 财务顾问。用简洁的中文回答，不超过120字。
 用户钱包：SOL ${wallet.solBalance.toFixed(3)}，USDC $${wallet.idleUSDC.toFixed(0)}，总资产 $${wallet.totalUSD.toFixed(0)}
 当前实时最优收益：${topYield}${summaryLine}
 规则：直接给出建议，涉及协议时给出名称，基于用户实际余额，不要套话。`;
@@ -435,7 +435,7 @@ export async function POST(req: NextRequest) {
 
         // ── Phase 3: Build hash and emit done ────────────────────
         const reasoningHash = await buildReasoningHash(message, fullText, wallet, aiAvailable);
-        const memoPayload = `[Solis] ${fullText}`.slice(0, 500);
+        const memoPayload = `[Sakura] ${fullText}`.slice(0, 500);
 
         // Generate session summary if history is long enough
         let newSessionSummary: string | undefined;

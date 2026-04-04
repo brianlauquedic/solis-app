@@ -141,7 +141,7 @@ async function callClaudeForPlan(
   const kaminoAPY = getAPY("Kamino Finance", 8.2);
   const solPrice = req.solBalance > 0 && req.totalUSD > 0 ? req.totalUSD / req.solBalance : 180;
 
-  const systemPrompt = `你是 Solis AI Agent。根据用户钱包，生成一个最优再平衡方案，输出严格的 JSON。
+  const systemPrompt = `你是 Sakura AI Agent。根据用户钱包，生成一个最优再平衡方案，输出严格的 JSON。
 
 用户钱包：
 - SOL: ${req.solBalance.toFixed(3)} (≈$${(req.solBalance * solPrice).toFixed(0)})
@@ -336,6 +336,6 @@ export async function POST(req: NextRequest) {
     ...plan,
     aiAvailable,
     planHash: hash,
-    memoPayload: `[Solis Agent] ${body.walletAddress.slice(0, 8)} | $${plan.projectedAnnualYield.toFixed(0)}/yr | ${plan.actions.map(a => `${a.protocol} ${a.type}`).join(", ")}`.slice(0, 700),
+    memoPayload: `[Sakura Agent] ${body.walletAddress.slice(0, 8)} | $${plan.projectedAnnualYield.toFixed(0)}/yr | ${plan.actions.map(a => `${a.protocol} ${a.type}`).join(", ")}`.slice(0, 700),
   });
 }

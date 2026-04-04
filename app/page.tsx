@@ -133,13 +133,12 @@ function AppContent() {
           {/* 和美人 Wa-bijin logo */}
           <div style={{
             width: 32, height: 32, borderRadius: 6,
-            background: "var(--accent)",
-            display: "flex", alignItems: "center", justifyContent: "center",
+            overflow: "hidden",
             flexShrink: 0,
           }}>
-            <WaBijinSVG size={24} />
+            <WaBijinSVG size={32} />
           </div>
-          <span className="jp-heading" style={{ fontSize: 18, fontWeight: 500, color: "var(--text-primary)", letterSpacing: "0.08em" }}>Solis</span>
+          <span className="jp-heading" style={{ fontSize: 18, fontWeight: 500, color: "var(--text-primary)", letterSpacing: "0.08em" }}>Sakura</span>
           <span style={{
             fontSize: 9, color: "var(--accent)", border: "1px solid var(--accent-mid)",
             borderRadius: 3, padding: "1px 5px", letterSpacing: 1.5, fontFamily: "var(--font-mono)",

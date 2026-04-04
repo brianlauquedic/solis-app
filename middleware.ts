@@ -1,5 +1,5 @@
 /**
- * Solis — Anti-Crawler & Rate-Limit Middleware (v2)
+ * Sakura — Anti-Crawler & Rate-Limit Middleware (v2)
  *
  * Layered defense in execution order:
  *   1. Banned IP instant block (honeypot triggered)

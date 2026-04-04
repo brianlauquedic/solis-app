@@ -84,7 +84,7 @@ export default function VerifyPage() {
           amount: body402.amount ?? 0.05,
           currency: "USDC",
           network: "solana-mainnet",
-          description: body402.description ?? "Solis 链上验证 · $0.05 USDC",
+          description: body402.description ?? "Sakura 链上验证 · $0.05 USDC",
         });
         if ("error" in payResult) {
           setChainResult({ signature: sig, memo: null, layers: { rawMemo: null }, slot: null, blockTime: null, timestamp: null, feePayer: null, error: "支付取消：" + payResult.error });
@@ -136,7 +136,7 @@ export default function VerifyPage() {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 14, fontWeight: 900, color: "#fff",
           }}>S</div>
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>Solis</span>
+          <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>Sakura</span>
         </Link>
         <span style={{ fontSize: 12, color: "#60A5FA" }}>可验证 AI 推理 · Verifiable AI Reasoning</span>
       </header>
@@ -157,7 +157,7 @@ export default function VerifyPage() {
             可验证 AI 推理
           </h1>
           <p style={{ fontSize: 14, color: "#64748B", lineHeight: 1.7, maxWidth: 520, margin: "0 auto" }}>
-            Solis 每次 AI 分析（代币安全 / DeFi 建议 / 收益推荐）时，将推理数据生成 SHA-256 哈希，
+            Sakura 每次 AI 分析（代币安全 / DeFi 建议 / 收益推荐）时，将推理数据生成 SHA-256 哈希，
             可一键写入 Solana 链上 Memo。任何人都可以在此验证——这是 Solana 生态
             <span style={{ color: "#9945FF", fontWeight: 700 }}> Verifiable Compute</span> 的完整实践。
           </p>
@@ -418,7 +418,7 @@ export default function VerifyPage() {
             <div style={{ fontSize: 24, marginBottom: 12 }}>🔍</div>
             <div style={{ fontSize: 15, color: "#EF4444", marginBottom: 8 }}>未找到匹配的推理记录</div>
             <div style={{ fontSize: 12, color: "#64748B" }}>
-              此哈希未在本机找到。Solis 目前将证明存储在本地，请确保在生成分析的同一设备上验证。
+              此哈希未在本机找到。Sakura 目前将证明存储在本地，请确保在生成分析的同一设备上验证。
             </div>
           </div>
         )}
@@ -514,7 +514,7 @@ export default function VerifyPage() {
           <div style={{ color: "#60A5FA", fontWeight: 700, marginBottom: 8 }}>
             🔐 为什么链上推理透明度很重要？
           </div>
-          当 Solis AI 给出"建议买入 $50"时，用户需要能够验证这个建议是否真实可靠。
+          当 Sakura AI 给出"建议买入 $50"时，用户需要能够验证这个建议是否真实可靠。
           通过将推理哈希写入 Solana 交易的 Memo 字段，任何人都可以：
           <br /><br />
           • 查看 AI 当时使用的原始数据（安全评分、持仓比例等）<br />

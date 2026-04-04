@@ -113,9 +113,9 @@ export const translations = {
     ja: "🤝 Stripe Machine Payments Protocol 対応済み",
   },
   stripeSectionDesc: {
-    zh: "Solis 的 AI 智能體已原生支援 HTTP 402 Payment Required 標準。任何 MCP 客戶端（Claude Desktop、Cursor、VS Code 等）可直接調用 Solis 的 DeFi 分析 API，每次調用自動支付 USDC——無需帳號、無需訂閱，真正的 Agent-to-Agent 經濟。",
-    en: "Solis AI agents natively implement the HTTP 402 Payment Required standard. Any MCP client (Claude Desktop, Cursor, VS Code, etc.) can call Solis DeFi analysis APIs with automatic per-call USDC payment — no account, no subscription, pure Agent-to-Agent economy.",
-    ja: "Solis AIエージェントはHTTP 402 Payment Required標準をネイティブ実装。Claude Desktop、Cursor、VS Codeなど任意のMCPクライアントがSolis DeFi分析APIを直接呼び出し、1回ごとにUSDCを自動支払い——アカウント不要、真のAgent-to-Agent経済。",
+    zh: "Sakura 的 AI 智能體已原生支援 HTTP 402 Payment Required 標準。任何 MCP 客戶端（Claude Desktop、Cursor、VS Code 等）可直接調用 Sakura 的 DeFi 分析 API，每次調用自動支付 USDC——無需帳號、無需訂閱，真正的 Agent-to-Agent 經濟。",
+    en: "Sakura AI agents natively implement the HTTP 402 Payment Required standard. Any MCP client (Claude Desktop, Cursor, VS Code, etc.) can call Sakura DeFi analysis APIs with automatic per-call USDC payment — no account, no subscription, pure Agent-to-Agent economy.",
+    ja: "Sakura AIエージェントはHTTP 402 Payment Required標準をネイティブ実装。Claude Desktop、Cursor、VS Codeなど任意のMCPクライアントがSakura DeFi分析APIを直接呼び出し、1回ごとにUSDCを自動支払い——アカウント不要、真のAgent-to-Agent経済。",
   },
   stripeFeature1: {
     zh: "⚡ 每次 API 調用自動 USDC 微支付",
@@ -137,9 +137,9 @@ export const translations = {
   connectPhantom: { zh: "👻 連接 Phantom", en: "👻 Connect Phantom", ja: "👻 Phantomを接続" },
   enterAddress: { zh: "📋 輸入地址", en: "📋 Enter Address", ja: "📋 アドレス入力" },
   phantomDetected: {
-    zh: "偵測到 Phantom 錢包。Solis 僅讀取地址用於分析，不會請求任何簽名或轉帳權限。",
-    en: "Phantom wallet detected. Solis only reads your address for analysis — no signing or transfer permissions requested.",
-    ja: "Phantomウォレットを検出しました。Solisは分析のためにアドレスを読み取るだけで、署名や転送権限は要求しません。",
+    zh: "偵測到 Phantom 錢包。Sakura 僅讀取地址用於分析，不會請求任何簽名或轉帳權限。",
+    en: "Phantom wallet detected. Sakura only reads your address for analysis — no signing or transfer permissions requested.",
+    ja: "Phantomウォレットを検出しました。Sakuraは分析のためにアドレスを読み取るだけで、署名や転送権限は要求しません。",
   },
   connectBtn: { zh: "連接 Phantom · 啟動 AI 顧問", en: "Connect Phantom · Launch AI Advisor", ja: "Phantom接続 · AIアドバイザー起動" },
   connecting: { zh: "連接中...", en: "Connecting...", ja: "接続中..." },
@@ -186,13 +186,13 @@ export const translations = {
   noPriceData: { zh: "無價格數據", en: "No price data", ja: "価格データなし" },
   viewOnSolscan: { zh: "🔍 在 Solscan 查看", en: "🔍 View on Solscan", ja: "🔍 Solscanで確認" },
   rugCheckDetect: { zh: "🛡️ RugCheck 檢測", en: "🛡️ RugCheck Scan", ja: "🛡️ RugCheck検査" },
-  aiRecommendations: { zh: "📋 Solis AI 建議", en: "📋 Solis AI Recommendations", ja: "📋 Solis AI 推奨" },
+  aiRecommendations: { zh: "📋 Sakura AI 建議", en: "📋 Sakura AI Recommendations", ja: "📋 Sakura AI 推奨" },
   recommendation: { zh: "建議", en: "Recommendation", ja: "推奨" },
   opportunity: { zh: "機會", en: "Opportunity", ja: "機会" },
   risk: { zh: "風險", en: "Risk", ja: "リスク" },
   good: { zh: "良好", en: "Good", ja: "良好" },
   shareReport: { zh: "📤 分享我的錢包報告", en: "📤 Share My Wallet Report", ja: "📤 ウォレットレポートをシェア" },
-  scanning: { zh: "Solis 正在掃描鏈上數據...", en: "Solis is scanning onchain data...", ja: "Solisがオンチェーンデータをスキャン中..." },
+  scanning: { zh: "Sakura 正在掃描鏈上數據...", en: "Sakura is scanning onchain data...", ja: "Sakuraがオンチェーンデータをスキャン中..." },
   healthy: { zh: "健康", en: "Healthy", ja: "健全" },
   needsAttention: { zh: "需關注", en: "Needs Attention", ja: "要注意" },
   highRisk: { zh: "高風險", en: "High Risk", ja: "高リスク" },
@@ -207,8 +207,8 @@ export const translations = {
   // ── TokenAnalysis ──────────────────────────────────────────────
   tokenSecurityAnalysis: { zh: "🛡️ 代幣安全分析", en: "🛡️ Token Security Analysis", ja: "🛡️ トークンセキュリティ分析" },
   tokenAnalysisSubtitle: {
-    zh: "輸入任意 Solana 代幣合約地址，Solis 立即調用 GoPlus · Jupiter · Helius 三方數據 + Claude AI 給出買入決策",
-    en: "Enter any Solana token contract address. Solis calls GoPlus · Jupiter · Helius + Claude AI for an instant buy/avoid decision.",
+    zh: "輸入任意 Solana 代幣合約地址，Sakura 立即調用 GoPlus · Jupiter · Helius 三方數據 + Claude AI 給出買入決策",
+    en: "Enter any Solana token contract address. Sakura calls GoPlus · Jupiter · Helius + Claude AI for an instant buy/avoid decision.",
     ja: "任意のSolanaトークンコントラクトアドレスを入力。GoPlus・Jupiter・Helius + Claude AIでリアルタイム判断を提供します。",
   },
   tokenAddressPlaceholder: { zh: "輸入代幣合約地址（Mint Address）...", en: "Enter token mint address...", ja: "トークンミントアドレスを入力..." },
@@ -284,12 +284,12 @@ export const translations = {
   receive: { zh: "獲得", en: "Receive", ja: "受け取り" },
   priceImpact: { zh: "價格影響", en: "Price Impact", ja: "価格影響" },
   slippageProtection: { zh: "滑點保護", en: "Slippage Protection", ja: "スリッページ保護" },
-  platformFee: { zh: "Solis 平台費", en: "Solis Platform Fee", ja: "Solisプラットフォーム手数料" },
+  platformFee: { zh: "Sakura 平台費", en: "Sakura Platform Fee", ja: "Sakuraプラットフォーム手数料" },
   route: { zh: "路由", en: "Route", ja: "ルート" },
   swapFeeNotice: {
-    zh: "Solis 收取 {pct} 平台費，用於維持 AI 分析和服務運營。交易透過 Jupiter 最優路由執行。",
-    en: "Solis charges a {pct} platform fee to sustain AI analysis and operations. Trades route via Jupiter for best price.",
-    ja: "Solisは{pct}のプラットフォーム料金を請求します。取引はJupiterを通じて最適ルートで実行されます。",
+    zh: "Sakura 收取 {pct} 平台費，用於維持 AI 分析和服務運營。交易透過 Jupiter 最優路由執行。",
+    en: "Sakura charges a {pct} platform fee to sustain AI analysis and operations. Trades route via Jupiter for best price.",
+    ja: "Sakuraは{pct}のプラットフォーム料金を請求します。取引はJupiterを通じて最適ルートで実行されます。",
   },
   confirmSwap: { zh: "確認兌換（Phantom 簽名）", en: "Confirm Swap (Sign with Phantom)", ja: "スワップ確認（Phantom署名）" },
   cancel: { zh: "取消", en: "Cancel", ja: "キャンセル" },
@@ -339,9 +339,9 @@ export const translations = {
 
   // ── Footer ────────────────────────────────────────────────────────
   footerText: {
-    zh: "Solis · Colosseum Frontier Hackathon 2026 · Agentic Economy Track · Built on Solana",
-    en: "Solis · Colosseum Frontier Hackathon 2026 · Agentic Economy Track · Built on Solana",
-    ja: "Solis · Colosseum Frontier Hackathon 2026 · Agentic Economy Track · Built on Solana",
+    zh: "Sakura · Colosseum Frontier Hackathon 2026 · Agentic Economy Track · Built on Solana",
+    en: "Sakura · Colosseum Frontier Hackathon 2026 · Agentic Economy Track · Built on Solana",
+    ja: "Sakura · Colosseum Frontier Hackathon 2026 · Agentic Economy Track · Built on Solana",
   },
 
   // ── Protocols ecosystem ────────────────────────────────────────────

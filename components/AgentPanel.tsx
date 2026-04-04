@@ -303,7 +303,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
           amount: body402.amount ?? 0.10,
           currency: "USDC",
           network: "solana-mainnet",
-          description: body402.description ?? "Solis Agent 分析 · $0.10 USDC",
+          description: body402.description ?? "Sakura Agent 分析 · $0.10 USDC",
         });
         if ("error" in payResult) throw new Error("支付取消：" + payResult.error);
         setAgentPaymentSig(payResult.sig);

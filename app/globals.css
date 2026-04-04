@@ -21,7 +21,7 @@
   --text-muted:     #4A4038; /* 利休鼠 Rikyu-nezumi */
 
   /* 朱色 Shu-iro — vermillion seal red (唯一の強調色) */
-  --accent:       #C0392B;
+  --accent:       #C94030;  /* 朱色 — brighter vermillion, matches reference */
   --accent-soft:  rgba(192, 57, 43, 0.09);
   --accent-mid:   rgba(192, 57, 43, 0.20);
 
@@ -125,7 +125,7 @@ body {
 
 /* 印章 Hero logo */
 .hero-logo {
-  animation: float 8s ease-in-out infinite, pulse-border 4s ease-in-out infinite;
+  animation: float 8s ease-in-out infinite;
 }
 
 .fade-in-up {

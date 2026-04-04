@@ -71,10 +71,10 @@ ${Array.isArray(basicData.positives) && basicData.positives.length > 0
 **投资建议**
 ${(basicData.decision as { verdict?: string; suggestion?: string })?.suggestion ?? "建议谨慎决策"}
 
-*此分析由 Solis 规则引擎生成（AI API 未配置时的回退方案）*`;
+*此分析由 Sakura 规则引擎生成（AI API 未配置时的回退方案）*`;
   }
 
-  const systemPrompt = `你是 Solis 链上安全专家。根据代币安全数据，用中文生成简洁的深度分析报告（不超过200字）。分析包括：1) 最大风险点 2) 持仓集中度风险 3) 短期价格风险 4) 明确的仓位建议（占总资产%）。语气专业但直接。`;
+  const systemPrompt = `你是 Sakura 链上安全专家。根据代币安全数据，用中文生成简洁的深度分析报告（不超过200字）。分析包括：1) 最大风险点 2) 持仓集中度风险 3) 短期价格风险 4) 明确的仓位建议（占总资产%）。语气专业但直接。`;
 
   const userContent = `分析代币 ${mint}：
 安全评分: ${basicData.securityScore}/100
@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
         amount: 1.00,
         currency: "USDC",
         network: "solana-mainnet",
-        description: `Solis 深度 AI 代币分析 — ${mint.slice(0, 8)}...`,
+        description: `Sakura 深度 AI 代币分析 — ${mint.slice(0, 8)}...`,
       },
       {
         status: 402,
@@ -155,7 +155,7 @@ export async function GET(req: NextRequest) {
   const valid = await verifyUSDCPayment(paymentSig);
   if (!valid) {
     return NextResponse.json(
-      { error: "Payment verification failed. Ensure 1.00 USDC was sent to the Solis fee wallet." },
+      { error: "Payment verification failed. Ensure 1.00 USDC was sent to the Sakura fee wallet." },
       { status: 402 }
     );
   }

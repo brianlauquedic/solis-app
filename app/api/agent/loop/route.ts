@@ -479,7 +479,7 @@ export async function POST(req: NextRequest) {
       if (!ANTHROPIC_API_KEY) {
         send("token", { text: "⚙️ AI 顾问需要配置 Anthropic API Key 才能运行。\n\n请在 `.env.local` 文件中设置：\n`ANTHROPIC_API_KEY=sk-ant-...`\n\n配置完成后重启服务即可使用 Claude Sonnet 4.6 深度分析功能。" });
         send("done", {
-          memoPayload: `[Solis] no API key configured`,
+          memoPayload: `[Sakura] no API key configured`,
           actions: [],
           reasoningHash: createHash("sha256").update("no-key").digest("hex"),
         });
@@ -489,7 +489,7 @@ export async function POST(req: NextRequest) {
 
       const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-      const systemPrompt = `You are Solis, an AI-powered DeFi advisor for Solana.
+      const systemPrompt = `You are Sakura, an AI-powered DeFi advisor for Solana.
 You have access to real-time data tools. Use them proactively.
 
 TOOL USAGE RULES (严格遵守):
@@ -627,7 +627,7 @@ Rules:
           .update(allThinkingText + finalText)
           .digest("hex");
 
-        const memoPayload = `[Solis] ${body.walletAddress.slice(0, 8)} | ${finalText.slice(0, 200)} | hash:${reasoningHash.slice(0, 16)}`.slice(0, 500);
+        const memoPayload = `[Sakura] ${body.walletAddress.slice(0, 8)} | ${finalText.slice(0, 200)} | hash:${reasoningHash.slice(0, 16)}`.slice(0, 500);
 
         send("done", {
           memoPayload,
@@ -640,7 +640,7 @@ Rules:
         const msg = err instanceof Error ? err.message : "Loop error";
         send("error", { message: msg });
         send("done", {
-          memoPayload: `[Solis error] ${body.walletAddress.slice(0, 8)}`,
+          memoPayload: `[Sakura error] ${body.walletAddress.slice(0, 8)}`,
           actions: [],
           reasoningHash: createHash("sha256").update("error").digest("hex"),
         });

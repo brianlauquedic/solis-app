@@ -251,7 +251,7 @@ export function quota402Body(feature: Feature, used: number) {
     amount: feeUSDC,
     currency: "USDC",
     network: "solana-mainnet",
-    description: `Solis ${feature} — free quota exhausted (${FREE_QUOTA} uses/device)`,
+    description: `Sakura ${feature} — free quota exhausted (${FREE_QUOTA} uses/device)`,
   };
 }
 

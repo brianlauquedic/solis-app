@@ -174,7 +174,7 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
         amount: price,
         currency: "USDC",
         network: "solana-mainnet",
-        description: `Solis ${plan.label} 订阅 $${price} USDC/${billingPeriod === "annual" ? "年" : "月"}`,
+        description: `Sakura ${plan.label} 订阅 $${price} USDC/${billingPeriod === "annual" ? "年" : "月"}`,
       });
       if ("error" in result) throw new Error(result.error);
 
@@ -237,7 +237,7 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
               <div>
                 <h2 style={{ fontSize: 26, fontWeight: 800, color: "#E2E8F0", margin: 0 }}>
-                  Solis 点数系统
+                  Sakura 点数系统
                 </h2>
                 <p style={{ fontSize: 13, color: "#64748B", marginTop: 6, margin: "6px 0 0" }}>
                   按实际 AI 调用成本计费 · USDC 链上支付 · 30天有效
@@ -486,7 +486,7 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
               <span style={{ fontSize: 18 }}>🔒</span>
               <div style={{ fontSize: 11, color: "#64748B", lineHeight: 1.6 }}>
                 <strong style={{ color: "#94A3B8" }}>链上支付，完全透明。</strong>{" "}
-                订阅费通过 Phantom 直接发送至 Solis 费用钱包（USDC on Solana）。
+                订阅费通过 Phantom 直接发送至 Sakura 费用钱包（USDC on Solana）。
                 点数按实际 AI API 成本设计：深度分析（Sonnet 4.6 + 扩展思考）80 点，
                 简单对话（Haiku）30 点，安全分析 10 点。Basic 可结转 500 点，无绑定、随时停止。
               </div>
