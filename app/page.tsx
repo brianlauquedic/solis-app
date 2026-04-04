@@ -26,6 +26,24 @@ const LANG_OPTIONS: { code: Lang; flag: string; label: string }[] = [
   { code: "ja", flag: "🇯🇵", label: "日本語" },
 ];
 
+// ── 時の色 Toki-no-Iro — Color of Time ──────────────────────────
+// Japanese traditional color philosophy: each hour has its own hue
+const TIME_COLORS = [
+  { from: 4,  to: 6,  bg: "#120A0D", accent: "#8B3040", name: "暁", label: "Dawn"      }, // 暁色 Akebono
+  { from: 6,  to: 9,  bg: "#0A0B12", accent: "#3A5C8B", name: "朝", label: "Morning"   }, // 朝焼け Asayake
+  { from: 9,  to: 12, bg: "#0C0D0A", accent: "#4A7A55", name: "昼", label: "Noon"      }, // 常磐色 Tokiwa
+  { from: 12, to: 15, bg: "#0E0C09", accent: "#8B7020", name: "午", label: "Afternoon" }, // 金色 Kin
+  { from: 15, to: 18, bg: "#130A08", accent: "#9B3520", name: "夕", label: "Dusk"      }, // 夕焼け Yūyake
+  { from: 18, to: 21, bg: "#09090F", accent: "#4A3A8B", name: "宵", label: "Evening"   }, // 藍色 Ai
+  { from: 21, to: 24, bg: "#080810", accent: "#2A2050", name: "夜", label: "Night"     }, // 夜色 Yoru
+  { from: 0,  to: 4,  bg: "#0A0808", accent: "#3A1A20", name: "深夜", label: "Midnight"}, // 漆黒 Shikkoku
+];
+
+function getTimeColor() {
+  const h = new Date().getHours();
+  return TIME_COLORS.find(c => h >= c.from && h < c.to) ?? TIME_COLORS[6];
+}
+
 function AppContent() {
   const { lang, setLang, t } = useLang();
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -33,6 +51,15 @@ function AppContent() {
   const [walletSnapshot, setWalletSnapshot] = useState<WalletSnapshot | undefined>();
   const [phantomLoading, setPhantomLoading] = useState(false);
   const [phantomAvailable, setPhantomAvailable] = useState(false);
+  const [timeBg, setTimeBg] = useState(getTimeColor());
+
+  // Update background every minute
+  useEffect(() => {
+    const tick = () => setTimeBg(getTimeColor());
+    tick();
+    const id = setInterval(tick, 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setPhantomAvailable(!!window.solana?.isPhantom), 300);
@@ -63,7 +90,10 @@ function AppContent() {
     : null;
 
   return (
-    <main className="min-h-screen" style={{ background: "var(--bg-base)" }}>
+    <main className="min-h-screen" style={{
+      background: timeBg.bg,
+      transition: "background 3s ease",
+    }}>
       {/* ── 頭部 Header ── */}
       <header style={{
         borderBottom: "1px solid var(--border)",
@@ -111,6 +141,14 @@ function AppContent() {
             fontSize: 9, color: "var(--accent)", border: "1px solid var(--accent-mid)",
             borderRadius: 3, padding: "1px 5px", letterSpacing: 1.5, fontFamily: "var(--font-mono)",
           }}>BETA</span>
+          {/* 時の色 Time indicator */}
+          <span style={{
+            fontSize: 10, color: "var(--text-muted)",
+            borderLeft: "1px solid var(--border)", paddingLeft: 10,
+            fontFamily: "var(--font-heading)", letterSpacing: "0.1em",
+          }} title={timeBg.label}>
+            {timeBg.name}
+          </span>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
