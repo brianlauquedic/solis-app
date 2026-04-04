@@ -43,11 +43,28 @@ interface ActionCard {
   estimatedEarn?: string;
 }
 
+interface StrategyCard {
+  asset: string;
+  action: "buy" | "sell" | "stake" | "lend" | "reduce" | "hold" | "swap";
+  entryLow?: number;
+  entryHigh?: number;
+  takeProfit1?: number;
+  takeProfit2?: number;
+  stopLoss?: number;
+  allocationPct?: number;
+  timeHorizon?: string;
+  confidence: number;
+  thesis: string;
+  riskFactors?: string[];
+  generatedAt: number;
+}
+
 interface Message {
   id: number;
   role: "user" | "assistant";
   text: string;
   actions?: ActionCard[];
+  strategyCards?: StrategyCard[];
   isTyping?: boolean;
   thinkingStep?: string;     // current thinking step (streaming)
   isStreaming?: boolean;     // text is still being streamed
@@ -618,6 +635,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
       let buf = "";
       let accText = "";
       let accThinking = "";
+      let accStrategyCards: StrategyCard[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -634,7 +652,14 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
             try {
               const parsed = JSON.parse(line.slice(6));
 
-              if (event === "thinking_delta") {
+              if (event === "strategy_card") {
+                accStrategyCards = [...accStrategyCards, parsed as StrategyCard];
+                setMessages(prev => prev.map(m =>
+                  m.id === assistantId
+                    ? { ...m, isTyping: true, thinkingStep: `📊 策略卡片：${(parsed as StrategyCard).asset}` }
+                    : m
+                ));
+              } else if (event === "thinking_delta") {
                 accThinking += parsed.text as string;
                 setThinkingText(accThinking);
                 setMessages(prev => prev.map(m =>
@@ -671,6 +696,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                 ));
               } else if (event === "done") {
                 const newActions: ActionCard[] | undefined = parsed.actions;
+                const newStrategyCards: StrategyCard[] = parsed.strategyCards ?? accStrategyCards;
                 if (newActions && newActions.length > 0) setLastActions(newActions);
                 if (parsed.sessionSummary) setSessionSummary(parsed.sessionSummary);
                 setMessages(prev => prev.map(m =>
@@ -682,6 +708,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                         thinkingStep: undefined,
                         text: accText || "抱歉，暂時無法回答，請稍后重試。",
                         actions: newActions,
+                        strategyCards: newStrategyCards.length > 0 ? newStrategyCards : undefined,
                         reasoningHash: parsed.reasoningHash,
                         memoPayload: parsed.memoPayload,
                         aiAvailable: parsed.aiAvailable,
@@ -879,6 +906,13 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                     </>
                   )}
                 </div>
+                {msg.strategyCards && msg.strategyCards.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {msg.strategyCards.map((card, i) => (
+                      <StrategyCardView key={i} card={card} />
+                    ))}
+                  </div>
+                )}
                 {msg.actions && msg.actions.length > 0 && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {msg.actions.map((a, i) => (
@@ -1061,6 +1095,120 @@ const LEND_PROTOCOLS: Record<string, "kamino" | "solend"> = {
   "Save (Solend)":  "solend",
   "Solend":         "solend",
 };
+
+// ── Strategy Card View ────────────────────────────────────────────
+function StrategyCardView({ card }: { card: StrategyCard }) {
+  const ACTION_LABEL: Record<string, { label: string; color: string }> = {
+    buy:    { label: "買入", color: "#10B981" },
+    sell:   { label: "賣出", color: "#EF4444" },
+    stake:  { label: "質押", color: "#8B5CF6" },
+    lend:   { label: "借貸", color: "#06B6D4" },
+    hold:   { label: "持有", color: "#F59E0B" },
+    reduce: { label: "減倉", color: "#F97316" },
+    swap:   { label: "兌換", color: "#3B82F6" },
+  };
+  const style = ACTION_LABEL[card.action] ?? { label: card.action.toUpperCase(), color: "#8B5CF6" };
+  const confidenceColor = card.confidence >= 70 ? "#10B981" : card.confidence >= 50 ? "#F59E0B" : "#EF4444";
+
+  return (
+    <div style={{
+      background: "var(--bg-base)",
+      border: `1px solid ${style.color}30`,
+      borderLeft: `3px solid ${style.color}`,
+      borderRadius: 12,
+      padding: "14px 16px",
+      position: "relative",
+    }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{
+            fontFamily: "var(--font-heading, 'Noto Serif JP', serif)",
+            fontSize: 18, fontWeight: 600, color: "var(--text-primary)",
+          }}>{card.asset}</span>
+          <span style={{
+            fontSize: 11, fontWeight: 700, color: style.color,
+            background: `${style.color}15`, border: `1px solid ${style.color}35`,
+            borderRadius: 4, padding: "2px 8px",
+          }}>{style.label}</span>
+          {card.timeHorizon && (
+            <span style={{ fontSize: 10, color: "var(--text-secondary)" }}>⏱ {card.timeHorizon}</span>
+          )}
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{
+            fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
+            fontSize: 18, fontWeight: 700, color: confidenceColor,
+          }}>{card.confidence}%</div>
+          <div style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1 }}>信心</div>
+        </div>
+      </div>
+
+      {/* Price levels grid */}
+      {(card.entryLow || card.takeProfit1 || card.stopLoss) && (
+        <div style={{
+          display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 10,
+        }}>
+          {card.entryLow && (
+            <div style={{ background: "var(--bg-card)", borderRadius: 8, padding: "8px 10px", textAlign: "center" }}>
+              <div style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>入場</div>
+              <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                ${card.entryLow}{card.entryHigh && card.entryHigh !== card.entryLow ? `–${card.entryHigh}` : ""}
+              </div>
+            </div>
+          )}
+          {card.takeProfit1 && (
+            <div style={{ background: "rgba(16,185,129,0.08)", borderRadius: 8, padding: "8px 10px", textAlign: "center" }}>
+              <div style={{ fontSize: 9, color: "#10B981", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>止盈</div>
+              <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 13, fontWeight: 700, color: "#10B981" }}>
+                ${card.takeProfit1}{card.takeProfit2 ? ` / $${card.takeProfit2}` : ""}
+              </div>
+            </div>
+          )}
+          {card.stopLoss && (
+            <div style={{ background: "rgba(239,68,68,0.08)", borderRadius: 8, padding: "8px 10px", textAlign: "center" }}>
+              <div style={{ fontSize: 9, color: "#EF4444", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>止損</div>
+              <div style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 13, fontWeight: 700, color: "#EF4444" }}>
+                ${card.stopLoss}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Thesis */}
+      <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 8 }}>
+        {card.thesis}
+      </div>
+
+      {/* Allocation + Risk */}
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+        {card.allocationPct && (
+          <span style={{
+            fontSize: 11, color: style.color,
+            background: `${style.color}10`, border: `1px solid ${style.color}25`,
+            borderRadius: 4, padding: "2px 8px", fontFamily: "var(--font-mono, monospace)",
+          }}>倉位 {card.allocationPct}%</span>
+        )}
+        {card.riskFactors && card.riskFactors.map((r, i) => (
+          <span key={i} style={{
+            fontSize: 10, color: "var(--text-muted)",
+            background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)",
+            borderRadius: 4, padding: "2px 6px",
+          }}>⚠ {r}</span>
+        ))}
+      </div>
+
+      {/* Strategy card badge */}
+      <div style={{
+        position: "absolute", top: 10, right: 10,
+        fontSize: 9, color: "var(--accent)",
+        background: "var(--accent-soft)", border: "1px solid rgba(192,57,43,0.2)",
+        borderRadius: 3, padding: "1px 5px", letterSpacing: 1, textTransform: "uppercase",
+      }}>AI 策略</div>
+    </div>
+  );
+}
 
 function ActionCardView({
   action,

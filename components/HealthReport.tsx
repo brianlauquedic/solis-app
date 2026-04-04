@@ -670,6 +670,9 @@ export default function HealthReport({ walletAddress, onDisconnect, onDataLoaded
         </div>
       )}
 
+      {/* Smart Money Tracking */}
+      <SmartMoneySection />
+
       {/* Share button */}
       <div style={{ textAlign: "center", marginTop: 24, marginBottom: 8 }}>
         <button
@@ -684,6 +687,218 @@ export default function HealthReport({ walletAddress, onDisconnect, onDataLoaded
           {t("shareReport")}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Smart Money Tracking Section ─────────────────────────────────
+interface SmartWallet {
+  address: string;
+  shortAddress: string;
+  label: string;
+  category: string;
+  score: number;
+  winRate: number;
+  estimatedPnlPct: number;
+  totalClosedTrades: number;
+  copySignal?: { token: string; recentBuyCount: number; confidence: number; reason: string };
+  dataQuality: string;
+  topWins: Array<{ mint: string; pnlPct: number }>;
+}
+
+interface ConsensusSignal {
+  token: string;
+  walletCount: number;
+  wallets: string[];
+  signal: string;
+  confidence: number;
+}
+
+function SmartMoneySection() {
+  const [open, setOpen] = useState(false);
+  const [wallets, setWallets] = useState<SmartWallet[]>([]);
+  const [consensus, setConsensus] = useState<ConsensusSignal[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [dataSource, setDataSource] = useState<"helius_realtime" | "demo">("demo");
+
+  async function load() {
+    if (wallets.length > 0) return; // already loaded
+    setLoading(true);
+    try {
+      const res = await fetch("/api/wallet/smart-money?limit=6");
+      if (!res.ok) return;
+      const data = await res.json() as {
+        wallets: SmartWallet[];
+        consensusSignals: ConsensusSignal[];
+        dataSource: "helius_realtime" | "demo";
+      };
+      setWallets(data.wallets ?? []);
+      setConsensus(data.consensusSignals ?? []);
+      setDataSource(data.dataSource ?? "demo");
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  }
+
+  function handleToggle() {
+    if (!open) load();
+    setOpen(v => !v);
+  }
+
+  const CATEGORY_COLOR: Record<string, string> = {
+    "鲸鱼": "#C0392B", "DeFi专家": "#10B981", "套利机器人": "#F59E0B",
+    "大户": "#8B5CF6", "高频机器人": "#F97316", "聪明钱": "#06B6D4",
+  };
+
+  return (
+    <div style={{
+      background: "var(--bg-card)", border: "1px solid var(--border)",
+      borderRadius: 16, padding: 20, marginBottom: 20,
+    }}>
+      <button
+        onClick={handleToggle}
+        style={{
+          width: "100%", background: "none", border: "none",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          cursor: "pointer", padding: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+            🐋 聰明錢追蹤
+          </span>
+          <span style={{
+            fontSize: 10, color: "#10B981",
+            background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)",
+            borderRadius: 4, padding: "1px 6px",
+          }}>真實鏈上 P&L</span>
+          {dataSource === "demo" && (
+            <span style={{ fontSize: 10, color: "var(--text-muted)" }}>（演示）</span>
+          )}
+        </div>
+        <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{open ? "收起 ▲" : "展開 ▼"}</span>
+      </button>
+
+      {open && (
+        <div style={{ marginTop: 16 }}>
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "20px 0", color: "var(--text-secondary)", fontSize: 13 }}>
+              ⏳ 正在分析鏈上交易...
+            </div>
+          ) : (
+            <>
+              {/* Consensus signals */}
+              {consensus.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
+                    🔥 共識買入信號（多個聰明錢同時買入）
+                  </div>
+                  {consensus.map((c, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      padding: "8px 12px", marginBottom: 6,
+                      background: "rgba(192,57,43,0.08)", border: "1px solid rgba(192,57,43,0.25)",
+                      borderRadius: 8,
+                    }}>
+                      <div>
+                        <span style={{ fontFamily: "var(--font-mono, monospace)", fontSize: 12, color: "var(--text-primary)", fontWeight: 700 }}>
+                          {c.token}
+                        </span>
+                        <span style={{ fontSize: 11, color: "var(--text-secondary)", marginLeft: 8 }}>
+                          {c.signal}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>
+                          {c.wallets.join(", ")}
+                        </span>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700,
+                          background: "rgba(16,185,129,0.1)", color: "#10B981",
+                          border: "1px solid rgba(16,185,129,0.25)",
+                          borderRadius: 4, padding: "2px 6px",
+                          fontFamily: "var(--font-mono, monospace)",
+                        }}>
+                          {c.confidence}% 信心
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Wallet list */}
+              <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
+                頂級聰明錢錢包（30日）
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {wallets.map((w, i) => {
+                  const catColor = CATEGORY_COLOR[w.category] ?? "#8B5CF6";
+                  const pnlPositive = w.estimatedPnlPct >= 0;
+                  return (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 10,
+                      padding: "10px 12px",
+                      background: "var(--bg-base)", border: "1px solid var(--border)",
+                      borderRadius: 10,
+                    }}>
+                      {/* Rank */}
+                      <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-muted)", width: 18, flexShrink: 0 }}>
+                        {i + 1}
+                      </span>
+                      {/* Category badge */}
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, color: catColor,
+                        background: `${catColor}18`, border: `1px solid ${catColor}35`,
+                        borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap", flexShrink: 0,
+                      }}>{w.category}</span>
+                      {/* Address */}
+                      <span style={{
+                        flex: 1, fontFamily: "var(--font-mono, monospace)",
+                        fontSize: 11, color: "var(--text-secondary)",
+                      }}>{w.shortAddress}</span>
+                      {/* Win rate */}
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#10B981" }}>
+                          {w.winRate.toFixed(1)}%
+                        </div>
+                        <div style={{ fontSize: 10, color: "var(--text-muted)" }}>勝率</div>
+                      </div>
+                      {/* P&L */}
+                      <div style={{ textAlign: "right", flexShrink: 0, minWidth: 56 }}>
+                        <div style={{
+                          fontSize: 13, fontWeight: 700,
+                          color: pnlPositive ? "#10B981" : "#EF4444",
+                          fontFamily: "var(--font-mono, monospace)",
+                        }}>
+                          {pnlPositive ? "+" : ""}{w.estimatedPnlPct.toFixed(1)}%
+                        </div>
+                        <div style={{ fontSize: 10, color: "var(--text-muted)" }}>{w.totalClosedTrades}筆</div>
+                      </div>
+                      {/* Copy signal */}
+                      {w.copySignal && (
+                        <span style={{
+                          fontSize: 10, color: "#C0392B",
+                          background: "rgba(192,57,43,0.1)", border: "1px solid rgba(192,57,43,0.25)",
+                          borderRadius: 4, padding: "2px 6px", whiteSpace: "nowrap", flexShrink: 0,
+                        }}>
+                          🔥 {w.copySignal.confidence.toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Data note */}
+              <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 10, textAlign: "center" }}>
+                {dataSource === "helius_realtime"
+                  ? "✅ 真實鏈上數據：基於 Helius API 閉合交易 P&L"
+                  : "📋 演示數據：配置 HELIUS_API_KEY 啟用真實鏈上 P&L 計算"}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }

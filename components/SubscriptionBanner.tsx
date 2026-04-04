@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { getDeviceId } from "@/lib/device-id";
 import { payWithPhantom } from "@/lib/x402";
 
@@ -53,11 +54,11 @@ const SOLIS_FEE_WALLET =
 
 export function SubscriptionBadge({
   walletAddress,
-  onClick,
 }: {
   walletAddress: string | null;
-  onClick: () => void;
+  onClick?: () => void;
 }) {
+  const router = useRouter();
   const [status, setStatus] = useState<{ tier: SubscriptionTier; credits: number; days: number | null } | null>(null);
 
   useEffect(() => {
@@ -70,6 +71,8 @@ export function SubscriptionBadge({
       .catch(() => {});
   }, [walletAddress]);
 
+  const handleClick = () => router.push("/pricing");
+
   const base: React.CSSProperties = {
     display: "flex", alignItems: "center", gap: 5,
     padding: "4px 10px", borderRadius: 7, border: "none",
@@ -79,22 +82,22 @@ export function SubscriptionBadge({
 
   if (!status || status.tier === "free") {
     return (
-      <button onClick={onClick} style={{ ...base, background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
-        🆓 {status ? `${status.credits}点` : "免费版"} · 升級
+      <button onClick={handleClick} style={{ ...base, background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
+        🆓 {status ? `${status.credits}點` : "免費版"} · 升級
       </button>
     );
   }
   if (status.tier === "pro") {
     return (
-      <button onClick={onClick} style={{ ...base, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.35)", color: "#D97706" }}>
-        ⭐ Pro · {status.credits.toLocaleString()}点
+      <button onClick={handleClick} style={{ ...base, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.35)", color: "#D97706" }}>
+        ⭐ Pro · {status.credits.toLocaleString()}點
         {status.days !== null && ` · ${status.days}天`}
       </button>
     );
   }
   return (
-    <button onClick={onClick} style={{ ...base, background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.35)", color: "#8B5CF6" }}>
-      🔵 Basic · {status.credits.toLocaleString()}点
+    <button onClick={handleClick} style={{ ...base, background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.35)", color: "#8B5CF6" }}>
+      🔵 Basic · {status.credits.toLocaleString()}點
       {status.days !== null && ` · ${status.days}天`}
     </button>
   );
@@ -132,9 +135,9 @@ function CreditMeter({ balance, total, tier }: { balance: number; total: number;
   );
 }
 
-// ── Main SubscriptionBanner modal ─────────────────────────────────
+// ── Main SubscriptionBanner — now routes to /pricing page ─────────
 
-export default function SubscriptionBanner({ walletAddress, onSubscriptionChange }: Props) {
+export default function SubscriptionBanner({ walletAddress, onSubscriptionChange: _onSubscriptionChange }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -192,7 +195,7 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
       if (data.success) {
         setMessage({ type: "success", text: data.message ?? "訂閱已啟用！" });
         await fetchStatus();
-        onSubscriptionChange?.(tier);
+        _onSubscriptionChange?.(tier);
       } else {
         setMessage({ type: "error", text: data.error ?? "訂閱啟用失敗" });
       }

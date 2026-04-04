@@ -715,6 +715,9 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
         </>
       )}
 
+      {/* ── Guardian Conditions ── */}
+      <GuardianConditionsPanel />
+
       {/* ── Idle state ── */}
       {agentState === "idle" && (
         <div style={{
@@ -739,6 +742,8 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
         }
       `}</style>
 
+
+
       {swapModal && (
         <SwapModal from={swapModal.from} to={swapModal.to} amount={swapModal.amount} onClose={() => setSwapModal(null)} />
       )}
@@ -747,6 +752,245 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
       )}
       {lendModal && (
         <LendModal protocol={lendModal.protocol} amount={lendModal.amount} onClose={() => setLendModal(null)} />
+      )}
+    </div>
+  );
+}
+
+// ── Guardian Conditions Panel ─────────────────────────────────────
+
+interface GuardianCondition {
+  id: string;
+  metric: string;
+  operator: string;
+  threshold: number;
+  action: string;
+  label: string;
+  isActive: boolean;
+  triggeredAt?: number;
+}
+
+const CONDITION_TEMPLATES: Array<{
+  metric: string; label: string; operator: string;
+  threshold: number; action: string; description: string; color: string;
+}> = [
+  { metric: "sol_price",         label: "SOL 價格跌破",     operator: "<",  threshold: 150, action: "alert_only",    description: "SOL 跌破 $150 時提醒",       color: "#EF4444" },
+  { metric: "sol_price",         label: "SOL 價格突破",     operator: ">",  threshold: 200, action: "alert_only",    description: "SOL 突破 $200 時提醒",       color: "#10B981" },
+  { metric: "usdc_apy_kamino",   label: "USDC APY 上升",    operator: ">",  threshold: 8,   action: "prepare_lend",  description: "Kamino APY > 8% 準備存款",   color: "#06B6D4" },
+  { metric: "sol_apy_marinade",  label: "質押 APY 下降",    operator: "<",  threshold: 6,   action: "alert_only",    description: "Marinade APY < 6% 提醒",    color: "#F59E0B" },
+  { metric: "health_factor",     label: "健康系數警告",     operator: "<",  threshold: 1.5, action: "alert_only",    description: "借貸健康系數 < 1.5 緊急提醒", color: "#EF4444" },
+  { metric: "smart_money_buy",   label: "聰明錢買入信號",   operator: ">",  threshold: 2,   action: "alert_only",    description: "≥ 2個聰明錢同時買入提醒",   color: "#8B5CF6" },
+];
+
+const ACTION_LABEL: Record<string, string> = {
+  alert_only:    "📢 提醒",
+  prepare_stake: "🔒 準備質押",
+  prepare_lend:  "💰 準備存款",
+  prepare_swap:  "🔄 準備兌換",
+};
+
+function GuardianConditionsPanel() {
+  const [open, setOpen] = useState(false);
+  const [conditions, setConditions] = useState<GuardianCondition[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState(0);
+  const [customThreshold, setCustomThreshold] = useState<string>("");
+
+  async function loadConditions() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/cron/guardian/conditions");
+      if (!res.ok) return;
+      const data = await res.json() as { conditions: GuardianCondition[] };
+      setConditions(data.conditions ?? []);
+    } catch { /* silent */ }
+    finally { setLoading(false); }
+  }
+
+  async function addCondition() {
+    const tpl = CONDITION_TEMPLATES[selectedTemplate];
+    const threshold = customThreshold ? parseFloat(customThreshold) : tpl.threshold;
+    if (isNaN(threshold)) return;
+
+    setAdding(true);
+    try {
+      const res = await fetch("/api/cron/guardian/conditions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          metric: tpl.metric,
+          operator: tpl.operator,
+          threshold,
+          action: tpl.action,
+          label: tpl.label,
+        }),
+      });
+      if (res.ok) {
+        setCustomThreshold("");
+        await loadConditions();
+      }
+    } catch { /* silent */ }
+    finally { setAdding(false); }
+  }
+
+  async function deleteCondition(id: string) {
+    try {
+      await fetch(`/api/cron/guardian/conditions?id=${id}`, { method: "DELETE" });
+      setConditions(prev => prev.filter(c => c.id !== id));
+    } catch { /* silent */ }
+  }
+
+  function handleToggle() {
+    if (!open) loadConditions();
+    setOpen(v => !v);
+  }
+
+  const tpl = CONDITION_TEMPLATES[selectedTemplate];
+
+  return (
+    <div style={{
+      background: "var(--bg-card)", border: "1px solid var(--border)",
+      borderRadius: 16, padding: 20, marginBottom: 20,
+    }}>
+      <button
+        onClick={handleToggle}
+        style={{
+          width: "100%", background: "none", border: "none",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          cursor: "pointer", padding: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+            🛡 Guardian 自動條件
+          </span>
+          {conditions.length > 0 && (
+            <span style={{
+              fontSize: 10, fontWeight: 700,
+              background: "rgba(16,185,129,0.1)", color: "#10B981",
+              border: "1px solid rgba(16,185,129,0.25)",
+              borderRadius: 4, padding: "1px 6px",
+            }}>{conditions.length} 個活躍</span>
+          )}
+        </div>
+        <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{open ? "收起 ▲" : "設置 ▼"}</span>
+      </button>
+
+      {open && (
+        <div style={{ marginTop: 16 }}>
+          {loading ? (
+            <div style={{ textAlign: "center", padding: 16, color: "var(--text-secondary)", fontSize: 13 }}>
+              載入中...
+            </div>
+          ) : (
+            <>
+              {/* Active conditions */}
+              {conditions.length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 8, textTransform: "uppercase", letterSpacing: 1 }}>
+                    活躍條件
+                  </div>
+                  {conditions.map(c => (
+                    <div key={c.id} style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      padding: "8px 12px", marginBottom: 6,
+                      background: "var(--bg-base)", border: "1px solid var(--border)",
+                      borderRadius: 8,
+                    }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: c.isActive ? "#10B981" : "#475569", flexShrink: 0 }} />
+                      <span style={{ flex: 1, fontSize: 12, color: "var(--text-primary)" }}>{c.label}</span>
+                      <span style={{ fontSize: 11, color: "var(--text-secondary)", fontFamily: "var(--font-mono, monospace)" }}>
+                        {c.operator} {c.threshold}
+                      </span>
+                      <span style={{
+                        fontSize: 10, color: "#8B5CF6",
+                        background: "rgba(139,92,246,0.1)", borderRadius: 4, padding: "1px 5px",
+                      }}>{ACTION_LABEL[c.action] ?? c.action}</span>
+                      {c.triggeredAt && (
+                        <span style={{ fontSize: 10, color: "var(--accent)" }}>
+                          ⚡ {new Date(c.triggeredAt).toLocaleDateString("zh-TW", { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => deleteCondition(c.id)}
+                        style={{
+                          background: "none", border: "none", cursor: "pointer",
+                          color: "var(--text-muted)", fontSize: 14, padding: "0 2px",
+                          lineHeight: 1,
+                        }}
+                        title="刪除"
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Add new condition */}
+              <div style={{
+                background: "var(--bg-base)", border: "1px solid var(--border)",
+                borderRadius: 10, padding: "12px 14px",
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>
+                  新增條件
+                </div>
+
+                {/* Template selector */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                  {CONDITION_TEMPLATES.map((t, i) => (
+                    <button
+                      key={i}
+                      onClick={() => { setSelectedTemplate(i); setCustomThreshold(""); }}
+                      style={{
+                        padding: "4px 10px", borderRadius: 6,
+                        fontSize: 11, cursor: "pointer",
+                        background: selectedTemplate === i ? `${t.color}18` : "var(--bg-card)",
+                        color: selectedTemplate === i ? t.color : "var(--text-secondary)",
+                        border: `1px solid ${selectedTemplate === i ? t.color + "40" : "var(--border)"}`,
+                        transition: "all 0.15s",
+                      } as React.CSSProperties}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Description + threshold input */}
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 10 }}>
+                  {tpl.description}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="number"
+                    placeholder={`閾值（預設 ${tpl.threshold}）`}
+                    value={customThreshold}
+                    onChange={e => setCustomThreshold(e.target.value)}
+                    style={{
+                      flex: 1, background: "var(--bg-card)", border: "1px solid var(--border)",
+                      color: "var(--text-primary)", borderRadius: 6, padding: "6px 10px", fontSize: 12,
+                    }}
+                  />
+                  <button
+                    onClick={addCondition}
+                    disabled={adding}
+                    style={{
+                      padding: "6px 16px", borderRadius: 6, border: "none",
+                      background: adding ? "var(--border)" : "var(--accent)",
+                      color: "#fff", fontSize: 12, fontWeight: 700,
+                      cursor: adding ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {adding ? "…" : "+ 新增"}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 8, textAlign: "center" }}>
+                Guardian 每小時自動評估條件，觸發時通過 AI 顧問通知
+              </div>
+            </>
+          )}
+        </div>
       )}
     </div>
   );
