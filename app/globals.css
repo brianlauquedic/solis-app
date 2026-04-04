@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #0A0A0F;
+  color: #E2E8F0;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0A0A0F; }
+::-webkit-scrollbar-thumb { background: #1E1E2E; border-radius: 3px; }
+
+/* ── Hero animations ── */
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 40px #8B5CF640, 0 0 80px #06B6D420; }
+  50%       { box-shadow: 0 0 60px #8B5CF660, 0 0 120px #06B6D440; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.hero-logo {
+  animation: pulse-glow 3s ease-in-out infinite, float 4s ease-in-out infinite;
+}
+.fade-in-up {
+  animation: fade-in-up 0.6s ease-out both;
+}
+.fade-in-up-1 { animation-delay: 0.1s; }
+.fade-in-up-2 { animation-delay: 0.2s; }
+.fade-in-up-3 { animation-delay: 0.3s; }
+.fade-in-up-4 { animation-delay: 0.4s; }
+
+/* ── Shimmer animation ── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40%            { transform: translateY(-6px); }
+}
+
+/* ── Mobile responsive ── */
+@media (max-width: 640px) {
+  /* Feature cards: 1 column on mobile */
+  .feature-grid { grid-template-columns: 1fr !important; }
+
+  /* Stats row: 2x2 */
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Token analysis: hide sidebar on mobile */
+  .token-grid { grid-template-columns: 1fr !important; }
+  .token-sidebar { display: none !important; }
+
+  /* Header: hide label on mobile */
+  .header-label { display: none !important; }
+
+  /* Hero title smaller */
+  .hero-title { font-size: 36px !important; }
+  .hero-subtitle { font-size: 24px !important; }
+
+  /* Tabs: smaller text */
+  .tab-btn { font-size: 11px !important; padding: 8px 10px !important; }
+
+  /* Quick stats: wrap */
+  .quick-stats { flex-wrap: wrap; gap: 12px !important; }
+
+  /* HealthReport opportunity alert: stack vertically */
+  .opportunity-alert { flex-direction: column !important; align-items: flex-start !important; }
+  .opportunity-alert a { margin-left: 0 !important; margin-top: 10px !important; width: 100% !important; text-align: center !important; }
+
+  /* Verify page: 3-col steps → 1 col */
+  .verify-steps { grid-template-columns: 1fr !important; }
+
+  /* DefiAssistant wallet summary: wrap */
+  .wallet-summary { flex-wrap: wrap !important; gap: 10px !important; }
+
+  /* ProofPanel: hash text smaller */
+  .proof-hash { font-size: 9px !important; }
+
+  /* Ecosystem badges: wrap tightly */
+  .ecosystem-badges { gap: 6px !important; }
+
+  /* Quick actions: 1 col on very small screens */
+  .quick-actions-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Streaming cursor ── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+.streaming-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  background: #8B5CF6;
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: blink 0.8s ease-in-out infinite;
+}
+
+/* ── Reasoning pulse ── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.3); }
+}
+
+/* ── Toast slide-in ── */
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}

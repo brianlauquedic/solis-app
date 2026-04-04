@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "solana": {
+      "type": "sse",
+      "url": "https://mcp.solana.com/mcp",
+      "description": "Official Solana MCP server — query on-chain data, accounts, tokens, and transactions"
+    }
+  }
+}

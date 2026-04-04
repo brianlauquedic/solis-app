@@ -1,0 +1,388 @@
+/**
+ * Anti-Sybil Free Quota System — with Upstash Redis persistence
+ *
+ * Three-dimensional identity tracking:
+ *   1. X-Wallet-Address  — blockchain identity (strongest)
+ *   2. X-Device-ID       — localStorage UUID (per-browser)
+ *   3. X-Forwarded-For   — IP address (fallback)
+ *
+ * ALL available dimensions are checked simultaneously.
+ * Any single dimension exceeding FREE_QUOTA blocks the request.
+ * All dimensions are incremented together on each free use.
+ *
+ * Persistence:
+ *   Production: Upstash Redis REST API (zero-dependency, pure fetch)
+ *               Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in env.
+ *   Development: In-memory Map fallback (resets on server restart).
+ *
+ * Quota TTL: 30 days rolling window (auto-resets, no manual intervention needed).
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { Connection, PublicKey } from "@solana/web3.js";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { getOrCreateFreeRecord, checkCreditBalance, deductCredits } from "@/lib/subscription";
+import type { Feature as SubFeature } from "@/lib/subscription";
+
+// ── Constants ─────────────────────────────────────────────────────
+export type Feature = "analyze" | "advisor" | "advisor_deep" | "agent" | "verify" | "portfolio";
+
+export const FREE_QUOTA = 3;
+
+const ADMIN_WALLETS = new Set<string>([
+  ...(process.env.SOLIS_ADMIN_WALLETS ?? "Goc5kAMb9NTXjobxzZogAWaHwajmQjw7CdmATWJN1mQh")
+    .split(",")
+    .map(w => w.trim())
+    .filter(Boolean),
+]);
+
+export function isAdminWallet(walletAddress: string): boolean {
+  return ADMIN_WALLETS.has(walletAddress.trim());
+}
+
+export const FEATURE_FEE: Record<Feature, number> = {
+  analyze:      100_000,  // $0.10 USDC (non-subscriber one-time)
+  advisor:      200_000,  // $0.20 USDC (Haiku simple chat)
+  advisor_deep: 500_000,  // $0.50 USDC (Sonnet 4.6 + extended thinking)
+  agent:        100_000,  // $0.10 USDC
+  verify:        50_000,  // $0.05 USDC
+  portfolio:    100_000,  // $0.10 USDC
+};
+
+const USDC_MINT     = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const FEE_WALLET    = process.env.SOLIS_FEE_WALLET ?? "";
+const HELIUS_RPC    = `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY ?? ""}`;
+
+const FEE_ATA = FEE_WALLET
+  ? getAssociatedTokenAddressSync(
+      new PublicKey(USDC_MINT),
+      new PublicKey(FEE_WALLET)
+    ).toString()
+  : "";
+
+// ── Upstash Redis (persistent, zero-dependency) ───────────────────
+const UPSTASH_URL   = process.env.UPSTASH_REDIS_REST_URL  ?? "";
+const UPSTASH_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN ?? "";
+const REDIS_TTL     = 2_592_000; // 30-day rolling window (seconds)
+
+const redisAvailable = !!(UPSTASH_URL && UPSTASH_TOKEN);
+
+type PipelineCommand = [string, ...string[]];
+
+async function redisPipeline(
+  commands: PipelineCommand[]
+): Promise<{ result: unknown }[]> {
+  const res = await fetch(`${UPSTASH_URL}/pipeline`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${UPSTASH_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(commands),
+  });
+  if (!res.ok) throw new Error(`Upstash error: ${res.status}`);
+  return res.json() as Promise<{ result: unknown }[]>;
+}
+
+// ── Payment sig replay protection ────────────────────────────────
+// Txs confirmed on Solana are immutable. Store used sigs for 24h to prevent replay.
+const PAYMENT_SIG_TTL = 86_400; // 24 hours
+
+export async function isPaymentSigUsed(txSig: string): Promise<boolean> {
+  if (redisAvailable) {
+    try {
+      const results = await redisPipeline([["GET", `solis:used_sig:${txSig}`]]);
+      return results[0]?.result !== null && results[0]?.result !== undefined;
+    } catch { /* fallback */ }
+  }
+  return memStore.has(`used_sig:${txSig}`);
+}
+
+export async function markPaymentSigUsed(txSig: string): Promise<void> {
+  if (redisAvailable) {
+    try {
+      await redisPipeline([["SET", `solis:used_sig:${txSig}`, "1", "EX", String(PAYMENT_SIG_TTL)]]);
+      return;
+    } catch { /* fallback */ }
+  }
+  memStore.set(`used_sig:${txSig}`, 1);
+}
+
+// ── In-memory fallback ────────────────────────────────────────────
+// Used when Upstash env vars are not set (local dev / offline)
+const memStore = new Map<string, number>();
+
+function memGet(key: string): number {
+  return memStore.get(key) ?? 0;
+}
+
+function memIncr(key: string): void {
+  memStore.set(key, (memStore.get(key) ?? 0) + 1);
+}
+
+// ── Identity extraction ───────────────────────────────────────────
+
+export function extractIdentifiers(req: NextRequest): string[] {
+  const ids: string[] = [];
+
+  const wallet = (req.headers.get("x-wallet-address") ?? "").trim();
+  if (wallet.length >= 32) ids.push(`wallet:${wallet}`);
+
+  const device = (req.headers.get("x-device-id") ?? "").trim();
+  if (device.length >= 10) ids.push(`device:${device}`);
+
+  const ip =
+    (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() ||
+    (req.headers.get("x-real-ip") ?? "").trim() ||
+    "unknown";
+  ids.push(`ip:${ip}`);
+
+  return ids;
+}
+
+// ── Quota read (async — Redis or memory) ──────────────────────────
+
+export async function checkQuota(
+  feature: Feature,
+  ids: string[]
+): Promise<{ allowed: boolean; used: number; remaining: number }> {
+  if (redisAvailable) {
+    try {
+      const commands: PipelineCommand[] = ids.map(id => ["GET", `solis:quota:${feature}:${id}`]);
+      const results = await redisPipeline(commands);
+
+      let maxUsed = 0;
+      let minRemaining = FREE_QUOTA;
+      for (const { result } of results) {
+        const used = result !== null && result !== undefined ? Number(result) : 0;
+        maxUsed = Math.max(maxUsed, used);
+        minRemaining = Math.min(minRemaining, Math.max(0, FREE_QUOTA - used));
+      }
+      return { allowed: minRemaining > 0, used: maxUsed, remaining: minRemaining };
+    } catch {
+      // Redis error → fall back to memory
+    }
+  }
+
+  // In-memory fallback
+  let maxUsed = 0;
+  let minRemaining = FREE_QUOTA;
+  for (const id of ids) {
+    const used = memGet(`${feature}:${id}`);
+    maxUsed = Math.max(maxUsed, used);
+    minRemaining = Math.min(minRemaining, Math.max(0, FREE_QUOTA - used));
+  }
+  return { allowed: minRemaining > 0, used: maxUsed, remaining: minRemaining };
+}
+
+// ── Quota write (async — Redis INCR+EXPIRE or memory) ────────────
+
+export async function consumeQuota(feature: Feature, ids: string[]): Promise<void> {
+  if (redisAvailable) {
+    try {
+      // Pipeline: INCR + EXPIRE (sliding 30-day window) for each id
+      const commands: PipelineCommand[] = [];
+      for (const id of ids) {
+        const key = `solis:quota:${feature}:${id}`;
+        commands.push(["INCR", key]);
+        commands.push(["EXPIRE", key, String(REDIS_TTL)]);
+      }
+      await redisPipeline(commands);
+      return;
+    } catch {
+      // Redis error → fall back to memory (don't block user)
+    }
+  }
+
+  for (const id of ids) {
+    memIncr(`${feature}:${id}`);
+  }
+}
+
+// ── Quota peek (non-consuming read) ─────────────────────────────
+
+export async function peekQuota(
+  feature: Feature,
+  ids: string[]
+): Promise<{ allowed: boolean; used: number; remaining: number }> {
+  return checkQuota(feature, ids);
+}
+
+// ── Payment verification ──────────────────────────────────────────
+
+export async function verifyQuotaPayment(
+  txSig: string,
+  requiredAmount: number
+): Promise<boolean> {
+  if (!FEE_WALLET) return true;
+  try {
+    const conn = new Connection(HELIUS_RPC, "confirmed");
+    const tx = await conn.getParsedTransaction(txSig, { maxSupportedTransactionVersion: 0 });
+    if (!tx) return false;
+
+    for (const ix of tx.transaction.message.instructions) {
+      if ("parsed" in ix && ix.parsed?.type === "transferChecked") {
+        const info = ix.parsed.info;
+        if (
+          info?.mint === USDC_MINT &&
+          info?.destination === FEE_ATA &&
+          Number(info?.tokenAmount?.amount ?? 0) >= requiredAmount
+        ) {
+          return true;
+        }
+      }
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// ── 402 response helpers ──────────────────────────────────────────
+
+export function quota402Body(feature: Feature, used: number) {
+  const feeUSDC = FEATURE_FEE[feature] / 1_000_000;
+  return {
+    error: "free_quota_exhausted",
+    feature,
+    used,
+    freeQuota: FREE_QUOTA,
+    recipient: FEE_WALLET || "not-configured",
+    amount: feeUSDC,
+    currency: "USDC",
+    network: "solana-mainnet",
+    description: `Solis ${feature} — free quota exhausted (${FREE_QUOTA} uses/device)`,
+  };
+}
+
+export function quotaExhaustedResponse(feature: Feature, used: number): NextResponse {
+  const feeUSDC = (FEATURE_FEE[feature] / 1_000_000).toFixed(2);
+  return NextResponse.json(quota402Body(feature, used), {
+    status: 402,
+    headers: {
+      "X-Payment-Required": "true",
+      "X-Payment-Amount": feeUSDC,
+      "X-Payment-Currency": "USDC",
+      "X-Payment-Recipient": FEE_WALLET || "not-configured",
+      "X-Payment-Network": "solana-mainnet",
+      "X-Quota-Used": String(used),
+      "X-Quota-Free": String(FREE_QUOTA),
+    },
+  });
+}
+
+// ── Full quota gate ───────────────────────────────────────────────
+
+export async function runQuotaGate(
+  req: NextRequest,
+  feature: Feature
+): Promise<
+  | { proceed: true; ids: string[]; paid: boolean }
+  | { proceed: false; response: NextResponse }
+> {
+  const ids = extractIdentifiers(req);
+
+  const wallet = (req.headers.get("x-wallet-address") ?? "").trim();
+
+  // Admin bypass
+  if (wallet && isAdminWallet(wallet)) {
+    console.log(`[SOLIS_ADMIN] wallet=${wallet.slice(0, 8)}… feature=${feature} ts=${new Date().toISOString()}`);
+    return { proceed: true, ids, paid: false };
+  }
+
+  // ── Unified wallet credit gate (free 100pt/month + Basic/Pro subscriptions) ──
+  // All wallet-connected users use credit tracking; no more per-feature 3-use limit
+  if (wallet && wallet.length >= 32) {
+    const record = await getOrCreateFreeRecord(wallet);
+    const { allowed, balance, cost } = await checkCreditBalance(
+      wallet,
+      feature as SubFeature
+    );
+    if (allowed) {
+      const newBalance = await deductCredits(wallet, feature as SubFeature);
+      console.log(
+        `[SOLIS_${record.tier.toUpperCase()}] tier=${record.tier} wallet=${wallet.slice(0, 8)}… ` +
+        `feature=${feature} cost=${cost} remaining=${newBalance}`
+      );
+      return { proceed: true, ids, paid: false };
+    }
+    // Credits exhausted — differentiate free vs paid messaging
+    const now = Date.now();
+    if (record.tier === "free") {
+      const nextResetDays = Math.max(1, Math.ceil((record.expiresAt - now) / (1000 * 60 * 60 * 24)));
+      return {
+        proceed: false,
+        response: NextResponse.json(
+          {
+            error: "free_credits_exhausted",
+            tier: "free",
+            feature,
+            creditBalance: balance,
+            creditCost: cost,
+            message: `免费额度不足（需 ${cost} 点，余 ${balance} 点）。约 ${nextResetDays} 天后自动重置 100 点，或立即升级订阅获得更多点数。`,
+            upgradeUrl: "/api/subscription",
+            nextResetDays,
+          },
+          { status: 402 }
+        ),
+      };
+    }
+    // Paid subscription exhausted
+    return {
+      proceed: false,
+      response: NextResponse.json(
+        {
+          error: "subscription_credits_exhausted",
+          tier: record.tier,
+          feature,
+          creditBalance: balance,
+          creditCost: cost,
+          message: record.tier === "basic"
+            ? `Basic 点数不足（需 ${cost} 点，余 ${balance} 点）。升级 Pro 获得 6,000 点/月 + 2,000 结转。`
+            : `Pro 本月点数已用完（需 ${cost} 点，余 ${balance} 点）。点数将在下月自动续充。`,
+          upgradeUrl: "/api/subscription",
+          daysUntilReset: Math.ceil((record.expiresAt - now) / (1000 * 60 * 60 * 24)),
+        },
+        { status: 402 }
+      ),
+    };
+  }
+
+  // Paid path (one-time payment for non-wallet users)
+  const paymentSig =
+    req.headers.get("x-payment") ?? req.headers.get("X-PAYMENT");
+
+  if (paymentSig) {
+    // Replay protection: reject if this txSig was already used
+    if (await isPaymentSigUsed(paymentSig)) {
+      return {
+        proceed: false,
+        response: NextResponse.json(
+          { error: "Payment already used — send a new transaction" },
+          { status: 402 }
+        ),
+      };
+    }
+    const valid = await verifyQuotaPayment(paymentSig, FEATURE_FEE[feature]);
+    if (!valid) {
+      return {
+        proceed: false,
+        response: NextResponse.json(
+          { error: "Payment verification failed" },
+          { status: 402 }
+        ),
+      };
+    }
+    await markPaymentSigUsed(paymentSig);
+    return { proceed: true, ids, paid: true };
+  }
+
+  // Free quota path (3 uses per wallet/device/IP)
+  const { allowed, used } = await checkQuota(feature, ids);
+  if (!allowed) {
+    return { proceed: false, response: quotaExhaustedResponse(feature, used) };
+  }
+
+  await consumeQuota(feature, ids);
+  return { proceed: true, ids, paid: false };
+}
