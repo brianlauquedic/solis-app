@@ -85,15 +85,15 @@ function checkMandateCompliance(
   for (const action of plan.actions) {
     const pct = total > 0 ? (action.amount / total) * 100 : 0;
     if ((action.type === "stake" || action.type === "lend") && pct > mandate.maxStakePct) {
-      violations.push(`${action.protocol} 占比 ${pct.toFixed(0)}% 超过限制 ${mandate.maxStakePct}%`);
+      violations.push(`${action.protocol} 占比 ${pct.toFixed(0)}% 超過限制 ${mandate.maxStakePct}%`);
     }
     if (pct > mandate.maxSingleProtocolPct) {
-      violations.push(`单协议 ${action.protocol} 占比 ${pct.toFixed(0)}% 超过 ${mandate.maxSingleProtocolPct}%`);
+      violations.push(`單協議 ${action.protocol} 占比 ${pct.toFixed(0)}% 超過 ${mandate.maxSingleProtocolPct}%`);
     }
     const protocolKey = action.protocol.toLowerCase().split(" ")[0];
     const allowed = mandate.allowedProtocols.some(p => protocolKey.includes(p));
     if (!allowed) {
-      violations.push(`协议 ${action.protocol} 不在你的允许列表中`);
+      violations.push(`協議 ${action.protocol} 不在你的允许列表中`);
     }
   }
   return { compliant: violations.length === 0, violations };
@@ -383,8 +383,8 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
             🤖 AI 再平衡 Agent
           </div>
           <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.5 }}>
-            自主分析你的持仓，生成最优 DeFi 收益方案。
-            无需提问——点一个按钮，Agent 帮你规划。
+            自主分析你的持倉，生成最優 DeFi 收益方案。
+            無需提问——點一個按钮，Agent 幫你規划。
           </div>
           {agentQuota && !agentQuota.admin && (
             <div style={{
@@ -396,8 +396,8 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
               color: agentQuota.remaining > 1 ? "#10B981" : agentQuota.remaining === 1 ? "#F59E0B" : "#8B5CF6",
             }}>
               {agentQuota.remaining > 0
-                ? `🆓 ${agentQuota.remaining}/3 次免费剩余`
-                : "💰 免费次数已用完 · $0.10 USDC/次"}
+                ? `🆓 ${agentQuota.remaining}/3 次免費剩餘`
+                : "💰 免費次數已用完 · $0.10 USDC/次"}
             </div>
           )}
         </div>
@@ -427,11 +427,11 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 700, color: signedMandate ? "#8B5CF6" : "#475569" }}>
-              {signedMandate ? "🔐 投资规则已签名上链" : "⚙️ 设置投资规则（可选）"}
+              {signedMandate ? "🔐 投資規則已簽名上鏈" : "⚙️ 設置投資規則（可選）"}
             </div>
             {signedMandate && (
               <div style={{ fontSize: 10, color: "var(--text-secondary)", marginTop: 3 }}>
-                最大质押 {signedMandate.mandate.maxStakePct}% · 单协议上限 {signedMandate.mandate.maxSingleProtocolPct}% · 已用 Phantom 签名
+                最大質押 {signedMandate.mandate.maxStakePct}% · 單協議上限 {signedMandate.mandate.maxSingleProtocolPct}% · 已用 Phantom 簽名
               </div>
             )}
           </div>
@@ -442,7 +442,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
               color: "var(--text-secondary)", fontSize: 11, cursor: "pointer", padding: "4px 10px",
             }}
           >
-            {showMandateEditor ? "收起" : signedMandate ? "修改" : "设置"}
+            {showMandateEditor ? "收起" : signedMandate ? "修改" : "設置"}
           </button>
         </div>
 
@@ -450,7 +450,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
           <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>
-                最大质押比例: <b style={{ color: "#8B5CF6" }}>{mandateDraft.maxStakePct}%</b>
+                最大質押比例: <b style={{ color: "#8B5CF6" }}>{mandateDraft.maxStakePct}%</b>
               </div>
               <input type="range" min={10} max={100} value={mandateDraft.maxStakePct}
                 onChange={e => setMandateDraft(d => ({ ...d, maxStakePct: Number(e.target.value) }))}
@@ -459,7 +459,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
             </div>
             <div>
               <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>
-                单协议上限: <b style={{ color: "#06B6D4" }}>{mandateDraft.maxSingleProtocolPct}%</b>
+                單協議上限: <b style={{ color: "#06B6D4" }}>{mandateDraft.maxSingleProtocolPct}%</b>
               </div>
               <input type="range" min={10} max={100} value={mandateDraft.maxSingleProtocolPct}
                 onChange={e => setMandateDraft(d => ({ ...d, maxSingleProtocolPct: Number(e.target.value) }))}
@@ -467,7 +467,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
               />
             </div>
             <div>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 8 }}>允许协议</div>
+              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 8 }}>允许協議</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {(["marinade", "jito", "kamino", "solend"] as const).map(p => (
                   <label key={p} style={{ display: "flex", alignItems: "center", gap: 5, cursor: "pointer" }}>
@@ -496,10 +496,10 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
                 fontSize: 12, fontWeight: 700, cursor: mandateSigning ? "not-allowed" : "pointer",
               }}
             >
-              {mandateSigning ? "等待 Phantom 签名..." : "👻 用 Phantom 签名此规则"}
+              {mandateSigning ? "等待 Phantom 簽名..." : "👻 用 Phantom 簽名此規則"}
             </button>
             <div style={{ fontSize: 10, color: "var(--text-muted)" }}>
-              规则将由你的钱包私钥签名，写入链上 Memo。AI 只能在此范围内操作。
+              規則將由你的錢包私鑰簽名，寫入鏈上 Memo。AI 只能在此範围内操作。
             </div>
           </div>
         )}
@@ -515,9 +515,9 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
           color: complianceResult.compliant ? "#10B981" : "#EF4444",
         }}>
           {complianceResult.compliant ? (
-            "✅ 执行方案符合你的 On-Chain Mandate 约束"
+            "✅ 執行方案符合你的 On-Chain Mandate 約束"
           ) : (
-            <>⚠️ Mandate 合规检查不通过：
+            <>⚠️ Mandate 合規檢查不通過：
               <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>
                 {complianceResult.violations.map((v, i) => <li key={i}>{v}</li>)}
               </ul>

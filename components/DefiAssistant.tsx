@@ -85,22 +85,22 @@ function parseIntent(input: string): Intent {
   const numMatch = text.match(/[\d,.]+/);
   const amount = numMatch ? parseFloat(numMatch[0].replace(",", "")) : null;
 
-  if (/(质押|staking|stake|liquid.*stake)/i.test(text) && /sol/i.test(text)) return { type: "stake_sol", amount };
+  if (/(質押|staking|stake|liquid.*stake)/i.test(text) && /sol/i.test(text)) return { type: "stake_sol", amount };
   if (/(存入|理财|存usdc|earn|lending)/i.test(text) && /usdc/i.test(text)) return { type: "deposit_usdc", amount };
-  if (/(收益|yield|apy|利率|最高|怎么赚|赚钱|被动收入)/i.test(text)) return { type: "yield_find" };
-  if (/(换|swap|兑换|卖掉)/i.test(text)) {
-    const to = text.match(/(换成|to|买)\s*(sol|usdc|usdt|bonk|jup)/i)?.[2]?.toUpperCase() ?? "USDC";
+  if (/(收益|yield|apy|利率|最高|怎麼賺|賺錢|被動收入)/i.test(text)) return { type: "yield_find" };
+  if (/(換|swap|兑換|賣掉)/i.test(text)) {
+    const to = text.match(/(換成|to|買)\s*(sol|usdc|usdt|bonk|jup)/i)?.[2]?.toUpperCase() ?? "USDC";
     return { type: "swap", from: "SOL", to, amount };
   }
   const mintMatch = text.match(/[1-9A-HJ-NP-Za-km-z]{32,44}/);
   if (mintMatch) return { type: "analyze_token", mint: mintMatch[0] };
-  if (/(rug|跑路|骗局|safe|安全|检测)/i.test(text)) {
+  if (/(rug|跑路|骗局|safe|安全|檢測)/i.test(text)) {
     const tok = text.match(/\$?([A-Z]{2,10})/i)?.[1]?.toUpperCase() ?? "?";
     return { type: "rug_check", token: tok };
   }
   const priceMatch = text.match(/(sol|usdc|bonk|jup|btc|eth)/i);
-  if (priceMatch && /(价格|price|多少|涨|跌)/i.test(text)) return { type: "price_check", token: priceMatch[1].toUpperCase() };
-  if (/(我的钱包|portfolio|资产|持仓|总值|体检|健康)/i.test(text)) return { type: "portfolio_check" };
+  if (priceMatch && /(價格|price|多少|涨|跌)/i.test(text)) return { type: "price_check", token: priceMatch[1].toUpperCase() };
+  if (/(我的錢包|portfolio|資產|持倉|總值|体檢|健康)/i.test(text)) return { type: "portfolio_check" };
   return { type: "unknown" };
 }
 
@@ -126,10 +126,10 @@ function generateResponse(
       const marinadeAPY = getAPY("Marinade Finance", 7.2) / 100;
       const jitoAPY = getAPY("Jito", 7.5) / 100;
       return {
-        text: `质押 **${amt.toFixed(2)} SOL** 到流动性质押协议，年化 ${(marinadeAPY * 100).toFixed(1)}-${(jitoAPY * 100).toFixed(1)}%，mSOL/jitoSOL 可继续用于 DeFi：`,
+        text: `質押 **${amt.toFixed(2)} SOL** 到流動性質押協議，年化 ${(marinadeAPY * 100).toFixed(1)}-${(jitoAPY * 100).toFixed(1)}%，mSOL/jitoSOL 可繼續用於 DeFi：`,
         actions: [
-          { protocol: "Marinade Finance", icon: "🫙", action: `质押 ${amt.toFixed(2)} SOL → mSOL`, detail: "全链最大 SOL 质押协议，流动性最好", apy: `${(marinadeAPY * 100).toFixed(1)}%`, estimatedEarn: `+${(amt * marinadeAPY).toFixed(3)} SOL/年`, url: "https://marinade.finance/", color: "#8B5CF6", riskLevel: "低" },
-          { protocol: "Jito", icon: "⚡", action: `质押 ${amt.toFixed(2)} SOL → jitoSOL`, detail: "含 MEV 奖励，APY 略高于 Marinade", apy: `${(jitoAPY * 100).toFixed(1)}%`, estimatedEarn: `+${(amt * jitoAPY).toFixed(3)} SOL/年`, url: "https://www.jito.network/staking/", color: "#06B6D4", riskLevel: "低" },
+          { protocol: "Marinade Finance", icon: "🫙", action: `質押 ${amt.toFixed(2)} SOL → mSOL`, detail: "全鏈最大 SOL 質押協議，流動性最好", apy: `${(marinadeAPY * 100).toFixed(1)}%`, estimatedEarn: `+${(amt * marinadeAPY).toFixed(3)} SOL/年`, url: "https://marinade.finance/", color: "#8B5CF6", riskLevel: "低" },
+          { protocol: "Jito", icon: "⚡", action: `質押 ${amt.toFixed(2)} SOL → jitoSOL`, detail: "含 MEV 獎励，APY 略高於 Marinade", apy: `${(jitoAPY * 100).toFixed(1)}%`, estimatedEarn: `+${(amt * jitoAPY).toFixed(3)} SOL/年`, url: "https://www.jito.network/staking/", color: "#06B6D4", riskLevel: "低" },
         ],
       };
     }
@@ -138,31 +138,31 @@ function generateResponse(
       const kaminoAPY = getAPY("Kamino Finance", 8.2) / 100;
       const solendAPY = getAPY("Save (Solend)", 5.5) / 100;
       return {
-        text: `将 **$${amt.toFixed(0)} USDC** 存入借贷协议，稳定获取利息，无价格风险：`,
+        text: `將 **$${amt.toFixed(0)} USDC** 存入借貸協議，穩定獲取利息，無價格風險：`,
         actions: [
-          { protocol: "Kamino Finance", icon: "🌿", action: `存入 $${amt.toFixed(0)} USDC`, detail: "自动复利，利率随市场波动", apy: `${(kaminoAPY * 100).toFixed(1)}%`, estimatedEarn: `$${(amt * kaminoAPY / 12).toFixed(1)}/月`, url: "https://app.kamino.finance/", color: "#10B981", riskLevel: "低" },
-          { protocol: "Save (Solend)", icon: "🏦", action: `存入 $${amt.toFixed(0)} USDC`, detail: "Solana 最老牌借贷协议，合约经过多次审计", apy: `${(solendAPY * 100).toFixed(1)}%`, estimatedEarn: `$${(amt * solendAPY / 12).toFixed(1)}/月`, url: "https://save.finance/", color: "#3B82F6", riskLevel: "低" },
-          { protocol: "Marginfi", icon: "💎", action: `存入 $${amt.toFixed(0)} USDC`, detail: "支持跨保证金，功能最丰富", apy: "~6.5%", estimatedEarn: `$${(amt * 0.065 / 12).toFixed(1)}/月`, url: "https://app.marginfi.com/", color: "#F59E0B", riskLevel: "低" },
+          { protocol: "Kamino Finance", icon: "🌿", action: `存入 $${amt.toFixed(0)} USDC`, detail: "自動复利，利率随市場波動", apy: `${(kaminoAPY * 100).toFixed(1)}%`, estimatedEarn: `$${(amt * kaminoAPY / 12).toFixed(1)}/月`, url: "https://app.kamino.finance/", color: "#10B981", riskLevel: "低" },
+          { protocol: "Save (Solend)", icon: "🏦", action: `存入 $${amt.toFixed(0)} USDC`, detail: "Solana 最老牌借貸協議，合約經過多次審計", apy: `${(solendAPY * 100).toFixed(1)}%`, estimatedEarn: `$${(amt * solendAPY / 12).toFixed(1)}/月`, url: "https://save.finance/", color: "#3B82F6", riskLevel: "低" },
+          { protocol: "Marginfi", icon: "💎", action: `存入 $${amt.toFixed(0)} USDC`, detail: "支持跨保證金，功能最丰富", apy: "~6.5%", estimatedEarn: `$${(amt * 0.065 / 12).toFixed(1)}/月`, url: "https://app.marginfi.com/", color: "#F59E0B", riskLevel: "低" },
         ],
       };
     }
     case "swap": {
       const amt = intent.amount ?? 1;
       return {
-        text: `通过 Jupiter 聚合器兑换，自动寻找最优路由：`,
-        actions: [{ protocol: "Jupiter Swap", icon: "🪐", action: `${amt} ${intent.from} → ${intent.to}`, detail: "全 Solana 最优价格，支持100+交易对", url: `https://jup.ag/swap/${intent.from}-${intent.to}`, color: "#8B5CF6", riskLevel: "低" }],
+        text: `通過 Jupiter 聚合器兑換，自動寻找最優路由：`,
+        actions: [{ protocol: "Jupiter Swap", icon: "🪐", action: `${amt} ${intent.from} → ${intent.to}`, detail: "全 Solana 最優價格，支持100+交易對", url: `https://jup.ag/swap/${intent.from}-${intent.to}`, color: "#8B5CF6", riskLevel: "低" }],
       };
     }
     case "yield_find":
       return buildYieldResponse(sol, usdc, total, liveYield);
     case "portfolio_check":
-      return { text: `你的钱包总资产 **$${total.toFixed(0)}**，含 **${sol.toFixed(3)} SOL** + **$${usdc.toFixed(0)} USDC** 闲置。切换到「🏥 钱包体检」Tab 查看完整报告。\n\n用我做什么操作？` };
+      return { text: `你的錢包總資產 **$${total.toFixed(0)}**，含 **${sol.toFixed(3)} SOL** + **$${usdc.toFixed(0)} USDC** 閒置。切換到「🏥 錢包体檢」Tab 查看完整報告。\n\n用我做什麼操作？` };
     case "analyze_token":
-      return { text: `切换到「🔍 代币分析」Tab，粘贴合约地址 **${intent.mint.slice(0, 8)}...** 即可获得安全评分和买入建议。` };
+      return { text: `切換到「🔍 代幣分析」Tab，貼上合約地址 **${intent.mint.slice(0, 8)}...** 即可獲得安全評分和買入建議。` };
     case "rug_check":
-      return { text: `检测 **$${intent.token}** 安全性：切换到「🔍 代币分析」Tab，输入合约地址，Sakura 将检测增发权限、持币集中度、蜜罐等 5 项风险。` };
+      return { text: `檢測 **$${intent.token}** 安全性：切換到「🔍 代幣分析」Tab，輸入合約地址，Sakura 將檢測增發權限、持幣集中度、蜜罐等 5 項風險。` };
     default:
-      return { text: `我可以帮你：\n\n💰 **收益** — "帮我质押 2 SOL" / "USDC 存哪里利息最高"\n🔍 **安全** — "分析这个代币 [地址]"\n💱 **交易** — "把 1 SOL 换成 USDC"\n📊 **资产** — "查看我的收益机会"`, actions: [] };
+      return { text: `我可以幫你：\n\n💰 **收益** — "幫我質押 2 SOL" / "USDC 存哪里利息最高"\n🔍 **安全** — "分析這個代幣 [地址]"\n💱 **交易** — "把 1 SOL 換成 USDC"\n📊 **資產** — "查看我的收益机会"`, actions: [] };
   }
 }
 
@@ -185,8 +185,8 @@ function buildYieldResponse(
   if (sol > 0.1) {
     actions.push({
       protocol: "Marinade Finance", icon: "🫙",
-      action: `质押 ${(sol * 0.6).toFixed(2)} SOL`,
-      detail: `流动性质押，获得 mSOL，当前 APY ${(marinadeAPY * 100).toFixed(1)}%`,
+      action: `質押 ${(sol * 0.6).toFixed(2)} SOL`,
+      detail: `流動性質押，獲得 mSOL，当前 APY ${(marinadeAPY * 100).toFixed(1)}%`,
       apy: `${(marinadeAPY * 100).toFixed(1)}%`,
       estimatedEarn: `$${(sol * 0.6 * marinadeAPY * solPrice).toFixed(0)}/年`,
       url: "https://marinade.finance/", color: "#8B5CF6", riskLevel: "低",
@@ -196,7 +196,7 @@ function buildYieldResponse(
     actions.push({
       protocol: "Kamino Finance", icon: "🌿",
       action: `存入 $${usdc.toFixed(0)} USDC`,
-      detail: `USDC 借贷自动复利，当前 APY ${(kaminoAPY * 100).toFixed(1)}%`,
+      detail: `USDC 借貸自動复利，当前 APY ${(kaminoAPY * 100).toFixed(1)}%`,
       apy: `${(kaminoAPY * 100).toFixed(1)}%`,
       estimatedEarn: `$${(usdc * kaminoAPY / 12).toFixed(1)}/月`,
       url: "https://app.kamino.finance/", color: "#10B981", riskLevel: "低",
@@ -205,15 +205,15 @@ function buildYieldResponse(
   if (sol > 0.5 && usdc > 10) {
     actions.push({
       protocol: "Raydium CLMM", icon: "🌊",
-      action: "SOL-USDC 集中流动性",
-      detail: "在指定价格区间做市，手续费收益高但有无常损失风险",
-      apy: "15–30%", estimatedEarn: "收益随市场波动",
+      action: "SOL-USDC 集中流動性",
+      detail: "在指定價格区間做市，手續費收益高但有無常損失風險",
+      apy: "15–30%", estimatedEarn: "收益随市場波動",
       url: "https://raydium.io/liquidity/", color: "#F59E0B", riskLevel: "中",
     });
   }
   const text = actions.length > 0
-    ? `基于你的钱包（SOL: ${sol.toFixed(3)}，USDC: $${usdc.toFixed(0)}），以下是实时最优收益机会，按风险由低到高：`
-    : "你的钱包余额较少，建议先积累更多 SOL/USDC 再进行 DeFi 操作。";
+    ? `基於你的錢包（SOL: ${sol.toFixed(3)}，USDC: $${usdc.toFixed(0)}），以下是實時最優收益机会，按風險由低到高：`
+    : "你的錢包餘額較少，建議先積累更多 SOL/USDC 再進行 DeFi 操作。";
   return { text, actions };
 }
 
@@ -244,7 +244,7 @@ function OpportunityPanel({
         marginBottom: 12,
       }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
-          💡 为你发现的收益机会
+          💡 為你發現的收益机会
         </div>
         {totalAnnual > 0 && (
           <div style={{
@@ -252,7 +252,7 @@ function OpportunityPanel({
             background: "#10B98115", border: "1px solid #10B98130",
             borderRadius: 8, padding: "4px 10px",
           }}>
-            预计年收益 +${totalAnnual.toFixed(0)}
+            预計年收益 +${totalAnnual.toFixed(0)}
           </div>
         )}
       </div>
@@ -265,17 +265,17 @@ function OpportunityPanel({
 
 // ── Quick Actions (sub populated dynamically with live APY) ──────
 const QUICK_ACTION_DEFS = [
-  { icon: "🫙", label: "质押 SOL", protocol: "Marinade Finance", fallbackSub: "Marinade / Jito", color: "#8B5CF6", prompt: "帮我质押 SOL 获取最高收益" },
+  { icon: "🫙", label: "質押 SOL", protocol: "Marinade Finance", fallbackSub: "Marinade / Jito", color: "#8B5CF6", prompt: "幫我質押 SOL 獲取最高收益" },
   { icon: "🌿", label: "USDC 理财", protocol: "Kamino Finance", fallbackSub: "Kamino Finance", color: "#10B981", prompt: "我的 USDC 存哪里利息最高" },
-  { icon: "🪐", label: "代币兑换", protocol: null, fallbackSub: "Jupiter 最优路由", color: "#06B6D4", prompt: "把 1 SOL 换成 USDC" },
+  { icon: "🪐", label: "代幣兑換", protocol: null, fallbackSub: "Jupiter 最優路由", color: "#06B6D4", prompt: "把 1 SOL 換成 USDC" },
   { icon: "💡", label: "收益机会", protocol: null, fallbackSub: "全部 DeFi 机会排行", color: "#F59E0B", prompt: "给我看所有收益机会" },
 ];
 
 // ── Suggestion Chips ─────────────────────────────────────────────
 const SUGGESTIONS = [
-  "帮我质押 SOL 获取最高收益",
+  "幫我質押 SOL 獲取最高收益",
   "我的 USDC 存哪里利息最高",
-  "把 1 SOL 换成 USDC",
+  "把 1 SOL 換成 USDC",
   "给我看所有收益机会",
 ];
 
@@ -327,7 +327,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
       // Use sessionSummary if available; otherwise find last real user message
       // (skip any previously-saved welcome-back messages to prevent nesting)
       const lastRealMsg = memory.messages
-        .filter(m => !m.text.startsWith("欢迎回来！上次我们讨论了"))
+        .filter(m => !m.text.startsWith("歡迎回來！上次我們讨論了"))
         .slice(-1)[0];
       const preview = memory.sessionSummary
         ? memory.sessionSummary.slice(0, 60)
@@ -336,7 +336,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
         setMessages(prev => [...prev, {
           id: Date.now(),
           role: "assistant",
-          text: `欢迎回来！上次我们讨论了「${preview}…」，继续吗？`,
+          text: `歡迎回來！上次我們讨論了「${preview}…」，繼續吗？`,
         }]);
       }
     }
@@ -349,7 +349,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
     if (!memorySavedRef.current) return;
     // Filter out: typing placeholders + welcome-back greetings (prevents nesting on reload)
     const real = messages.filter(
-      m => !m.isTyping && !m.text.startsWith("欢迎回来！上次我们讨论了")
+      m => !m.isTyping && !m.text.startsWith("歡迎回來！上次我們讨論了")
     );
     if (real.length === 0) return;
     saveChatMemory(walletAddress, {
@@ -406,12 +406,12 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
               const old = prev.opportunities.find(o => o.protocol === opp.protocol);
               if (old && Math.abs(opp.apy - old.apy) >= 0.5) {
                 const dir = opp.apy > old.apy ? "↑ 上涨" : "↓ 下降";
-                const alertText = `${opp.protocol} APY ${dir} ${Math.abs(opp.apy - old.apy).toFixed(1)}%，现在 ${opp.apyDisplay}`;
+                const alertText = `${opp.protocol} APY ${dir} ${Math.abs(opp.apy - old.apy).toFixed(1)}%，現在 ${opp.apyDisplay}`;
                 setToast({ id: Date.now(), text: alertText });
                 setMessages(prev => [...prev, {
                   id: Date.now(),
                   role: "assistant",
-                  text: `🔔 **主动提醒** — ${alertText}。要调整持仓吗？`,
+                  text: `🔔 **主動提醒** — ${alertText}。要調整持倉吗？`,
                   isAgentInitiated: true,
                 }]);
                 break; // alert once per cycle
@@ -441,7 +441,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
             setMessages(prev => [...prev, {
               id: alert.timestamp,
               role: "assistant",
-              text: `${emoji} **Guardian Alert** — ${alert.message}。要调整持仓吗？`,
+              text: `${emoji} **Guardian Alert** — ${alert.message}。要調整持倉吗？`,
               isAgentInitiated: true,
             }]);
             if (alert.timestamp > lastAlertTimestampRef.current) {
@@ -473,12 +473,12 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
             const changePct = Math.abs(newPrice - token.lastKnownPrice) / token.lastKnownPrice * 100;
             if (changePct >= 10) {
               const dir = newPrice > token.lastKnownPrice ? "🚀 上涨" : "📉 下跌";
-              const alertText = `${token.symbol} ${dir} ${changePct.toFixed(1)}%，现价 $${newPrice.toFixed(4)}`;
+              const alertText = `${token.symbol} ${dir} ${changePct.toFixed(1)}%，現價 $${newPrice.toFixed(4)}`;
               setToast({ id: Date.now(), text: alertText });
               setMessages(prev => [...prev, {
                 id: Date.now(),
                 role: "assistant",
-                text: `🔔 **价格提醒** — ${alertText}。要查看详情或操作吗？`,
+                text: `🔔 **價格提醒** — ${alertText}。要查看详情或操作吗？`,
                 isAgentInitiated: true,
               }]);
               saveLastPrice(token.mint, newPrice);
@@ -496,8 +496,8 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
   }, [messages]);
 
   function isExecuteIntent(text: string): boolean {
-    return /^(执行|确认|好的?|可以|做吧|行|就这样|开始|go|yes|ok|好的执行|确认执行)[\s!！。]*$/i.test(text.trim())
-      || /^(执行|用|选|要)\s*(marinade|jito|kamino|solend|第一个|第二个|这个)/i.test(text.trim());
+    return /^(執行|確認|好的?|可以|做吧|行|就這樣|開始|go|yes|ok|好的執行|確認執行)[\s!！。]*$/i.test(text.trim())
+      || /^(執行|用|選|要)\s*(marinade|jito|kamino|solend|第一個|第二個|這個)/i.test(text.trim());
   }
 
   function openActionModal(action: ActionCard) {
@@ -519,7 +519,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
 
-    // ── Execute intent: user replied "执行" / "好" after AI gave action cards ──
+    // ── Execute intent: user replied "執行" / "好" after AI gave action cards ──
     if (isExecuteIntent(text) && lastActions && lastActions.length > 0) {
       const lower = text.toLowerCase();
       // Try to match a specific protocol name, else pick first
@@ -531,12 +531,12 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
         (lower.includes("第二") ? lastActions[1] : null) ??
         lastActions[0];
 
-      const label = STAKE_PROTOCOLS[target.protocol] ? "质押"
+      const label = STAKE_PROTOCOLS[target.protocol] ? "質押"
         : LEND_PROTOCOLS[target.protocol] ? "存入"
-        : "兑换";
+        : "兑換";
 
       const userMsg: Message   = { id: Date.now(),     role: "user",      text: text.trim() };
-      const confirmMsg: Message = { id: Date.now() + 1, role: "assistant", text: `好的，正在打开 **${target.protocol}** ${label}...` };
+      const confirmMsg: Message = { id: Date.now() + 1, role: "assistant", text: `好的，正在打開 **${target.protocol}** ${label}...` };
       setMessages(prev => [...prev, userMsg, confirmMsg]);
       setInput("");
       setLastActions(null);
@@ -586,7 +586,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
           amount: challenge.amount ?? 0.50,
           currency: "USDC",
           network: "solana-mainnet",
-          description: "Sakura AI 顾问会话 0.50 USDC",
+          description: "Sakura AI 顾问会話 0.50 USDC",
         });
         if ("error" in payResult) {
           setMessages(prev => prev.map(m =>
@@ -680,7 +680,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                         isTyping: false,
                         isStreaming: false,
                         thinkingStep: undefined,
-                        text: accText || "抱歉，暂时无法回答，请稍后重试。",
+                        text: accText || "抱歉，暂時無法回答，請稍后重試。",
                         actions: newActions,
                         reasoningHash: parsed.reasoningHash,
                         memoPayload: parsed.memoPayload,
@@ -691,7 +691,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
               } else if (event === "error") {
                 setMessages(prev => prev.map(m =>
                   m.id === assistantId
-                    ? { ...m, isTyping: false, isStreaming: false, text: parsed.message ?? "发生错误，请重试。" }
+                    ? { ...m, isTyping: false, isStreaming: false, text: parsed.message ?? "發生错誤，請重試。" }
                     : m
                 ));
               }
@@ -702,7 +702,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
     } catch {
       setMessages(prev => prev.map(m =>
         m.id === assistantId
-          ? { ...m, isTyping: false, isStreaming: false, text: "网络错误，请稍后重试。" }
+          ? { ...m, isTyping: false, isStreaming: false, text: "网絡错誤，請稍后重試。" }
           : m
       ));
     } finally {
@@ -793,7 +793,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                 background: "#10B98115", border: "1px solid #10B98130",
                 borderRadius: 10, padding: "2px 8px",
               }}>
-                ● 实时 APY
+                ● 實時 APY
               </span>
             )}
             {messages.length > 0 && (
@@ -958,8 +958,8 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
             </div>
             <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
               {advisorQuota.remaining > 0
-                ? <>还剩 <strong style={{ color: "#10B981" }}>{advisorQuota.remaining}/3</strong> 次免费 · 超出后每次 <strong style={{ color: "var(--text-primary)" }}>0.50 USDC</strong></>
-                : <>免费次数已用完 · 发送消息时自动支付 <strong style={{ color: "var(--text-primary)" }}>0.50 USDC</strong></>}
+                ? <>還剩 <strong style={{ color: "#10B981" }}>{advisorQuota.remaining}/3</strong> 次免費 · 超出后每次 <strong style={{ color: "var(--text-primary)" }}>0.50 USDC</strong></>
+                : <>免費次數已用完 · 發送消息時自動支付 <strong style={{ color: "var(--text-primary)" }}>0.50 USDC</strong></>}
             </div>
           </div>
           <span style={{
@@ -969,7 +969,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
             border: `1px solid ${advisorQuota.remaining > 0 ? "#10B98140" : "#8B5CF640"}`,
             borderRadius: 6, padding: "3px 8px", whiteSpace: "nowrap",
           }}>
-            {advisorQuota.remaining > 0 ? `🆓 ${advisorQuota.remaining}/3 次免费` : "💰 0.50 USDC/次"}
+            {advisorQuota.remaining > 0 ? `🆓 ${advisorQuota.remaining}/3 次免費` : "💰 0.50 USDC/次"}
           </span>
         </div>
       )}
@@ -1080,7 +1080,7 @@ function ActionCardView({
   const stakeProtocol  = STAKE_PROTOCOLS[action.protocol];
   const lendProtocol   = LEND_PROTOCOLS[action.protocol];
 
-  // Parse amounts from action text e.g. "质押 1.50 SOL" or "存入 $200 USDC"
+  // Parse amounts from action text e.g. "質押 1.50 SOL" or "存入 $200 USDC"
   const amountMatch = action.action.match(/([\d,.]+)/);
   const parsedAmount = amountMatch ? parseFloat(amountMatch[1].replace(",", "")) : 1;
 
@@ -1097,14 +1097,14 @@ function ActionCardView({
     if (isJupiterSwap && swapParams) {
       return (
         <button onClick={() => onSwap(swapParams)} style={btnStyle(action.color)}>
-          兑换 →
+          兑換 →
         </button>
       );
     }
     if (stakeProtocol) {
       return (
         <button onClick={() => onStake({ protocol: stakeProtocol, amount: parsedAmount })} style={btnStyle(action.color)}>
-          质押 →
+          質押 →
         </button>
       );
     }
@@ -1119,7 +1119,7 @@ function ActionCardView({
       <a href={action.url} target="_blank" rel="noopener noreferrer" style={{
         ...btnStyle(action.color), textDecoration: "none", display: "inline-block",
       }}>
-        执行 →
+        執行 →
       </a>
     );
   };
@@ -1140,14 +1140,14 @@ function ActionCardView({
             </span>
           )}
           <span style={{ fontSize: 10, color: riskColor, background: `${riskColor}15`, borderRadius: 4, padding: "1px 6px" }}>
-            风险：{action.riskLevel}
+            風險：{action.riskLevel}
           </span>
         </div>
         <div style={{ fontSize: 13, color: "var(--text-primary)", marginBottom: 2 }}>{action.action}</div>
         <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{action.detail}</div>
         {action.estimatedEarn && (
           <div style={{ fontSize: 12, color: "#10B981", marginTop: 4, fontWeight: 600 }}>
-            预计收益：{action.estimatedEarn}
+            预計收益：{action.estimatedEarn}
           </div>
         )}
       </div>
@@ -1230,7 +1230,7 @@ function ReasoningBox({
           ) : (
             <span style={{ fontSize: 10 }}>🔐</span>
           )}
-          <span style={{ fontSize: 10, color: "var(--text-secondary)" }}>可验证推理</span>
+          <span style={{ fontSize: 10, color: "var(--text-secondary)" }}>可验證推理</span>
           <span style={{ fontSize: 10, color: "var(--text-muted)", fontFamily: "monospace" }}>
             #{reasoningHash.slice(0, 12)}
           </span>
@@ -1249,7 +1249,7 @@ function ReasoningBox({
           {memoStatus === "done" ? (
             <a href={`https://solscan.io/tx/${txSig}`} target="_blank" rel="noopener noreferrer"
               style={{ fontSize: 10, color: "#10B981", textDecoration: "none" }}>
-              ✅ 已写入链上 →
+              ✅ 已寫入鏈上 →
             </a>
           ) : (
             <button onClick={writeMemo} disabled={memoStatus === "sending"} style={{
@@ -1257,7 +1257,7 @@ function ReasoningBox({
               background: "none", border: "1px solid var(--border)",
               borderRadius: 6, padding: "4px 10px", cursor: "pointer", textAlign: "left",
             }}>
-              {memoStatus === "sending" ? "⏳ 写入中..." : memoStatus === "error" ? "❌ 失败，重试" : "⛓ 写入 Solana 链上"}
+              {memoStatus === "sending" ? "⏳ 寫入中..." : memoStatus === "error" ? "❌ 失败，重試" : "⛓ 寫入 Solana 鏈上"}
             </button>
           )}
         </div>

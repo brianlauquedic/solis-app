@@ -421,7 +421,7 @@ export default function HealthReport({ walletAddress, onDisconnect, onDataLoaded
                   fontSize: 18, fontWeight: 700,
                   color: data.riskyTokenCount > 0 ? "#EF4444" : "#10B981",
                 }}>
-                  {data.riskyTokenCount} 个
+                  {data.riskyTokenCount} 個
                 </div>
                 <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{t("highRiskTokens")}</div>
               </div>
@@ -795,45 +795,45 @@ function ScoreBreakdown({ data }: { data: WalletData }) {
 
   const factors = [
     {
-      label: "SOL 余额",
+      label: "SOL 餘額",
       delta: data.solBalance > 1 ? +10 : 0,
       desc: data.solBalance > 1
-        ? `持有 ${data.solBalance.toFixed(2)} SOL，基础分 +10`
-        : `SOL 余额较少（${data.solBalance.toFixed(3)}），未加分`,
+        ? `持有 ${data.solBalance.toFixed(2)} SOL，基礎分 +10`
+        : `SOL 餘額較少（${data.solBalance.toFixed(3)}），未加分`,
       good: data.solBalance > 1,
     },
     {
-      label: "高风险代币",
+      label: "高風險代幣",
       delta: data.riskyTokenCount > 3 ? -15 : data.riskyTokenCount > 1 ? -8 : 0,
       desc: data.riskyTokenCount > 3
-        ? `持有 ${data.riskyTokenCount} 个高风险代币，-15`
+        ? `持有 ${data.riskyTokenCount} 個高風險代幣，-15`
         : data.riskyTokenCount > 1
-        ? `持有 ${data.riskyTokenCount} 个高风险代币，-8`
-        : "高风险代币数量可控，不扣分",
+        ? `持有 ${data.riskyTokenCount} 個高風險代幣，-8`
+        : "高風險代幣數量可控，不扣分",
       good: data.riskyTokenCount <= 1,
     },
     {
-      label: "风险集中度",
+      label: "風險集中度",
       delta: data.breakdown?.risky > 50 ? -10 : 0,
       desc: data.breakdown?.risky > 50
-        ? `高风险资产占 ${data.breakdown.risky.toFixed(0)}%，过度集中 -10`
-        : "风险仓位比例健康，不扣分",
+        ? `高風險資產占 ${data.breakdown.risky.toFixed(0)}%，過度集中 -10`
+        : "風險倉位比例健康，不扣分",
       good: (data.breakdown?.risky ?? 0) <= 50,
     },
     {
-      label: "闲置 USDC",
+      label: "閒置 USDC",
       delta: data.idleUSDC > 100 ? -5 : 0,
       desc: data.idleUSDC > 100
-        ? `$${data.idleUSDC.toFixed(0)} USDC 闲置未生息，-5`
-        : "无大额闲置 USDC，不扣分",
+        ? `$${data.idleUSDC.toFixed(0)} USDC 閒置未生息，-5`
+        : "無大額閒置 USDC，不扣分",
       good: data.idleUSDC <= 100,
     },
     {
-      label: "流动性质押",
+      label: "流動性質押",
       delta: data.tokens.some(t => t.type === "liquid_stake") ? +5 : 0,
       desc: data.tokens.some(t => t.type === "liquid_stake")
-        ? "持有 mSOL/jitoSOL 等质押资产，+5"
-        : "未使用流动性质押，错失额外收益",
+        ? "持有 mSOL/jitoSOL 等質押資產，+5"
+        : "未使用流動性質押，错失額外收益",
       good: data.tokens.some(t => t.type === "liquid_stake"),
     },
   ];
@@ -854,7 +854,7 @@ function ScoreBreakdown({ data }: { data: WalletData }) {
         }}
       >
         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
-          📊 健康分数是怎么算的？
+          📊 健康分數是怎麼算的？
         </div>
         <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{open ? "收起 ▲" : "查看详情 ▼"}</span>
       </button>
@@ -866,7 +866,7 @@ function ScoreBreakdown({ data }: { data: WalletData }) {
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "8px 12px", background: "var(--bg-base)", borderRadius: 8,
           }}>
-            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>基础分</span>
+            <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>基礎分</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: "#8B5CF6" }}>+{base}</span>
           </div>
 
@@ -899,7 +899,7 @@ function ScoreBreakdown({ data }: { data: WalletData }) {
             border: "1px solid #8B5CF630",
             borderRadius: 8,
           }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>最终健康分</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>最終健康分</span>
             <span style={{ fontSize: 18, fontWeight: 900, color: "#8B5CF6" }}>
               {data.healthScore}
             </span>
