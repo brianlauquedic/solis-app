@@ -21,7 +21,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { getOrCreateFreeRecord, checkCreditBalance, deductCredits } from "@/lib/subscription";
+import { getOrCreateFreeRecord, atomicDeductCredits } from "@/lib/subscription";
 import type { Feature as SubFeature } from "@/lib/subscription";
 
 // ── Constants ─────────────────────────────────────────────────────
@@ -295,24 +295,25 @@ export async function runQuotaGate(
   }
 
   // ── Unified wallet credit gate (free 100pt/month + Basic/Pro subscriptions) ──
-  // All wallet-connected users use credit tracking; no more per-feature 3-use limit
+  // Uses atomicDeductCredits — single Redis Lua operation, no TOCTOU race
   if (wallet && wallet.length >= 32) {
-    const record = await getOrCreateFreeRecord(wallet);
-    const { allowed, balance, cost } = await checkCreditBalance(
-      wallet,
-      feature as SubFeature
-    );
-    if (allowed) {
-      const newBalance = await deductCredits(wallet, feature as SubFeature);
+    await getOrCreateFreeRecord(wallet); // ensure record exists before atomic op
+    const result = await atomicDeductCredits(wallet, feature as SubFeature);
+
+    if (result.success) {
       console.log(
-        `[SOLIS_${record.tier.toUpperCase()}] tier=${record.tier} wallet=${wallet.slice(0, 8)}… ` +
-        `feature=${feature} cost=${cost} remaining=${newBalance}`
+        `[SOLIS_${result.tier.toUpperCase()}] tier=${result.tier} wallet=${wallet.slice(0, 8)}… ` +
+        `feature=${feature} remaining=${result.newBalance}`
       );
       return { proceed: true, ids, paid: false };
     }
+
     // Credits exhausted — differentiate free vs paid messaging
     const now = Date.now();
-    if (record.tier === "free") {
+    const { balance, cost, tier } = result;
+
+    if (tier === "free") {
+      const record = await getOrCreateFreeRecord(wallet);
       const nextResetDays = Math.max(1, Math.ceil((record.expiresAt - now) / (1000 * 60 * 60 * 24)));
       return {
         proceed: false,
@@ -323,7 +324,7 @@ export async function runQuotaGate(
             feature,
             creditBalance: balance,
             creditCost: cost,
-            message: `免费额度不足（需 ${cost} 点，余 ${balance} 点）。约 ${nextResetDays} 天后自动重置 100 点，或立即升级订阅获得更多点数。`,
+            message: `免費額度不足（需 ${cost} 點，餘 ${balance} 點）。約 ${nextResetDays} 天後自動重置 100 點，或立即升級訂閱獲得更多點數。`,
             upgradeUrl: "/api/subscription",
             nextResetDays,
           },
@@ -332,18 +333,19 @@ export async function runQuotaGate(
       };
     }
     // Paid subscription exhausted
+    const record = await getOrCreateFreeRecord(wallet);
     return {
       proceed: false,
       response: NextResponse.json(
         {
           error: "subscription_credits_exhausted",
-          tier: record.tier,
+          tier,
           feature,
           creditBalance: balance,
           creditCost: cost,
-          message: record.tier === "basic"
-            ? `Basic 点数不足（需 ${cost} 点，余 ${balance} 点）。升级 Pro 获得 6,000 点/月 + 2,000 结转。`
-            : `Pro 本月点数已用完（需 ${cost} 点，余 ${balance} 点）。点数将在下月自动续充。`,
+          message: tier === "basic"
+            ? `Basic 點數不足（需 ${cost} 點，餘 ${balance} 點）。升級 Pro 獲得 6,000 點/月 + 2,000 結轉。`
+            : `Pro 本月點數已用完（需 ${cost} 點，餘 ${balance} 點）。點數將在下月自動續充。`,
           upgradeUrl: "/api/subscription",
           daysUntilReset: Math.ceil((record.expiresAt - now) / (1000 * 60 * 60 * 24)),
         },

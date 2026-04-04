@@ -182,6 +182,40 @@ async function redisSetJson(key: string, value: unknown, exSeconds: number): Pro
   } catch { /* silent */ }
 }
 
+// ── Upstash Lua eval (atomic check-and-deduct) ───────────────────
+
+async function redisEval(script: string, keys: string[], args: string[]): Promise<unknown> {
+  const res = await fetch(`${UPSTASH_URL}/eval`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${UPSTASH_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify([script, keys.length, ...keys, ...args]),
+  });
+  if (!res.ok) throw new Error(`Upstash eval error: ${res.status}`);
+  const data = await res.json() as { result: unknown };
+  return data.result;
+}
+
+// Lua script: atomically check balance and deduct if sufficient.
+// Returns: new balance (≥0) on success, -1 if no record, -2 if insufficient credits.
+const DEDUCT_LUA = `
+local raw = redis.call("GET", KEYS[1])
+if not raw then return -1 end
+local ok, rec = pcall(cjson.decode, raw)
+if not ok then return -1 end
+local cost = tonumber(ARGV[1])
+if rec["creditBalance"] < cost then return -2 end
+rec["creditBalance"] = rec["creditBalance"] - cost
+local ttl = redis.call("TTL", KEYS[1])
+redis.call("SET", KEYS[1], cjson.encode(rec), "EX", tostring(math.max(ttl, 1)))
+return rec["creditBalance"]
+`;
+
+// ── In-memory lock (per-wallet mutex for dev fallback) ───────────
+const memLocks = new Map<string, Promise<void>>();
+
 // ── In-memory fallback ────────────────────────────────────────────
 
 const memSubs = new Map<string, SubscriptionRecord>();
@@ -286,6 +320,74 @@ export async function deductCredits(
     memSubs.set(walletAddress, updated);
   }
   return newBalance;
+}
+
+/**
+ * Atomically check balance and deduct credits in one Redis operation.
+ * Eliminates TOCTOU race between checkCreditBalance + deductCredits.
+ *
+ * Returns:
+ *   { success: true,  newBalance: number }  — deducted OK
+ *   { success: false, reason: "no_record" | "insufficient", balance: number, cost: number }
+ */
+export async function atomicDeductCredits(
+  walletAddress: string,
+  feature: Feature
+): Promise<
+  | { success: true; newBalance: number; tier: SubscriptionTier }
+  | { success: false; reason: "no_record" | "insufficient"; balance: number; cost: number; tier: SubscriptionTier }
+> {
+  const cost = FEATURE_CREDIT_COST[feature];
+  const key = `solis:sub:${walletAddress}`;
+
+  // ── Redis path: atomic Lua ───────────────────────────────────────
+  if (redisAvailable) {
+    try {
+      const result = await redisEval(DEDUCT_LUA, [key], [String(cost)]);
+      const num = Number(result);
+      if (num >= 0) {
+        // Success — read tier from cached record (non-blocking best-effort)
+        const record = await getSubscription(walletAddress);
+        return { success: true, newBalance: num, tier: record?.tier ?? "free" };
+      }
+      if (num === -2) {
+        const record = await getSubscription(walletAddress);
+        const balance = record?.creditBalance ?? 0;
+        return { success: false, reason: "insufficient", balance, cost, tier: record?.tier ?? "free" };
+      }
+      // -1: no record — fall through to getOrCreate path
+    } catch {
+      // Redis error → fall through to non-atomic path (don't block user)
+    }
+  }
+
+  // ── In-memory path: JS mutex per wallet ─────────────────────────
+  // Prevents concurrent in-process races during dev / Redis-unavailable
+  const runWithLock = async (): Promise<ReturnType<typeof atomicDeductCredits>> => {
+    const record = await getSubscription(walletAddress);
+    if (!record) return { success: false, reason: "no_record", balance: 0, cost, tier: "free" };
+    if (record.creditBalance < cost) {
+      return { success: false, reason: "insufficient", balance: record.creditBalance, cost, tier: record.tier };
+    }
+    const newBalance = record.creditBalance - cost;
+    memSubs.set(walletAddress, { ...record, creditBalance: newBalance });
+    return { success: true, newBalance, tier: record.tier };
+  };
+
+  // Chain onto existing lock for this wallet (if any) to serialize
+  const prev = memLocks.get(walletAddress) ?? Promise.resolve();
+  let resolve!: () => void;
+  const lock = new Promise<void>(r => { resolve = r; });
+  memLocks.set(walletAddress, prev.then(() => lock));
+
+  try {
+    await prev;
+    return await runWithLock();
+  } finally {
+    resolve();
+    // Clean up lock entry once settled
+    if (memLocks.get(walletAddress) === lock) memLocks.delete(walletAddress);
+  }
 }
 
 // ── Payment verification ──────────────────────────────────────────
