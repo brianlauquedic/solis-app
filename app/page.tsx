@@ -175,7 +175,7 @@ function AppContent() {
           {/* 昼夜切替 Day/Night toggle */}
           <button
             onClick={() => setIsDayMode(v => !v)}
-            title={isDayMode ? "夜モードに切替" : "昼モードに切替"}
+            title={isDayMode ? t("switchToNight") : t("switchToDay")}
             style={{
               display: "flex", alignItems: "center", gap: 5,
               padding: "4px 10px", borderRadius: 6, cursor: "pointer",
@@ -188,7 +188,7 @@ function AppContent() {
           >
             <span style={{ fontSize: 14 }}>{isDayMode ? "☀️" : "🌙"}</span>
             <span style={{ fontSize: 10, letterSpacing: "0.05em" }}>
-              {isDayMode ? (isDay ? "昼" : "昼") : (isDay ? "昼" : "夜")}
+              {isDayMode ? t("dayMode") : t("nightMode")}
             </span>
           </button>
         </div>

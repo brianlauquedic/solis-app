@@ -346,6 +346,12 @@ export const translations = {
 
   // ── Protocols ecosystem ────────────────────────────────────────────
   integratedProtocols: { zh: "集成協議", en: "Integrated Protocols", ja: "統合プロトコル" },
+
+  // ── Day/Night toggle ──────────────────────────────────────────────
+  dayMode:       { zh: "白天", en: "Day",   ja: "昼" },
+  nightMode:     { zh: "黑夜", en: "Night", ja: "夜" },
+  switchToDay:   { zh: "切換白天模式", en: "Switch to Day",   ja: "昼モードへ" },
+  switchToNight: { zh: "切換黑夜模式", en: "Switch to Night", ja: "夜モードへ" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
