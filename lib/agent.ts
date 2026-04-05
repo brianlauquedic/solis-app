@@ -38,8 +38,12 @@ export function createReadOnlyAgent() {
   const wallet = new KeypairWallet(keypair, RPC_URL);
   return new SolanaAgentKit(wallet, RPC_URL, {
     HELIUS_API_KEY,
-    ELFA_AI_API_KEY:   process.env.ELFA_API_KEY ?? "",
-    ALLORA_API_KEY:    process.env.ALLORA_API_KEY ?? "",
+    ELFA_AI_API_KEY:    process.env.ELFA_API_KEY ?? "",
+    ALLORA_API_KEY:     process.env.ALLORA_API_KEY ?? "",
+    OKX_API_KEY:        process.env.OKX_API_KEY ?? "",
+    OKX_SECRET_KEY:     process.env.OKX_SECRET_KEY ?? "",
+    OKX_API_PASSPHRASE: process.env.OKX_API_PASSPHRASE ?? "",
+    OKX_PROJECT_ID:     process.env.OKX_PROJECT_ID ?? "",
     signOnly: true,
   })
     .use(TokenPlugin)
@@ -311,37 +315,55 @@ export async function sakGetOkxQuote(
     }
   } catch { /* ignore */ }
 
-  // ── OKX DEX quote ─────────────────────────────────────────────
+  // ── OKX DEX quote — 優先使用 SAK DefiPlugin.getQuote()，失敗回退 HMAC REST ──
   let okxResult: OkxQuoteResult["okxDex"] = null;
   const okxHasAuth = !!(process.env.OKX_API_KEY && process.env.OKX_SECRET_KEY);
   if (okxHasAuth) {
+    const chainId = "501"; // Solana
+    const fromAddr = fromTokenAddress === SOL_ADDR
+      ? "11111111111111111111111111111111" // OKX uses native address for SOL
+      : fromTokenAddress;
+    const toAddr = toTokenAddress;
+
+    // ── Try SAK DefiPlugin getQuote first (真正使用 SAK) ──────────
     try {
-      const chainId = "501"; // Solana
-      const fromAddr = fromTokenAddress === SOL_ADDR
-        ? "11111111111111111111111111111111" // OKX uses native address for SOL
-        : fromTokenAddress;
-      const toAddr = toTokenAddress === USDC_ADDR
-        ? USDC_ADDR
-        : toTokenAddress;
-      const params = `chainId=${chainId}&fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amount}`;
-      const path = "/api/v5/dex/aggregator/quote";
-      const headers = okxAuthHeaders(path, params);
-      const okxRes = await fetch(`https://www.okx.com${path}?${params}`, {
-        headers: { ...headers, "Content-Type": "application/json" },
-        next: { revalidate: 10 },
-      });
-      if (okxRes.ok) {
-        const o = await okxRes.json() as { data?: { toTokenAmount: string; priceImpactPercentage: string; dexRouterList?: { router: string }[] }[] };
-        const d = o.data?.[0];
-        if (d) {
-          okxResult = {
-            outAmount: Number(d.toTokenAmount),
-            priceImpact: d.priceImpactPercentage,
-            router: d.dexRouterList?.[0]?.router ?? "OKX DEX",
-          };
-        }
+      const agent = createReadOnlyAgent();
+      const m = agent.methods as Record<string, (...a: unknown[]) => Promise<unknown>>;
+      const sakResult = await m.getQuote?.(chainId, fromAddr, toAddr, String(amount), "0.5") as
+        Array<{ toTokenAmount?: string; priceImpactPercentage?: string; dexRouterList?: Array<{ router?: string }> }> | undefined;
+      const d = sakResult?.[0];
+      if (d?.toTokenAmount) {
+        okxResult = {
+          outAmount:   Number(d.toTokenAmount),
+          priceImpact: d.priceImpactPercentage ?? "0",
+          router:      d.dexRouterList?.[0]?.router ?? "OKX DEX",
+        };
       }
-    } catch { /* ignore */ }
+    } catch { /* fallback to manual HMAC below */ }
+
+    // ── HMAC REST fallback if SAK failed ──────────────────────────
+    if (!okxResult) {
+      try {
+        const params = `chainId=${chainId}&fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amount}`;
+        const path   = "/api/v5/dex/aggregator/quote";
+        const headers = okxAuthHeaders(path, params);
+        const okxRes = await fetch(`https://www.okx.com${path}?${params}`, {
+          headers: { ...headers, "Content-Type": "application/json" },
+          next: { revalidate: 10 },
+        });
+        if (okxRes.ok) {
+          const o = await okxRes.json() as { data?: { toTokenAmount: string; priceImpactPercentage: string; dexRouterList?: { router: string }[] }[] };
+          const d = o.data?.[0];
+          if (d) {
+            okxResult = {
+              outAmount:   Number(d.toTokenAmount),
+              priceImpact: d.priceImpactPercentage,
+              router:      d.dexRouterList?.[0]?.router ?? "OKX DEX",
+            };
+          }
+        }
+      } catch { /* ignore */ }
+    }
   }
 
   // ── Determine best route ───────────────────────────────────────
@@ -901,7 +923,7 @@ export async function sakGetLimitOrders(
   try {
     const agent  = createReadOnlyAgent();
     const m      = agent.methods as Record<string, (...a: unknown[]) => Promise<unknown>>;
-    const orders = await m.getOpenLimitOrders?.(walletAddress) as
+    const orders = await m.getOpenJupiterLimitOrders?.(walletAddress) as
       Array<{
         publicKey?: string;
         account?: {
