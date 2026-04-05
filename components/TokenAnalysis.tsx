@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { addToWatchlist, getWatchlist, removeFromWatchlist, saveLastPrice, WatchedToken } from "@/lib/watchlist";
 import { saveProof } from "@/lib/proof-store";
 import { payWithPhantom } from "@/lib/x402";
@@ -798,52 +798,8 @@ export default function TokenAnalysis({ walletAddress }: Props) {
             </div>
           </div>
 
-          {/* GMGN K-Line Chart */}
-          <div style={{
-            marginTop: 16, borderRadius: 12, overflow: "hidden",
-            border: "1px solid var(--border)",
-          }}>
-            <div style={{
-              padding: "8px 14px",
-              background: "var(--bg-card)",
-              borderBottom: "1px solid var(--border)",
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-            }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)" }}>
-                📈 K 線圖 · DexScreener
-              </span>
-              <div style={{ display: "flex", gap: 10 }}>
-                <a
-                  href={`https://dexscreener.com/solana/${tokenData.mint}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ fontSize: 10, color: "var(--text-muted)", textDecoration: "none" }}
-                >
-                  DexScreener →
-                </a>
-                <a
-                  href={`https://gmgn.ai/sol/token/${tokenData.mint}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ fontSize: 10, color: "var(--accent)", textDecoration: "none" }}
-                >
-                  GMGN →
-                </a>
-              </div>
-            </div>
-            <iframe
-              src={`https://dexscreener.com/solana/${tokenData.mint}?embed=1&theme=dark&trades=0&info=0`}
-              style={{
-                width: "100%",
-                height: 360,
-                border: "none",
-                display: "block",
-                background: "#0d0d14",
-              }}
-              title={`${tokenData.symbol} price chart`}
-              loading="lazy"
-            />
-          </div>
+          {/* GMGN K-Line Chart — server-proxied, no iframe */}
+          <GmgnKlineChart mint={tokenData.mint} symbol={tokenData.symbol} />
 
           {/* Score + Decision */}
           <div style={{
@@ -1151,6 +1107,205 @@ function Stat({ value, label, color }: { value: string; label: string; color: st
     <div>
       <div style={{ fontSize: 22, fontWeight: 800, color }}>{value}</div>
       <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{label}</div>
+    </div>
+  );
+}
+
+// ── GMGN Kline Chart (server-proxied, no iframe needed) ───────────
+type Resolution = "5m" | "15m" | "1h" | "4h" | "1d";
+
+interface Candle {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+function GmgnKlineChart({ mint, symbol }: { mint: string; symbol: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const chartRef     = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const seriesRef    = useRef<any>(null);
+  const [resolution, setResolution] = useState<Resolution>("1h");
+  const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(false);
+  const [candles, setCandles]       = useState<Candle[]>([]);
+
+  const RESOLUTIONS: Resolution[] = ["5m", "15m", "1h", "4h", "1d"];
+
+  const fetchCandles = useCallback(async (res: Resolution) => {
+    setLoading(true);
+    setError(false);
+    try {
+      const r = await fetch(`/api/gmgn/kline?mint=${mint}&resolution=${res}&limit=150`);
+      const json = await r.json();
+      if (json.candles && json.candles.length > 0) {
+        setCandles(json.candles);
+      } else {
+        setError(true);
+      }
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [mint]);
+
+  // Initial fetch
+  useEffect(() => { fetchCandles(resolution); }, [fetchCandles, resolution]);
+
+  // Mount/update chart
+  useEffect(() => {
+    if (!containerRef.current || candles.length === 0) return;
+
+    let chart = chartRef.current;
+    if (!chart) {
+      // Dynamic import to avoid SSR issues
+      import("lightweight-charts").then(({ createChart, CandlestickSeries }) => {
+        if (!containerRef.current) return;
+        chart = createChart(containerRef.current, {
+          layout: {
+            background: { color: "#0E0C0A" },
+            textColor:  "#8B7D72",
+          },
+          grid: {
+            vertLines:  { color: "#1A1714" },
+            horzLines:  { color: "#1A1714" },
+          },
+          crosshair: { mode: 1 },
+          rightPriceScale: { borderColor: "#2E2820" },
+          timeScale: {
+            borderColor:    "#2E2820",
+            timeVisible:    true,
+            secondsVisible: false,
+          },
+          width:  containerRef.current.clientWidth,
+          height: 320,
+        });
+        chartRef.current = chart;
+        const series = chart.addSeries(CandlestickSeries, {
+          upColor:        "#3D7A5C",
+          downColor:      "#A8293A",
+          borderUpColor:  "#3D7A5C",
+          borderDownColor:"#A8293A",
+          wickUpColor:    "#3D7A5C",
+          wickDownColor:  "#A8293A",
+        });
+        seriesRef.current = series;
+        series.setData(candles);
+        chart.timeScale().fitContent();
+      });
+    } else if (seriesRef.current) {
+      seriesRef.current.setData(candles);
+      chart.timeScale().fitContent();
+    }
+
+    // Resize handler
+    const handleResize = () => {
+      if (chartRef.current && containerRef.current) {
+        chartRef.current.applyOptions({ width: containerRef.current.clientWidth });
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [candles]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (chartRef.current) {
+        chartRef.current.remove();
+        chartRef.current = null;
+        seriesRef.current = null;
+      }
+    };
+  }, []);
+
+  return (
+    <div style={{ marginTop: 16, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}>
+      {/* Header */}
+      <div style={{
+        padding: "8px 14px",
+        background: "var(--bg-card)",
+        borderBottom: "1px solid var(--border)",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)" }}>
+            📈 K 線圖 · GMGN
+          </span>
+          {/* Resolution switcher */}
+          <div style={{ display: "flex", gap: 4 }}>
+            {RESOLUTIONS.map(r => (
+              <button
+                key={r}
+                onClick={() => setResolution(r)}
+                style={{
+                  fontSize: 10, padding: "2px 7px", borderRadius: 4, cursor: "pointer",
+                  border: `1px solid ${resolution === r ? "var(--accent)" : "var(--border)"}`,
+                  background: resolution === r ? "var(--accent-soft)" : "transparent",
+                  color: resolution === r ? "var(--accent)" : "var(--text-muted)",
+                }}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <a href={`https://dexscreener.com/solana/${mint}`} target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: 10, color: "var(--text-muted)", textDecoration: "none" }}>
+            DexScreener →
+          </a>
+          <a href={`https://gmgn.ai/sol/token/${mint}`} target="_blank" rel="noopener noreferrer"
+            style={{ fontSize: 10, color: "var(--accent)", textDecoration: "none" }}>
+            GMGN →
+          </a>
+        </div>
+      </div>
+
+      {/* Chart area */}
+      <div style={{ background: "#0E0C0A", position: "relative", minHeight: 320 }}>
+        {loading && (
+          <div style={{
+            position: "absolute", inset: 0, display: "flex", alignItems: "center",
+            justifyContent: "center", flexDirection: "column", gap: 8,
+          }}>
+            <div style={{ width: 24, height: 24, border: "2px solid var(--accent)", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+            <span style={{ fontSize: 11, color: "var(--text-muted)" }}>載入 GMGN 數據…</span>
+          </div>
+        )}
+        {error && !loading && (
+          <div style={{
+            position: "absolute", inset: 0, display: "flex", alignItems: "center",
+            justifyContent: "center", flexDirection: "column", gap: 12,
+          }}>
+            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
+              暫無 K 線數據
+            </span>
+            <div style={{ display: "flex", gap: 8 }}>
+              <a href={`https://gmgn.ai/sol/token/${mint}`} target="_blank" rel="noopener noreferrer"
+                style={{
+                  fontSize: 11, padding: "6px 14px", borderRadius: 6, cursor: "pointer",
+                  background: "var(--accent)", color: "#fff", textDecoration: "none",
+                }}>
+                在 GMGN 查看
+              </a>
+              <a href={`https://dexscreener.com/solana/${mint}`} target="_blank" rel="noopener noreferrer"
+                style={{
+                  fontSize: 11, padding: "6px 14px", borderRadius: 6, cursor: "pointer",
+                  border: "1px solid var(--border)", color: "var(--text-secondary)", textDecoration: "none",
+                }}>
+                DexScreener
+              </a>
+            </div>
+          </div>
+        )}
+        <div ref={containerRef} style={{ width: "100%", display: error || loading ? "none" : "block" }} />
+      </div>
     </div>
   );
 }
