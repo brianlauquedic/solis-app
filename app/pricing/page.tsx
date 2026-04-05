@@ -91,10 +91,13 @@ export default function PricingPage() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [activating, setActivating] = useState<SubscriptionTier | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isDayMode, setIsDayMode] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("sakura_wallet");
     if (saved) setWalletAddress(saved);
+    const day = localStorage.getItem("sakura_day_mode");
+    if (day === "1") setIsDayMode(true);
   }, []);
 
   const fetchStatus = useCallback(async () => {
@@ -167,19 +170,33 @@ export default function PricingPage() {
 
   const savingsPct = billing === "annual" ? 30 : 0;
 
+  const dayVars = isDayMode ? {
+    "--bg-base":       "#F2EBE0",
+    "--bg-card":       "#EAE0D0",
+    "--bg-card-2":     "#E0D4C0",
+    "--bg-header":     "rgba(242,235,224,0.95)",
+    "--border":        "#C8B89A",
+    "--text-primary":  "#2A1A10",
+    "--text-secondary":"#6B5540",
+    "--text-muted":    "#9B8570",
+    "--accent-soft":   "rgba(192,57,43,0.08)",
+    "--accent-mid":    "rgba(192,57,43,0.18)",
+  } as React.CSSProperties : {} as React.CSSProperties;
+
   return (
     <div style={{
       minHeight: "100vh",
-      background: "var(--bg-base)",
+      background: isDayMode ? "#F2EBE0" : "#09090F",
       color: "var(--text-primary)",
       fontFamily: "var(--font-body, 'Noto Sans JP', sans-serif)",
+      ...dayVars,
     }}>
       {/* ── Header ─────────────────────────────────────────────────── */}
       <header style={{
         position: "sticky", top: 0, zIndex: 100,
         borderBottom: "1px solid var(--border)",
-        background: "var(--bg-base)",
-        backdropFilter: "blur(12px)",
+        background: isDayMode ? "rgba(242,235,224,0.95)" : "rgba(9,9,15,0.92)",
+        backdropFilter: "blur(16px)",
         padding: "0 40px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
         height: 60,
@@ -203,17 +220,12 @@ export default function PricingPage() {
           </span>
         </button>
 
-        <nav style={{ display: "flex", gap: 32 }}>
-          {["為何選擇 Sakura", "資源", "定價"].map(item => (
-            <span key={item} style={{
-              fontSize: 13, color: item === "定價" ? "var(--text-primary)" : "var(--text-secondary)",
-              fontWeight: item === "定價" ? 700 : 400,
-              cursor: "pointer",
-              borderBottom: item === "定價" ? "2px solid var(--accent)" : "none",
-              paddingBottom: 2,
-            }}>{item}</span>
-          ))}
-        </nav>
+        <span style={{
+          fontSize: 14, fontWeight: 700,
+          color: "var(--text-primary)",
+          borderBottom: "2px solid var(--accent)",
+          paddingBottom: 2,
+        }}>定價</span>
 
         <button
           onClick={() => router.push("/")}
