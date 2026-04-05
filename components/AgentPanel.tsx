@@ -906,20 +906,15 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
   const [conditions, setConditions] = useState<GuardianCondition[]>([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [addedOk, setAddedOk] = useState(false);   // inline button feedback
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [customThreshold, setCustomThreshold] = useState<string>("");
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
 
-  function showSuccess(msg: string) {
-    setSuccessMsg(msg);
-    setErrorMsg(null);
-    setTimeout(() => setSuccessMsg(null), 3500);
-  }
-  function showError(msg: string) {
-    setErrorMsg(msg);
-    setSuccessMsg(null);
-    setTimeout(() => setErrorMsg(null), 4000);
+  // Fixed-position viewport toast — guaranteed visible regardless of parent CSS
+  function showToast(msg: string, type: "success" | "error") {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
   }
 
   async function loadConditions() {
@@ -936,10 +931,10 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
   }
 
   async function addCondition() {
-    if (!walletAddress) { showError("請先連接錢包"); return; }
+    if (!walletAddress) { showToast("請先連接錢包", "error"); return; }
     const tpl = CONDITION_TEMPLATES[selectedTemplate];
     const threshold = customThreshold ? parseFloat(customThreshold) : tpl.threshold;
-    if (isNaN(threshold)) { showError("請輸入有效的數值"); return; }
+    if (isNaN(threshold)) { showToast("請輸入有效的數值", "error"); return; }
 
     setAdding(true);
     try {
@@ -960,19 +955,27 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
       });
       if (res.ok) {
         setCustomThreshold("");
-        showSuccess(`✅ 條件已新增：${tpl.label} ${tpl.operator === "lt" ? "<" : ">"} ${threshold}`);
+        setAddedOk(true);
+        setTimeout(() => setAddedOk(false), 2500);
+        showToast(`條件已新增：${tpl.label} ${tpl.operator === "lt" ? "<" : ">"} ${threshold}`, "success");
         await loadConditions();
       } else {
-        const err = await res.json() as { error?: string };
-        showError(err.error ?? "新增失敗，請重試");
+        let errMsg = "新增失敗，請重試";
+        try {
+          const errData = await res.json() as { error?: string; message?: string };
+          if (errData.message) errMsg = errData.message;
+          else if (errData.error === "free_credits_exhausted") errMsg = "免費額度不足，請升級訂閱";
+          else if (errData.error) errMsg = errData.error;
+        } catch { /* ignore parse error */ }
+        showToast(errMsg, "error");
       }
-    } catch { showError("網絡錯誤，請重試"); }
+    } catch { showToast("網絡錯誤，請重試", "error"); }
     finally { setAdding(false); }
   }
 
   async function deleteCondition(id: string) {
     try {
-      await fetch("/api/cron/guardian/conditions", {
+      const res = await fetch("/api/cron/guardian/conditions", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -980,7 +983,10 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
         },
         body: JSON.stringify({ conditionId: id }),
       });
-      setConditions(prev => prev.filter(c => c.id !== id));
+      if (res.ok) {
+        setConditions(prev => prev.filter(c => c.id !== id));
+        showToast("條件已刪除", "success");
+      }
     } catch { /* silent */ }
   }
 
@@ -1020,30 +1026,25 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
         <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{open ? "收起 ▲" : "設置 ▼"}</span>
       </button>
 
+      {/* ── Fixed Viewport Toast (guaranteed always visible) ── */}
+      {toast && (
+        <div style={{
+          position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
+          zIndex: 99999, pointerEvents: "none",
+          background: toast.type === "success" ? "#10B981" : "#EF4444",
+          color: "#fff", fontWeight: 700, fontSize: 14,
+          padding: "12px 24px", borderRadius: 10,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.35)",
+          display: "flex", alignItems: "center", gap: 8,
+          whiteSpace: "nowrap",
+          animation: "fadeInUp 0.2s ease",
+        }}>
+          {toast.type === "success" ? "✅" : "❌"} {toast.msg}
+        </div>
+      )}
+
       {open && (
         <div style={{ marginTop: 16 }}>
-
-          {/* ── Success / Error Toast ── */}
-          {successMsg && (
-            <div style={{
-              background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.35)",
-              borderRadius: 8, padding: "10px 14px", marginBottom: 12,
-              fontSize: 13, color: "#10B981", fontWeight: 600,
-              display: "flex", alignItems: "center", gap: 8,
-            }}>
-              {successMsg}
-            </div>
-          )}
-          {errorMsg && (
-            <div style={{
-              background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
-              borderRadius: 8, padding: "10px 14px", marginBottom: 12,
-              fontSize: 13, color: "#EF4444", fontWeight: 600,
-            }}>
-              ❌ {errorMsg}
-            </div>
-          )}
-
           {loading ? (
             <div style={{ textAlign: "center", padding: 16, color: "var(--text-secondary)", fontSize: 13 }}>
               載入中...
@@ -1137,15 +1138,17 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
                   />
                   <button
                     onClick={addCondition}
-                    disabled={adding}
+                    disabled={adding || addedOk}
                     style={{
                       padding: "6px 16px", borderRadius: 6, border: "none",
-                      background: adding ? "var(--border)" : "var(--accent)",
+                      background: addedOk ? "#10B981" : adding ? "var(--border)" : "var(--accent)",
                       color: "#fff", fontSize: 12, fontWeight: 700,
-                      cursor: adding ? "not-allowed" : "pointer",
+                      cursor: (adding || addedOk) ? "not-allowed" : "pointer",
+                      transition: "background 0.2s",
+                      minWidth: 72,
                     }}
                   >
-                    {adding ? "…" : "+ 新增"}
+                    {adding ? "…" : addedOk ? "✓ 已新增" : "+ 新增"}
                   </button>
                 </div>
               </div>
