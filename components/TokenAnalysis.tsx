@@ -1182,51 +1182,54 @@ function GmgnKlineChart({ mint, symbol, isDayMode = false }: { mint: string; sym
   useEffect(() => { fetchCandles(resolution); }, [fetchCandles, resolution]);
 
   // Mount/update chart
+  // Rebuild chart whenever candles OR theme changes — guarantees correct background
   useEffect(() => {
     if (!containerRef.current || candles.length === 0) return;
 
     const th = CHART_THEMES[chartTheme];
-    let chart = chartRef.current;
-    if (!chart) {
-      // Dynamic import to avoid SSR issues
-      import("lightweight-charts").then(({ createChart, CandlestickSeries }) => {
-        if (!containerRef.current) return;
-        chart = createChart(containerRef.current, {
-          layout: {
-            background: { color: th.bg },
-            textColor:  th.text,
-          },
-          grid: {
-            vertLines:  { color: th.grid },
-            horzLines:  { color: th.grid },
-          },
-          crosshair: { mode: 1 },
-          rightPriceScale: { borderColor: th.border },
-          timeScale: {
-            borderColor:    th.border,
-            timeVisible:    true,
-            secondsVisible: false,
-          },
-          width:  containerRef.current.clientWidth,
-          height: 320,
-        });
-        chartRef.current = chart;
-        const series = chart.addSeries(CandlestickSeries, {
-          upColor:        "#3D7A5C",
-          downColor:      "#A8293A",
-          borderUpColor:  "#3D7A5C",
-          borderDownColor:"#A8293A",
-          wickUpColor:    "#3D7A5C",
-          wickDownColor:  "#A8293A",
-        });
-        seriesRef.current = series;
-        series.setData(candles);
-        chart.timeScale().fitContent();
-      });
-    } else if (seriesRef.current) {
-      seriesRef.current.setData(candles);
-      chart.timeScale().fitContent();
+
+    // Always destroy and recreate so theme colors are applied cleanly
+    if (chartRef.current) {
+      chartRef.current.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
     }
+
+    import("lightweight-charts").then(({ createChart, CandlestickSeries }) => {
+      if (!containerRef.current) return;
+      const chart = createChart(containerRef.current, {
+        layout: {
+          background: { color: th.bg },
+          textColor:  th.text,
+        },
+        grid: {
+          vertLines:  { color: th.grid },
+          horzLines:  { color: th.grid },
+        },
+        crosshair: { mode: 1 },
+        rightPriceScale: { borderColor: th.border },
+        timeScale: {
+          borderColor:    th.border,
+          timeVisible:    true,
+          secondsVisible: false,
+        },
+        width:  containerRef.current.clientWidth,
+        height: 320,
+      });
+      chartRef.current = chart;
+      const series = chart.addSeries(CandlestickSeries, {
+        upColor:        "#3D7A5C",
+        downColor:      "#A8293A",
+        borderUpColor:  "#3D7A5C",
+        borderDownColor:"#A8293A",
+        wickUpColor:    "#3D7A5C",
+        wickDownColor:  "#A8293A",
+      });
+      seriesRef.current = series;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      series.setData(candles as any);
+      chart.timeScale().fitContent();
+    });
 
     // Resize handler
     const handleResize = () => {
@@ -1237,18 +1240,6 @@ function GmgnKlineChart({ mint, symbol, isDayMode = false }: { mint: string; sym
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [candles, chartTheme]);
-
-  // Apply theme change to existing chart (without re-fetching)
-  useEffect(() => {
-    if (!chartRef.current) return;
-    const th = CHART_THEMES[chartTheme];
-    chartRef.current.applyOptions({
-      layout: { background: { color: th.bg }, textColor: th.text },
-      grid:   { vertLines: { color: th.grid }, horzLines: { color: th.grid } },
-      rightPriceScale: { borderColor: th.border },
-      timeScale: { borderColor: th.border },
-    });
-  }, [chartTheme]);
 
   // Cleanup on unmount
   useEffect(() => {
