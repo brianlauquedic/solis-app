@@ -10,6 +10,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { payWithPhantom } from "@/lib/x402";
 import { getDeviceId } from "@/lib/device-id";
 import CopyTradeModal from "./CopyTradeModal";
+import AgentFactory from "./AgentFactory";
 
 const SOLIS_FEE_WALLET_ADDR = "Goc5kAMb9NTXjobxzZogAWaHwajmQjw7CdmATWJN1mQh";
 
@@ -341,7 +342,8 @@ const QUICK_ACTION_DEFS: Array<{
   { icon: "🌿", label: "USDC 理财",   protocol: "Kamino Finance",   fallbackSub: "Kamino Finance",     color: "#10B981", prompt: "我的 USDC 存哪里利息最高" },
   { icon: "🌊", label: "代幣兑換",    protocol: null,               fallbackSub: "Jupiter 最優路由",   color: "#06B6D4", prompt: "把 1 SOL 換成 USDC" },
   { icon: "🪷", label: "收益机会",    protocol: null,               fallbackSub: "全部 DeFi 机会排行", color: "#F59E0B", prompt: "给我看所有收益机会" },
-  { icon: "🐋", label: "聰明錢追蹤", protocol: null,               fallbackSub: "24h 共識買入信號",   color: "#C0392B", prompt: null },
+  { icon: "🐋", label: "聰明錢追蹤",  protocol: null,               fallbackSub: "24h 共識買入信號",   color: "#C0392B", prompt: null },
+  { icon: "🏭", label: "Agent Workshop", protocol: null,            fallbackSub: "自然語言創建 Agent", color: "#8B5CF6", prompt: null },
 ];
 
 // ── Suggestion Chips ─────────────────────────────────────────────
@@ -373,7 +375,8 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [advisorQuota, setAdvisorQuota] = useState<{ remaining: number; used: number; admin?: boolean } | null>(null);
   const [advisorPaymentSig, setAdvisorPaymentSig] = useState<string | null>(null);
-  const [showSmartMoney, setShowSmartMoney] = useState(false);
+  const [showSmartMoney, setShowSmartMoney]       = useState(false);
+  const [showAgentFactory, setShowAgentFactory]   = useState(false);
   const lastYieldRef = useRef<LiveYield | null>(null);
   const lastAlertTimestampRef = useRef<number>(0);
 
@@ -1080,12 +1083,18 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
               const sub = liveOpp
                 ? `${qa.protocol?.split(" ")[0]}，APY ${liveOpp.apyDisplay}`
                 : qa.fallbackSub;
-              const isSmartMoney = qa.prompt === null;
-              const isActive = isSmartMoney && showSmartMoney;
+              const isSmartMoney    = qa.label === "聰明錢追蹤";
+              const isAgentFactory = qa.label === "Agent Workshop";
+              const isToggle       = qa.prompt === null;
+              const isActive       = (isSmartMoney && showSmartMoney) || (isAgentFactory && showAgentFactory);
               return (
                 <button
                   key={qa.label}
-                  onClick={() => isSmartMoney ? setShowSmartMoney(v => !v) : sendMessage(qa.prompt!)}
+                  onClick={() => {
+                    if (isSmartMoney)    { setShowSmartMoney(v => !v); setShowAgentFactory(false); }
+                    else if (isAgentFactory) { setShowAgentFactory(v => !v); setShowSmartMoney(false); }
+                    else if (!isToggle)  sendMessage(qa.prompt!);
+                  }}
                   style={{
                     background: isActive ? "var(--accent-soft)" : "var(--bg-card)",
                     border: `1px solid ${isActive ? "var(--accent)" : qa.color + "30"}`,
@@ -1122,6 +1131,9 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
 
       {/* ── Smart Money Panel ── */}
       {messages.length === 0 && showSmartMoney && <SmartMoneyPanel walletAddress={walletAddress} />}
+
+      {/* ── Agent Workshop Panel ── */}
+      {messages.length === 0 && showAgentFactory && <AgentFactory />}
 
       {/* ── Quota / session notice ── */}
       {advisorQuota && !advisorQuota.admin && messages.length === 0 && (

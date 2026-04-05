@@ -22,6 +22,11 @@ import {
   sakPrepareStakeTx,
   sakPrepareLendTx,
   sakPrepareSwapTx,
+  sakGetTrendingTokens,
+  sakGetSocialSentiment,
+  sakGetAlloraInference,
+  sakGetSanctumAPY,
+  sakGetOkxQuote,
   SOL_MINT,
   USDC_MINT,
 } from "@/lib/agent";
@@ -221,6 +226,59 @@ Use symbol='SOL' for Solana, or provide mint address for SPL tokens.`,
         },
       },
       required: ["symbol"],
+    },
+  },
+  {
+    name: "get_trending_tokens",
+    description: "Get currently trending Solana/crypto tokens from CoinGecko with 24h price change. Use to identify market momentum and hot sectors.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_price_prediction",
+    description: "Get Allora AI on-chain machine learning price inference for SOL. Returns a short-term bullish/bearish signal based on decentralized ML models.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        asset: { type: "string", description: "Asset to predict (currently only 'SOL' supported)" },
+      },
+      required: [],
+    },
+  },
+  {
+    name: "get_social_sentiment",
+    description: "Get social media sentiment for a token ticker using Elfa AI. Returns mention count, bullish/bearish/neutral sentiment, and top mentions.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        ticker: { type: "string", description: "Token ticker symbol e.g. SOL, WIF, BONK" },
+      },
+      required: ["ticker"],
+    },
+  },
+  {
+    name: "get_sanctum_apy",
+    description: "Get real-time APY rates for all Sanctum LST (Liquid Staking Tokens) including mSOL, JitoSOL, bSOL. More comprehensive than Marinade-only data.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "compare_swap_quotes",
+    description: "Compare Jupiter vs OKX DEX swap quotes to find the best route and price for a token swap. Returns both quotes and recommends the better option. Use before any swap recommendation to ensure best execution.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        input_mint:  { type: "string", description: "Input token mint address (use So11111111111111111111111111111111111111112 for SOL)" },
+        output_mint: { type: "string", description: "Output token mint address" },
+        amount:      { type: "number", description: "Amount in smallest unit (lamports for SOL: multiply SOL amount by 1e9)" },
+      },
+      required: ["input_mint", "output_mint", "amount"],
     },
   },
 ];
@@ -442,6 +500,38 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       } catch (err) {
         return { error: `Technical analysis failed: ${err instanceof Error ? err.message : String(err)}` };
       }
+    }
+    case "get_trending_tokens": {
+      const trending = await sakGetTrendingTokens();
+      return { trending, count: trending.length };
+    }
+    case "get_price_prediction": {
+      const prediction = await sakGetAlloraInference();
+      return prediction ?? { error: "Allora inference unavailable" };
+    }
+    case "get_social_sentiment": {
+      const ticker = (input as { ticker?: string }).ticker ?? "SOL";
+      const sentiment = await sakGetSocialSentiment(ticker);
+      return sentiment ?? { error: "Elfa API unavailable - set ELFA_API_KEY env var" };
+    }
+    case "get_sanctum_apy": {
+      const lsts = await sakGetSanctumAPY();
+      return { lsts, count: lsts.length };
+    }
+    case "compare_swap_quotes": {
+      const result = await sakGetOkxQuote(
+        input.input_mint as string,
+        input.output_mint as string,
+        input.amount as number
+      );
+      const okxAvailable = !!process.env.OKX_API_KEY;
+      return {
+        ...result,
+        okxAvailable,
+        note: !okxAvailable
+          ? "OKX DEX 未配置 API Key，僅顯示 Jupiter 報價。設置 OKX_API_KEY 環境變量即可啟用雙聚合器比較。"
+          : undefined,
+      };
     }
     default:
       return { error: `Unknown tool: ${name}` };
