@@ -1123,6 +1123,27 @@ interface Candle {
   volume: number;
 }
 
+type ChartTheme = "dark" | "light";
+
+const CHART_THEMES: Record<ChartTheme, {
+  bg: string; text: string; grid: string; border: string; bgLabel: string;
+}> = {
+  dark: {
+    bg:      "#0E0C0A",
+    text:    "#8B7D72",
+    grid:    "#1A1714",
+    border:  "#2E2820",
+    bgLabel: "#141210",
+  },
+  light: {
+    bg:      "#FFFFFF",
+    text:    "#374151",
+    grid:    "#F3F4F6",
+    border:  "#E5E7EB",
+    bgLabel: "#F9FAFB",
+  },
+};
+
 function GmgnKlineChart({ mint, symbol }: { mint: string; symbol: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1133,6 +1154,7 @@ function GmgnKlineChart({ mint, symbol }: { mint: string; symbol: string }) {
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(false);
   const [candles, setCandles]       = useState<Candle[]>([]);
+  const [chartTheme, setChartTheme] = useState<ChartTheme>("dark");
 
   const RESOLUTIONS: Resolution[] = ["5m", "15m", "1h", "4h", "1d"];
 
@@ -1161,6 +1183,7 @@ function GmgnKlineChart({ mint, symbol }: { mint: string; symbol: string }) {
   useEffect(() => {
     if (!containerRef.current || candles.length === 0) return;
 
+    const th = CHART_THEMES[chartTheme];
     let chart = chartRef.current;
     if (!chart) {
       // Dynamic import to avoid SSR issues
@@ -1168,17 +1191,17 @@ function GmgnKlineChart({ mint, symbol }: { mint: string; symbol: string }) {
         if (!containerRef.current) return;
         chart = createChart(containerRef.current, {
           layout: {
-            background: { color: "#0E0C0A" },
-            textColor:  "#8B7D72",
+            background: { color: th.bg },
+            textColor:  th.text,
           },
           grid: {
-            vertLines:  { color: "#1A1714" },
-            horzLines:  { color: "#1A1714" },
+            vertLines:  { color: th.grid },
+            horzLines:  { color: th.grid },
           },
           crosshair: { mode: 1 },
-          rightPriceScale: { borderColor: "#2E2820" },
+          rightPriceScale: { borderColor: th.border },
           timeScale: {
-            borderColor:    "#2E2820",
+            borderColor:    th.border,
             timeVisible:    true,
             secondsVisible: false,
           },
@@ -1211,7 +1234,19 @@ function GmgnKlineChart({ mint, symbol }: { mint: string; symbol: string }) {
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [candles]);
+  }, [candles, chartTheme]);
+
+  // Apply theme change to existing chart (without re-fetching)
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const th = CHART_THEMES[chartTheme];
+    chartRef.current.applyOptions({
+      layout: { background: { color: th.bg }, textColor: th.text },
+      grid:   { vertLines: { color: th.grid }, horzLines: { color: th.grid } },
+      rightPriceScale: { borderColor: th.border },
+      timeScale: { borderColor: th.border },
+    });
+  }, [chartTheme]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -1255,7 +1290,19 @@ function GmgnKlineChart({ mint, symbol }: { mint: string; symbol: string }) {
             ))}
           </div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Theme toggle */}
+          <button
+            onClick={() => setChartTheme(t => t === "dark" ? "light" : "dark")}
+            title={chartTheme === "dark" ? "切換白色背景" : "切換深色背景"}
+            style={{
+              fontSize: 13, background: "none", border: "1px solid var(--border)",
+              borderRadius: 6, cursor: "pointer", padding: "2px 8px",
+              color: "var(--text-secondary)", lineHeight: 1,
+            }}
+          >
+            {chartTheme === "dark" ? "☀️" : "🌙"}
+          </button>
           <a href={`https://dexscreener.com/solana/${mint}`} target="_blank" rel="noopener noreferrer"
             style={{ fontSize: 10, color: "var(--text-muted)", textDecoration: "none" }}>
             DexScreener →
@@ -1268,7 +1315,7 @@ function GmgnKlineChart({ mint, symbol }: { mint: string; symbol: string }) {
       </div>
 
       {/* Chart area */}
-      <div style={{ background: "#0E0C0A", position: "relative", minHeight: 320 }}>
+      <div style={{ background: CHART_THEMES[chartTheme].bg, position: "relative", minHeight: 320 }}>
         {loading && (
           <div style={{
             position: "absolute", inset: 0, display: "flex", alignItems: "center",
