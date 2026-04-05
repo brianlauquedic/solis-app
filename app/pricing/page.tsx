@@ -286,19 +286,19 @@ export default function PricingPage() {
             background: "var(--bg-card)", border: "1px solid var(--border)",
             borderRadius: 20,
           }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🏢</div>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>⛩️</div>
             <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>企業方案</h2>
             <p style={{ fontSize: 15, color: "var(--text-secondary)", maxWidth: 480, margin: "0 auto 28px" }}>
               需要更大配額、私有部署或 API 整合？歡迎洽談企業定制方案。
             </p>
             <button
-              onClick={() => window.open("https://twitter.com/sakura_defi", "_blank")}
+              onClick={() => window.open("https://t.me/mmm0113mmm0113", "_blank")}
               style={{
                 padding: "12px 32px", borderRadius: 10,
                 background: "var(--accent)", border: "none",
                 color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer",
               }}
-            >聯繫我們</button>
+            >✈️ Telegram 聯繫我們</button>
           </div>
         ) : (
           <>
