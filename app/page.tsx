@@ -351,6 +351,7 @@ function AppContent() {
                 <AgentPanel
                   walletAddress={walletAddress}
                   walletSnapshot={walletSnapshot}
+                  isDayMode={isDayMode}
                 />
               </ErrorBoundary>
             )}

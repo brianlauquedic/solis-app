@@ -43,6 +43,7 @@ interface RebalancePlan {
 interface Props {
   walletAddress: string;
   walletSnapshot?: WalletSnapshot;
+  isDayMode?: boolean;
 }
 
 type AgentState = "idle" | "scanning" | "analyzing" | "generating" | "done" | "error";
@@ -227,7 +228,7 @@ function genBacktestSeries(mode: StrategyMode): { time: number; value: number }[
   });
 }
 
-export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
+export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = false }: Props) {
   const { t } = useLang();
   const [agentState, setAgentState] = useState<AgentState>("idle");
   const [stepLabel, setStepLabel] = useState("");
@@ -526,7 +527,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot }: Props) {
           >
             {showBacktest ? "▲ 收起回測圖表" : "▼ 查看 30 日策略回測"}
           </button>
-          {showBacktest && <StrategyBacktestChart mode={strategyMode} defs={STRATEGY_DEFS} />}
+          {showBacktest && <StrategyBacktestChart mode={strategyMode} defs={STRATEGY_DEFS} isDayMode={isDayMode} />}
         </div>
       </div>
 
@@ -1108,37 +1109,49 @@ function GuardianConditionsPanel() {
 }
 
 // ── Strategy Backtest Chart ───────────────────────────────────────────────
+// Reuse same theme map from TokenAnalysis approach
+const BACKTEST_THEMES = {
+  dark:  { bg: "#0E0C0A", text: "#8B7D72", grid: "#1A1714", border: "#2E2820", dimLine: "#2E2820" },
+  light: { bg: "#FFFFFF",  text: "#374151", grid: "#F3F4F6", border: "#E5E7EB", dimLine: "#D1D5DB" },
+};
+
 function StrategyBacktestChart({
   mode,
   defs,
+  isDayMode = false,
 }: {
   mode: StrategyMode;
   defs: StrategyDef[];
+  isDayMode?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chartRef     = useRef<any>(null);
+  const chartTheme   = isDayMode ? "light" : "dark";
 
+  // Rebuild on mode OR theme change
   useEffect(() => {
     if (!containerRef.current) return;
+
+    const th = BACKTEST_THEMES[chartTheme];
+
+    // Always destroy and recreate for correct theme colors
+    if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
 
     import("lightweight-charts").then(({ createChart, LineSeries }) => {
       if (!containerRef.current) return;
 
-      // Destroy old chart
-      if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
-
       const chart = createChart(containerRef.current, {
         layout: {
-          background: { color: "#0E0C0A" },
-          textColor:  "#8B7D72",
+          background: { color: th.bg },
+          textColor:  th.text,
         },
         grid: {
-          vertLines: { color: "#1A1714" },
-          horzLines: { color: "#1A1714" },
+          vertLines: { color: th.grid },
+          horzLines: { color: th.grid },
         },
-        rightPriceScale: { borderColor: "#2E2820" },
-        timeScale: { borderColor: "#2E2820", timeVisible: true },
+        rightPriceScale: { borderColor: th.border },
+        timeScale: { borderColor: th.border, timeVisible: true },
         width:  containerRef.current.clientWidth,
         height: 220,
       });
@@ -1147,11 +1160,10 @@ function StrategyBacktestChart({
       // Draw all 3 strategies as lines, highlight selected
       defs.forEach(def => {
         const series = chart.addSeries(LineSeries, {
-          color:     def.id === mode ? def.badgeColor : "#2E2820",
+          color:     def.id === mode ? def.badgeColor : th.dimLine,
           lineWidth: def.id === mode ? 2 : 1,
-          lineStyle: def.id === mode ? 0 : 2, // solid vs dashed
+          lineStyle: def.id === mode ? 0 : 2,
         });
-        // Cast time to UTCTimestamp
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         series.setData(genBacktestSeries(def.id) as any);
       });
@@ -1162,15 +1174,16 @@ function StrategyBacktestChart({
     return () => {
       if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
     };
-  }, [mode, defs]);
+  }, [mode, defs, chartTheme]);
 
   const activeDef = defs.find(d => d.id === mode)!;
+  const th = BACKTEST_THEMES[chartTheme];
 
   return (
     <div style={{
       marginTop: 12, borderRadius: 12, overflow: "hidden",
       border: `1px solid ${activeDef.badgeColor}30`,
-      background: "#0E0C0A",
+      background: th.bg,
     }}>
       {/* Legend */}
       <div style={{
@@ -1183,7 +1196,7 @@ function StrategyBacktestChart({
         <div style={{ display: "flex", gap: 12 }}>
           {defs.map(d => (
             <span key={d.id} style={{ fontSize: 9, color: d.id === mode ? d.badgeColor : "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>
-              <span style={{ display: "inline-block", width: 12, height: 2, background: d.id === mode ? d.badgeColor : "#2E2820", borderRadius: 1 }} />
+              <span style={{ display: "inline-block", width: 12, height: 2, background: d.id === mode ? d.badgeColor : th.dimLine, borderRadius: 1 }} />
               {d.name}
             </span>
           ))}
