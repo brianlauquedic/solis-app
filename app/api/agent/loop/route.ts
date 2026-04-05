@@ -35,6 +35,14 @@ import {
   sakGetDefiLlamaData,
   sakGetFearGreed,
   sakGetCryptoNews,
+  sakGetPythPrice,
+  sakGetNetworkStatus,
+  sakGetMessariResearch,
+  sakGetDriftPerpMarkets,
+  sakGetLimitOrders,
+  sakGetSanctumLSTDetails,
+  sakGetElfaTrendingTokens,
+  sakEstimateCloseEmptyAccounts,
   SOL_MINT,
   USDC_MINT,
 } from "@/lib/agent";
@@ -372,6 +380,86 @@ Use symbol='SOL' for Solana, or provide mint address for SPL tokens.`,
       required: [],
     },
   },
+  {
+    name: "get_pyth_price",
+    description: "Get real-time price from Pyth Network oracle (updates every 400ms). More accurate than CoinGecko for trading decisions. Use for SOL, BTC, ETH price checks when precision matters or when user is about to execute a trade.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        symbol: { type: "string", description: "Token symbol: SOL, BTC, ETH, BNB, etc." },
+      },
+      required: ["symbol"],
+    },
+  },
+  {
+    name: "get_network_status",
+    description: "Get current Solana network TPS and health status. Use when user asks why transactions are slow, whether the network is congested, or before recommending time-sensitive trades.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_messari_research",
+    description: "Query Messari AI for institutional-grade crypto research. Returns deep fundamental analysis, market reports, and protocol insights. Use when user asks for serious research, protocol fundamentals, or investment thesis beyond price action.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        query: { type: "string", description: "Research question (e.g. 'What is Solana DeFi TVL trend?' or 'Marinade Finance protocol analysis')" },
+      },
+      required: ["query"],
+    },
+  },
+  {
+    name: "get_drift_perp_markets",
+    description: "Get available Drift Protocol perpetual futures markets with real-time funding rates. Use when user asks about perpetual trading, funding rates, long/short costs, or Drift market overview.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_user_limit_orders",
+    description: "Get user's open Jupiter limit orders. Use when user asks about their pending orders, active limit orders, or order management.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        wallet_address: { type: "string", description: "User wallet address" },
+      },
+      required: ["wallet_address"],
+    },
+  },
+  {
+    name: "get_sanctum_lst_details",
+    description: "Get comprehensive LST (Liquid Staking Token) data from Sanctum including APY, USD price, and TVL for mSOL, JitoSOL, bSOL, stSOL. More complete than get_sanctum_apy. Use for detailed LST comparison.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "get_elfa_trending_tokens",
+    description: "Get top trending tokens across all crypto social media right now using Elfa AI smart money signals. Shows mention counts, smart money mentions, and sentiment. Use when user asks what the market is talking about or what's trending.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: "estimate_close_empty_accounts",
+    description: "Estimate how much SOL can be reclaimed by closing empty token accounts in the user's wallet. Each empty account wastes ~0.002 SOL in rent. Use when user asks about wallet optimization or reclaiming SOL.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        wallet_address: { type: "string", description: "User wallet address to scan" },
+      },
+      required: ["wallet_address"],
+    },
+  },
 ];
 
 // ── Tool execution (SAK-backed) ──────────────────────────────────────────────
@@ -682,6 +770,81 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
           ? "CryptoPanic API unavailable or no recent news for this token"
           : `${news.items.length} latest news items for ${currency}`,
       };
+    }
+    case "get_pyth_price": {
+      const symbol = (input.symbol as string ?? "SOL").toUpperCase();
+      const result = await sakGetPythPrice(symbol);
+      if (!result) return { error: `Pyth price unavailable for ${symbol}. Try get_token_price instead.` };
+      return { ...result, dataSource: "Pyth Network Oracle", note: "Real-time oracle price (updates every 400ms)" };
+    }
+    case "get_network_status": {
+      const status = await sakGetNetworkStatus();
+      return { ...status, dataSource: "Solana RPC", recommendation:
+        status.status === "healthy"   ? "網絡狀況良好，適合執行交易。" :
+        status.status === "congested" ? "網絡輕微擁堵，建議稍後或提高優先費執行交易。" :
+                                        "網絡嚴重擁堵，非緊急交易建議等待網絡恢復。",
+      };
+    }
+    case "get_messari_research": {
+      const query = input.query as string;
+      const result = await sakGetMessariResearch(query);
+      if (!result) return {
+        error: "Messari API 未配置。請在 .env.local 設置 MESSARI_API_KEY=your_key。",
+        note:  "Messari 提供機構級加密研究，可在 messari.io 申請 API key。",
+      };
+      return { ...result, dataSource: "Messari AI Research" };
+    }
+    case "get_drift_perp_markets": {
+      const markets = await sakGetDriftPerpMarkets();
+      if (!markets.length) return { error: "Drift perp markets unavailable", markets: [] };
+      const longFavored  = markets.filter(m => m.bias === "long-favored").map(m => m.name);
+      const shortFavored = markets.filter(m => m.bias === "short-favored").map(m => m.name);
+      return {
+        markets,
+        summary: {
+          longFavored,
+          shortFavored,
+          note: longFavored.length  ? `${longFavored.join(", ")} 目前多頭承擔資金費用（市場偏多）` :
+                shortFavored.length ? `${shortFavored.join(", ")} 目前空頭承擔資金費用（市場偏空）` :
+                                      "市場情緒中性，資金費率接近零。",
+        },
+        dataSource: "Drift Protocol via SAK DefiPlugin",
+      };
+    }
+    case "get_user_limit_orders": {
+      const wallet = input.wallet_address as string;
+      const orders = await sakGetLimitOrders(wallet);
+      return {
+        orders,
+        count: orders.length,
+        dataSource: "Jupiter Limit Orders via SAK TokenPlugin",
+        note: orders.length === 0 ? "No open limit orders found for this wallet." : undefined,
+      };
+    }
+    case "get_sanctum_lst_details": {
+      const lsts = await sakGetSanctumLSTDetails();
+      if (!lsts.length) return { error: "Sanctum LST details unavailable", lsts: [] };
+      const bestAPY = lsts.reduce((a, b) => a.apy > b.apy ? a : b);
+      return {
+        lsts,
+        bestAPY: bestAPY.symbol,
+        dataSource: "Sanctum Protocol via SAK DefiPlugin",
+        summary: `目前 APY 最高的 LST 是 ${bestAPY.symbol}（${(bestAPY.apy * 100).toFixed(2)}%），TVL $${(bestAPY.tvl / 1e6).toFixed(0)}M。`,
+      };
+    }
+    case "get_elfa_trending_tokens": {
+      const tokens = await sakGetElfaTrendingTokens();
+      return {
+        tokens,
+        count: tokens.length,
+        dataSource: tokens.some(t => t.smartMentions > 0) ? "Elfa AI Smart Money Signals" : "CoinGecko Trending (Elfa fallback)",
+        note: tokens.length === 0 ? "Trending data unavailable" : undefined,
+      };
+    }
+    case "estimate_close_empty_accounts": {
+      const wallet = input.wallet_address as string;
+      const result = await sakEstimateCloseEmptyAccounts(wallet);
+      return { ...result, dataSource: "Solana RPC Token Accounts", action: result.estimatedAccounts > 0 ? "可在錢包管理頁面執行清理" : undefined };
     }
     default:
       return { error: `Unknown tool: ${name}` };

@@ -759,3 +759,288 @@ export async function sakGetFearGreed(): Promise<FearGreedResult | null> {
     };
   } catch { return null; }
 }
+
+// ── SAK 全面運用：8 個高價值新工具 ──────────────────────────────────────────
+
+/**
+ * 1. Pyth Network 實時 Oracle 價格 (TokenPlugin)
+ * 比 CoinGecko 更即時（400ms 更新），適合交易決策
+ */
+export async function sakGetPythPrice(
+  symbol: string
+): Promise<{ price: number; confidence: number; symbol: string; feedId?: string } | null> {
+  try {
+    const agent  = createReadOnlyAgent();
+    const m      = agent.methods as Record<string, (...a: unknown[]) => Promise<unknown>>;
+    // 先取 feed ID，再取價格
+    const feedId = await m.fetchPythPriceFeedID?.(symbol, "stable") as string | undefined;
+    if (feedId) {
+      const price = await m.fetchPythPrice?.(feedId) as number | undefined;
+      if (price) return { price, confidence: 0, symbol: symbol.toUpperCase(), feedId };
+    }
+    // fallback: 直接用 symbol 取價（部分版本支援）
+    const direct = await m.fetchPythPrice?.(symbol) as number | undefined;
+    if (direct) return { price: direct, confidence: 0, symbol: symbol.toUpperCase() };
+  } catch { /* fallback below */ }
+  return null;
+}
+
+/**
+ * 2. Solana 網絡狀態 — TPS + 健康度 (TokenPlugin)
+ * AI 可回答「現在網絡擁堵嗎？」「為什麼 tx 很慢？」
+ */
+export async function sakGetNetworkStatus(): Promise<{
+  tps: number;
+  status: "healthy" | "congested" | "degraded";
+  statusLabel: string;
+}> {
+  const defaultStatus = { tps: 0, status: "healthy" as const, statusLabel: "未知" };
+  try {
+    const agent  = createReadOnlyAgent();
+    const m      = agent.methods as Record<string, (...a: unknown[]) => Promise<unknown>>;
+    const tps    = await m.getTPS?.() as number | undefined;
+    if (tps !== undefined && tps !== null) {
+      const status =
+        tps > 2000 ? "healthy" :
+        tps > 800  ? "congested" : "degraded";
+      const statusLabel =
+        status === "healthy"   ? `健康（${tps} TPS）` :
+        status === "congested" ? `輕微擁堵（${tps} TPS）` :
+                                 `嚴重擁堵（${tps} TPS）`;
+      return { tps, status, statusLabel };
+    }
+  } catch { /* fallback */ }
+  // Fallback: Solana RPC getRecentPerformanceSamples
+  try {
+    const conn = new Connection(RPC_URL, "confirmed");
+    const samples = await conn.getRecentPerformanceSamples(1);
+    if (samples[0]) {
+      const tps = Math.round(samples[0].numTransactions / samples[0].samplePeriodSecs);
+      const status = tps > 2000 ? "healthy" : tps > 800 ? "congested" : "degraded";
+      return { tps, status, statusLabel: `${status === "healthy" ? "健康" : status === "congested" ? "輕微擁堵" : "嚴重擁堵"}（${tps} TPS）` };
+    }
+  } catch { /* ignore */ }
+  return defaultStatus;
+}
+
+/**
+ * 3. Messari AI 機構研究 (MiscPlugin)
+ * 提供機構級加密研究報告，需要 MESSARI_API_KEY
+ */
+export async function sakGetMessariResearch(
+  query: string
+): Promise<{ answer: string; sources?: string[] } | null> {
+  const key = process.env.MESSARI_API_KEY;
+  if (!key) return null;  // 靜默返回 null，不影響其他功能
+  try {
+    const agent  = createReadOnlyAgent();
+    const m      = agent.methods as Record<string, (...a: unknown[]) => Promise<unknown>>;
+    const result = await m.askMessariAi?.(query) as
+      { answer?: string; sources?: string[]; data?: { answer?: string } } | undefined;
+    if (result?.answer) return { answer: result.answer, sources: result.sources };
+    if (result?.data?.answer) return { answer: result.data.answer };
+  } catch { /* no fallback — Messari is paid */ }
+  return null;
+}
+
+/**
+ * 4. Drift 永續合約市場 + 資金費率 (DefiPlugin)
+ * AI 可回答「Drift 上 SOL 資金費率是多少？做多做空哪個更划算？」
+ */
+export async function sakGetDriftPerpMarkets(): Promise<Array<{
+  name: string;
+  baseAsset: string;
+  fundingRate: number;    // 每小時資金費率（%）
+  fundingRatePct: string;
+  bias: "long-favored" | "short-favored" | "neutral";
+}>> {
+  try {
+    const agent  = createReadOnlyAgent();
+    const m      = agent.methods as Record<string, (...a: unknown[]) => Promise<unknown>>;
+    const markets = await m.getAvailableDriftPerpMarkets?.() as
+      Array<{ marketName?: string; baseAssetSymbol?: string; marketIndex?: number }> | undefined;
+    if (!markets?.length) return [];
+
+    // 並行取各市場資金費率（最多 6 個）
+    const top = markets.slice(0, 6);
+    const rates = await Promise.allSettled(
+      top.map(mk => m.getDriftFundingRateAsPercentage?.(mk.marketIndex ?? 0, "perp"))
+    );
+
+    return top.map((mk, i) => {
+      const rateRaw = rates[i].status === "fulfilled"
+        ? (rates[i] as PromiseFulfilledResult<unknown>).value as number ?? 0
+        : 0;
+      const rate = parseFloat((rateRaw * 100).toFixed(4));
+      return {
+        name:           mk.marketName ?? mk.baseAssetSymbol ?? `Market ${i}`,
+        baseAsset:      mk.baseAssetSymbol ?? "?",
+        fundingRate:    rateRaw,
+        fundingRatePct: `${rate > 0 ? "+" : ""}${rate}%/hr`,
+        bias:           rate > 0.001 ? "long-favored" : rate < -0.001 ? "short-favored" : "neutral",
+      };
+    });
+  } catch { return []; }
+}
+
+/**
+ * 5. Jupiter 開放限價單 (TokenPlugin)
+ * 查詢用戶當前掛單狀況
+ */
+export async function sakGetLimitOrders(
+  walletAddress: string
+): Promise<Array<{
+  orderId: string;
+  inputMint: string;
+  outputMint: string;
+  inputAmount: number;
+  outputAmount: number;
+  price: number;
+  expiredAt?: string;
+}>> {
+  try {
+    const agent  = createReadOnlyAgent();
+    const m      = agent.methods as Record<string, (...a: unknown[]) => Promise<unknown>>;
+    const orders = await m.getOpenLimitOrders?.(walletAddress) as
+      Array<{
+        publicKey?: string;
+        account?: {
+          inputMint?: { toString: () => string };
+          outputMint?: { toString: () => string };
+          oriInAmount?: { toString: () => string };
+          oriOutAmount?: { toString: () => string };
+          expiredAt?: { toNumber: () => number } | null;
+        };
+      }> | undefined;
+    if (!orders?.length) return [];
+    return orders.map(o => {
+      const a = o.account ?? {};
+      const inAmt  = Number(a.oriInAmount?.toString()  ?? "0");
+      const outAmt = Number(a.oriOutAmount?.toString() ?? "0");
+      return {
+        orderId:      o.publicKey ?? "",
+        inputMint:    a.inputMint?.toString()  ?? "",
+        outputMint:   a.outputMint?.toString() ?? "",
+        inputAmount:  inAmt,
+        outputAmount: outAmt,
+        price:        inAmt > 0 ? outAmt / inAmt : 0,
+        expiredAt:    a.expiredAt
+          ? new Date(a.expiredAt.toNumber() * 1000).toISOString().slice(0, 10)
+          : undefined,
+      };
+    });
+  } catch { return []; }
+}
+
+/**
+ * 6. Sanctum LST 完整詳情 — 價格 + TVL + APY (DefiPlugin)
+ * 比現有的 sakGetSanctumAPY 更豐富，含 USD 價格和 TVL
+ */
+export async function sakGetSanctumLSTDetails(): Promise<Array<{
+  symbol:  string;
+  name:    string;
+  mint:    string;
+  apy:     number;
+  price:   number;   // USD price
+  tvl:     number;   // TVL in USD
+}>> {
+  const known = [
+    { symbol: "mSOL",    name: "Marinade SOL",   mint: "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So" },
+    { symbol: "JitoSOL", name: "Jito SOL",       mint: "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn" },
+    { symbol: "bSOL",    name: "BlazeStake SOL", mint: "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1" },
+    { symbol: "stSOL",   name: "Lido stSOL",     mint: "7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj" },
+  ];
+  try {
+    const agent = createReadOnlyAgent();
+    const m     = agent.methods as Record<string, (...a: unknown[]) => Promise<unknown>>;
+
+    const [apyRes, priceRes, tvlRes] = await Promise.allSettled([
+      Promise.allSettled(known.map(k => m.sanctumGetLSTAPY?.(k.mint))),
+      Promise.allSettled(known.map(k => m.sanctumGetLSTPrice?.(k.mint))),
+      Promise.allSettled(known.map(k => m.sanctumGetLSTTVL?.(k.mint))),
+    ]);
+
+    return known.map((k, i) => ({
+      symbol: k.symbol,
+      name:   k.name,
+      mint:   k.mint,
+      apy:   apyRes.status === "fulfilled"  && apyRes.value[i].status  === "fulfilled"
+        ? (apyRes.value[i] as PromiseFulfilledResult<unknown>).value as number ?? 0 : 0,
+      price: priceRes.status === "fulfilled" && priceRes.value[i].status === "fulfilled"
+        ? (priceRes.value[i] as PromiseFulfilledResult<unknown>).value as number ?? 0 : 0,
+      tvl:   tvlRes.status === "fulfilled"  && tvlRes.value[i].status  === "fulfilled"
+        ? (tvlRes.value[i] as PromiseFulfilledResult<unknown>).value as number ?? 0 : 0,
+    })).filter(k => k.apy > 0 || k.tvl > 0);
+  } catch { return []; }
+}
+
+/**
+ * 7. Elfa AI 全市場趨勢代幣 (MiscPlugin)
+ * 與 sakGetSocialSentiment（按 ticker 查詢）不同：
+ * 這裡取全市場當前最熱門代幣 Top 10
+ */
+export async function sakGetElfaTrendingTokens(): Promise<Array<{
+  symbol: string;
+  mentions: number;
+  smartMentions: number;
+  sentiment: number;   // -1.0 ~ 1.0
+}>> {
+  try {
+    const agent  = createReadOnlyAgent();
+    const m      = agent.methods as Record<string, (...a: unknown[]) => Promise<unknown>>;
+    const result = await m.getTrendingTokensUsingElfaAi?.() as
+      { data?: Array<{ token?: string; mentionCount?: number; smartMentionCount?: number; sentiment?: number }> } | undefined;
+    if (result?.data?.length) {
+      return result.data.slice(0, 10).map(t => ({
+        symbol:        t.token ?? "?",
+        mentions:      t.mentionCount      ?? 0,
+        smartMentions: t.smartMentionCount ?? 0,
+        sentiment:     t.sentiment         ?? 0,
+      }));
+    }
+  } catch { /* no fallback — Elfa is paid */ }
+  // Fallback: CoinGecko trending
+  try {
+    const res  = await fetch("https://api.coingecko.com/api/v3/search/trending", { next: { revalidate: 1800 } });
+    if (!res.ok) return [];
+    const data = await res.json() as { coins?: Array<{ item: { symbol: string; score: number } }> };
+    return (data.coins ?? []).slice(0, 10).map(c => ({
+      symbol:        c.item.symbol.toUpperCase(),
+      mentions:      Math.round((10 - c.item.score) * 100),
+      smartMentions: 0,
+      sentiment:     0,
+    }));
+  } catch { return []; }
+}
+
+/**
+ * 8. 關閉空 Token 帳戶 — 回收 SOL Rent (TokenPlugin)
+ * 每個空帳戶可回收 ~0.002 SOL，AI 可建議用戶清理
+ * 返回預計回收量（需用戶 Phantom 簽名執行）
+ */
+export async function sakEstimateCloseEmptyAccounts(
+  walletAddress: string
+): Promise<{ estimatedAccounts: number; estimatedReclaimSol: number; note: string }> {
+  try {
+    const conn    = new Connection(RPC_URL, "confirmed");
+    const pubkey  = new PublicKey(walletAddress);
+    const tokenAccounts = await conn.getParsedTokenAccountsByOwner(pubkey, {
+      programId: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"),
+    });
+    const emptyAccounts = tokenAccounts.value.filter(a => {
+      const amount = a.account.data.parsed?.info?.tokenAmount?.uiAmount ?? 1;
+      return amount === 0;
+    });
+    const count       = emptyAccounts.length;
+    const reclaimSol  = parseFloat((count * 0.00203928).toFixed(4)); // Solana rent exemption
+    return {
+      estimatedAccounts:  count,
+      estimatedReclaimSol: reclaimSol,
+      note: count > 0
+        ? `發現 ${count} 個空 Token 帳戶，關閉後可回收約 ${reclaimSol} SOL（~$${(reclaimSol * 170).toFixed(2)} USD）。可在 Token 頁面操作。`
+        : "沒有空的 Token 帳戶，無需清理。",
+    };
+  } catch {
+    return { estimatedAccounts: 0, estimatedReclaimSol: 0, note: "無法掃描帳戶" };
+  }
+}
