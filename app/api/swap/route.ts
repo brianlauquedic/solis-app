@@ -20,6 +20,27 @@ const TOKEN_MINTS: Record<string, string> = {
   RAY:  "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R",
 };
 
+// Resolve any token symbol to mint, or pass through if already a mint address
+async function resolveMint(symbolOrMint: string): Promise<{ mint: string; decimals: number } | null> {
+  // Already a mint address (base58, 32-44 chars)
+  if (symbolOrMint.length >= 32) return { mint: symbolOrMint, decimals: 6 };
+  // Known tokens
+  const known = TOKEN_MINTS[symbolOrMint.toUpperCase()];
+  if (known) {
+    const dec = symbolOrMint.toUpperCase() === "SOL" ? 9 : 6;
+    return { mint: known, decimals: dec };
+  }
+  // Jupiter token search
+  try {
+    const res = await fetch(`https://tokens.jup.ag/token/${symbolOrMint}`, { signal: AbortSignal.timeout(4000) });
+    if (res.ok) {
+      const d = await res.json() as { address?: string; decimals?: number };
+      if (d.address) return { mint: d.address, decimals: d.decimals ?? 6 };
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
 function fetchWithTimeout(url: string, opts: RequestInit = {}, ms = 10000): Promise<Response> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
@@ -91,43 +112,63 @@ export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
     const from = searchParams.get("from")?.toUpperCase() ?? "SOL";
     const to = searchParams.get("to")?.toUpperCase() ?? "USDC";
+    const fromMintOverride = searchParams.get("fromMint");
+    const toMintOverride   = searchParams.get("toMint");
     const amount = parseFloat(searchParams.get("amount") ?? "1");
 
-    if (isNaN(amount) || amount <= 0) {
+    if (isNaN(amount) || amount <= 0)
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
-    }
 
-    const inputMint = TOKEN_MINTS[from];
-    const outputMint = TOKEN_MINTS[to];
-    if (!inputMint || !outputMint) {
-      return NextResponse.json({ error: `Unsupported token: ${from} or ${to}` }, { status: 400 });
-    }
+    // Resolve mints — explicit overrides take priority
+    const inputResolved  = fromMintOverride
+      ? { mint: fromMintOverride, decimals: from === "SOL" ? 9 : 6 }
+      : await resolveMint(from);
+    const outputResolved = toMintOverride
+      ? { mint: toMintOverride, decimals: 6 }
+      : await resolveMint(to);
 
-    // Convert to lamports (SOL = 9 decimals, USDC = 6 decimals)
-    const decimals = from === "SOL" ? 9 : 6;
-    const amountLamports = Math.round(amount * 10 ** decimals);
+    if (!inputResolved)  return NextResponse.json({ error: `Cannot resolve token: ${from}` }, { status: 400 });
+    if (!outputResolved) return NextResponse.json({ error: `Cannot resolve token: ${to}` }, { status: 400 });
 
+    const amountLamports = Math.round(amount * 10 ** inputResolved.decimals);
     const rawSlippage = parseInt(searchParams.get("slippage") ?? "50");
-    const slippageBps = Math.min(Math.max(rawSlippage, 10), 300); // clamp 0.1% – 3%
-    const quote = await getQuote(inputMint, outputMint, amountLamports, slippageBps);
+    const slippageBps = Math.min(Math.max(rawSlippage, 10), 300);
 
-    // Calculate human-readable output
-    const outDecimals = to === "SOL" ? 9 : 6;
+    // Also fetch recommended slippage from GMGN if available
+    let finalSlippage = slippageBps;
+    try {
+      const slipRes = await fetch(
+        `https://gmgn.ai/api/v1/recommend_slippage/sol/${outputResolved.mint}`,
+        { signal: AbortSignal.timeout(3000) }
+      );
+      if (slipRes.ok) {
+        const slipData = await slipRes.json() as { recommend_slippage?: string; has_tax?: boolean };
+        if (slipData.recommend_slippage) {
+          const gmgnSlip = parseFloat(slipData.recommend_slippage) * 100; // percent → bps
+          finalSlippage = Math.max(slippageBps, Math.min(gmgnSlip, 300));
+        }
+      }
+    } catch { /* use default */ }
+
+    const quote = await getQuote(inputResolved.mint, outputResolved.mint, amountLamports, finalSlippage);
+
+    const outDecimals = outputResolved.decimals;
     const outAmount = parseInt(quote.outAmount) / 10 ** outDecimals;
     const priceImpact = parseFloat(quote.priceImpactPct ?? "0");
     const platformFeeUSD = (amount * PLATFORM_FEE_BPS) / 10000;
 
     return NextResponse.json({
-      from,
-      to,
+      from, to,
       inputAmount: amount,
       outputAmount: outAmount,
-      outputAmountFormatted: outAmount.toLocaleString(undefined, { maximumFractionDigits: to === "SOL" ? 4 : 2 }),
+      outputAmountFormatted: outAmount.toLocaleString(undefined, { maximumFractionDigits: outDecimals > 6 ? 4 : 2 }),
       priceImpact: priceImpact.toFixed(3),
       platformFeePct: `${(PLATFORM_FEE_BPS / 100).toFixed(1)}%`,
       platformFeeUSD: platformFeeUSD.toFixed(4),
-      slippageBps,
-      quoteResponse: quote, // pass back for swap execution
+      slippageBps: finalSlippage,
+      inputMint: inputResolved.mint,
+      outputMint: outputResolved.mint,
+      quoteResponse: quote,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Quote failed";
@@ -146,23 +187,27 @@ export async function POST(req: NextRequest) {
     let freshQuote: unknown;
 
     if (body.from && body.to && body.amount) {
-      // Preferred: re-fetch quote from params
       const from = String(body.from).toUpperCase();
       const to   = String(body.to).toUpperCase();
       const amount = parseFloat(body.amount);
       const slippageBps = Math.min(Math.max(parseInt(body.slippageBps ?? "50"), 10), 300);
 
-      if (isNaN(amount) || amount <= 0) {
+      if (isNaN(amount) || amount <= 0)
         return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
-      }
-      const inputMint  = TOKEN_MINTS[from];
-      const outputMint = TOKEN_MINTS[to];
-      if (!inputMint || !outputMint) {
-        return NextResponse.json({ error: `Unsupported token pair` }, { status: 400 });
-      }
-      const decimals = from === "SOL" ? 9 : 6;
-      const amountLamports = Math.round(amount * 10 ** decimals);
-      freshQuote = await getQuote(inputMint, outputMint, amountLamports, slippageBps);
+
+      // Support direct mint overrides from copy-trade flow
+      const inputResolved  = body.inputMint
+        ? { mint: String(body.inputMint), decimals: from === "SOL" ? 9 : 6 }
+        : await resolveMint(from);
+      const outputResolved = body.outputMint
+        ? { mint: String(body.outputMint), decimals: 6 }
+        : await resolveMint(to);
+
+      if (!inputResolved || !outputResolved)
+        return NextResponse.json({ error: "Cannot resolve token pair" }, { status: 400 });
+
+      const amountLamports = Math.round(amount * 10 ** inputResolved.decimals);
+      freshQuote = await getQuote(inputResolved.mint, outputResolved.mint, amountLamports, slippageBps);
 
     } else if (body.quoteResponse) {
       // Legacy: re-validate by re-fetching with same params from the original quote

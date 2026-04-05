@@ -798,6 +798,44 @@ export default function TokenAnalysis({ walletAddress }: Props) {
             </div>
           </div>
 
+          {/* GMGN K-Line Chart */}
+          <div style={{
+            marginTop: 16, borderRadius: 12, overflow: "hidden",
+            border: "1px solid var(--border)",
+          }}>
+            <div style={{
+              padding: "8px 14px",
+              background: "var(--bg-card)",
+              borderBottom: "1px solid var(--border)",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text-secondary)" }}>
+                📈 K 線圖 · GMGN
+              </span>
+              <a
+                href={`https://gmgn.ai/sol/token/${tokenData.mint}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ fontSize: 10, color: "var(--accent)", textDecoration: "none" }}
+              >
+                在 GMGN 查看 →
+              </a>
+            </div>
+            <iframe
+              src={`https://www.gmgn.cc/kline/sol/${tokenData.mint}?theme=dark&interval=15`}
+              style={{
+                width: "100%",
+                height: 320,
+                border: "none",
+                display: "block",
+                background: "#0d0d14",
+              }}
+              title={`${tokenData.symbol} K-line chart`}
+              loading="lazy"
+              sandbox="allow-scripts allow-same-origin"
+            />
+          </div>
+
           {/* Score + Decision */}
           <div style={{
             display: "grid", gridTemplateColumns: "140px 1fr",

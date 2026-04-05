@@ -62,6 +62,29 @@ async function getDexScreenerPrice(mint: string): Promise<number | null> {
   }
 }
 
+// ── Pump.fun Bonding Curve Data ──────────────────────────────────
+async function getPumpFunData(mint: string): Promise<{ price: number | null; name?: string; symbol?: string; imageUri?: string } | null> {
+  try {
+    const res = await fetchWithTimeout(`https://frontend-api.pump.fun/coins/${mint}`, {}, 5000);
+    if (!res.ok) return null;
+    const d = await res.json() as {
+      name?: string; symbol?: string; image_uri?: string;
+      usd_market_cap?: number; virtual_sol_reserves?: number;
+      virtual_token_reserves?: number; complete?: boolean;
+    };
+    // If token has graduated from bonding curve, DexScreener has better data
+    if (d.complete) return { price: null, name: d.name, symbol: d.symbol, imageUri: d.image_uri };
+    // Bonding curve price: sol_reserves / token_reserves * SOL_price
+    // virtual_sol_reserves is in lamports (1e9), virtual_token_reserves in micro-tokens (1e6)
+    let price: number | null = null;
+    if (d.usd_market_cap && d.virtual_token_reserves && d.virtual_token_reserves > 0) {
+      // 1B total supply, market cap approach
+      price = d.usd_market_cap / 1_000_000_000;
+    }
+    return { price, name: d.name, symbol: d.symbol, imageUri: d.image_uri };
+  } catch { return null; }
+}
+
 // ── Jupiter Token Metadata ───────────────────────────────────────
 async function getJupiterTokenInfo(mint: string) {
   try {
@@ -209,11 +232,13 @@ export async function GET(req: NextRequest) {
   if (wallet && !isValidSolanaAddress(wallet)) return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
 
   // Parallel fetch
-  const [gp, jupPrice, jupToken, heliusMeta] = await Promise.all([
+  const isPumpFun = mint.endsWith("pump");
+  const [gp, jupPrice, jupToken, heliusMeta, pumpData] = await Promise.all([
     getGoPlus(mint),
     getJupiterPrice(mint),
     getJupiterTokenInfo(mint),
     getHeliusMetadata(mint),
+    isPumpFun ? getPumpFunData(mint) : Promise.resolve(null),
   ]);
 
   // Token name/symbol
@@ -221,18 +246,19 @@ export async function GET(req: NextRequest) {
     jupToken?.name ??
     heliusMeta?.content?.metadata?.name ??
     heliusMeta?.token_info?.symbol ??
+    pumpData?.name ??
     "Unknown Token";
   const symbol =
     jupToken?.symbol ??
     heliusMeta?.content?.metadata?.symbol ??
+    pumpData?.symbol ??
     mint.slice(0, 6) + "...";
-  const logoURI = jupToken?.logoURI ?? null;
+  const logoURI = jupToken?.logoURI ?? pumpData?.imageUri ?? null;
 
-  // Price — Jupiter first, DexScreener fallback
+  // Price — Jupiter first, DexScreener fallback, Pump.fun bonding curve last
   let price: number | null = jupPrice?.price ? parseFloat(jupPrice.price) : null;
-  if (price === null) {
-    price = await getDexScreenerPrice(mint);
-  }
+  if (price === null) price = await getDexScreenerPrice(mint);
+  if (price === null && isPumpFun) price = pumpData?.price ?? null;
 
   // Security
   const { score: secScore, risks, positives } = calcSecurityScore(gp);

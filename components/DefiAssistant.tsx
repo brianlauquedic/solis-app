@@ -9,6 +9,7 @@ import { getWatchlist, saveLastPrice } from "@/lib/watchlist";
 import { useLang } from "@/contexts/LanguageContext";
 import { payWithPhantom } from "@/lib/x402";
 import { getDeviceId } from "@/lib/device-id";
+import CopyTradeModal from "./CopyTradeModal";
 
 const SOLIS_FEE_WALLET_ADDR = "Goc5kAMb9NTXjobxzZogAWaHwajmQjw7CdmATWJN1mQh";
 
@@ -136,6 +137,18 @@ function parseIntent(input: string): Intent {
   if (/(質押|staking|stake|liquid.*stake)/i.test(text) && /sol/i.test(text)) return { type: "stake_sol", amount };
   if (/(存入|理财|存usdc|earn|lending)/i.test(text) && /usdc/i.test(text)) return { type: "deposit_usdc", amount };
   if (/(收益|yield|apy|利率|最高|怎麼賺|賺錢|被動收入)/i.test(text)) return { type: "yield_find" };
+  // Buy intent: "買 BONK", "buy 10 WIF", "幫我買 USDC"
+  const buyMatch = text.match(/(?:買|buy|購買)\s+(?:([\d.]+)\s+)?(\$?[A-Za-z]{2,12})/i);
+  if (buyMatch) {
+    const amt = buyMatch[1] ? parseFloat(buyMatch[1]) : 10;
+    const tok = buyMatch[2].replace("$", "").toUpperCase();
+    return { type: "swap", from: "USDC", to: tok, amount: amt };
+  }
+  // Swap intent: "swap 10 USDC for BONK"
+  const swapMatch = text.match(/swap\s+([\d.]+)\s+([A-Za-z]+)\s+(?:for|to|換成|換)\s+([A-Za-z]+)/i);
+  if (swapMatch) {
+    return { type: "swap", from: swapMatch[2].toUpperCase(), to: swapMatch[3].toUpperCase(), amount: parseFloat(swapMatch[1]) };
+  }
   if (/(換|swap|兑換|賣掉)/i.test(text)) {
     const to = text.match(/(換成|to|買)\s*(sol|usdc|usdt|bonk|jup)/i)?.[2]?.toUpperCase() ?? "USDC";
     return { type: "swap", from: "SOL", to, amount };
@@ -194,13 +207,21 @@ function generateResponse(
         ],
       };
     }
-    case "swap": {
-      const amt = intent.amount ?? 1;
+    case "swap":
       return {
-        text: `通過 Jupiter 聚合器兑換，自動寻找最優路由：`,
-        actions: [{ protocol: "Jupiter Swap", icon: "🪐", action: `${amt} ${intent.from} → ${intent.to}`, detail: "全 Solana 最優價格，支持100+交易對", url: `https://jup.ag/swap/${intent.from}-${intent.to}`, color: "#8B5CF6", riskLevel: "低" }],
+        text: `⚡ **Swap 執行** — 將 ${intent.amount ?? 10} ${intent.from} 換成 ${intent.to}，透過 Jupiter 最優路由執行`,
+        actions: [{
+          protocol: "Jupiter Swap",
+          icon: "⚡",
+          action: `${intent.amount ?? 10} ${intent.from} → ${intent.to}`,
+          detail: "Jupiter 聚合路由，0.3% 平台費",
+          apy: "",
+          estimatedEarn: "",
+          url: `https://jup.ag/swap/${intent.from}-${intent.to}`,
+          color: "#8B5CF6",
+          riskLevel: "低",
+        }],
       };
-    }
     case "yield_find":
       return buildYieldResponse(sol, usdc, total, liveYield);
     case "portfolio_check":
@@ -801,6 +822,41 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
     }
   }
 
+  function exportAnalysis() {
+    const assistantMessages = messages.filter(m => m.role === "assistant");
+    if (assistantMessages.length === 0) return;
+
+    const content = assistantMessages.map((m, i) =>
+      `<div class="msg"><div class="num">${i + 1}</div><div class="text">${
+        m.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+               .replace(/\n/g, '<br>')
+      }</div></div>`
+    ).join('');
+
+    const html = `<!DOCTYPE html><html><head>
+    <meta charset="utf-8">
+    <title>Sakura AI 分析報告 · ${new Date().toLocaleDateString('zh-TW')}</title>
+    <style>
+      body { font-family: 'Noto Sans JP', 'Noto Serif TC', serif; max-width: 800px; margin: 40px auto; color: #1a1a1a; line-height: 1.8; }
+      h1 { font-size: 22px; border-bottom: 2px solid #C0392B; padding-bottom: 10px; color: #C0392B; }
+      .meta { font-size: 12px; color: #888; margin-bottom: 30px; }
+      .msg { margin-bottom: 24px; padding: 16px; border-left: 3px solid #C0392B; background: #fafaf8; }
+      .num { font-size: 11px; color: #C0392B; font-weight: 700; margin-bottom: 6px; }
+      .text { font-size: 14px; }
+      strong { color: #C0392B; }
+      @media print { body { margin: 20px; } }
+    </style>
+  </head><body>
+    <h1>🌸 Sakura AI 分析報告</h1>
+    <div class="meta">生成時間：${new Date().toLocaleString('zh-TW')} · Powered by Claude Sonnet 4.6</div>
+    ${content}
+    <div style="margin-top:40px;font-size:11px;color:#aaa;text-align:center">Sakura — Solana DeFi AI 顧問 · sakura.finance</div>
+  </body></html>`;
+
+    const w = window.open("", "_blank");
+    if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
 
@@ -886,6 +942,20 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
               }}>
                 ● 實時 APY
               </span>
+            )}
+            {messages.length > 0 && (
+              <button
+                onClick={exportAnalysis}
+                title="導出分析報告"
+                style={{
+                  padding: "4px 10px", borderRadius: 6, border: "1px solid var(--border)",
+                  background: "var(--bg-card)", color: "var(--text-secondary)",
+                  fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  display: "flex", alignItems: "center", gap: 4,
+                }}
+              >
+                📄 導出
+              </button>
             )}
             {messages.length > 0 && (
               <button
@@ -1051,7 +1121,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
       )}
 
       {/* ── Smart Money Panel ── */}
-      {messages.length === 0 && showSmartMoney && <SmartMoneyPanel />}
+      {messages.length === 0 && showSmartMoney && <SmartMoneyPanel walletAddress={walletAddress} />}
 
       {/* ── Quota / session notice ── */}
       {advisorQuota && !advisorQuota.admin && messages.length === 0 && (
@@ -1499,12 +1569,15 @@ function SummaryPill({ label, value, color }: { label: string; value: string; co
 }
 
 // ── Smart Money Panel ────────────────────────────────────────────
-function SmartMoneyPanel() {
+function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
   const [tab, setTab]             = useState<"consensus" | "wallets">("consensus");
   const [data, setData]           = useState<SmartMoneyData | null>(null);
   const [loading, setLoading]     = useState(true);
   const [walletPage, setWalletPage] = useState(0);
   const [expanded, setExpanded]   = useState<string | null>(null);
+  const [copyMint, setCopyMint]   = useState<string | null>(null);
+  const [copySymbol, setCopySymbol] = useState<string>("");
+  const [discoveredCount, setDiscoveredCount] = useState(0);
 
   const PAGE_SIZE   = 10;
   const totalBatches = data ? Math.ceil((data.activeWallets?.length ?? 0) / PAGE_SIZE) : 1;
@@ -1523,6 +1596,16 @@ function SmartMoneyPanel() {
       .then(r => r.json())
       .then(d => { setData(d as SmartMoneyData); setLoading(false); })
       .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetch("/api/wallet/smart-money?type=discover")
+        .then(r => r.json())
+        .then((d: { total?: number }) => { if (d.total) setDiscoveredCount(d.total); })
+        .catch(() => {});
+    }, 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   function Stars({ n }: { n: number }) {
@@ -1555,6 +1638,12 @@ function SmartMoneyPanel() {
           <span style={{ fontFamily: "var(--font-heading, serif)", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "0.03em" }}>
             聰明錢地址追蹤
           </span>
+          {discoveredCount > 0 && (
+            <span style={{
+              fontSize: 10, background: "rgba(192,57,43,0.15)", color: "#C0392B",
+              borderRadius: 10, padding: "2px 8px", marginLeft: 8, fontWeight: 700,
+            }}>🔍 +{discoveredCount} 新發現</span>
+          )}
           {data?.dataSource === "demo" && (
             <span style={{ fontSize: 9, color: "#F59E0B", background: "#F59E0B15", border: "1px solid #F59E0B30", borderRadius: 4, padding: "2px 6px" }}>演示數據</span>
           )}
@@ -1672,6 +1761,20 @@ function SmartMoneyPanel() {
                     首次發現&nbsp;
                     <span style={{ color: "var(--text-muted)" }}>{smFormatTimeAgo(token.firstSeenAt)}</span>
                   </div>
+                </div>
+                {/* Copy trade button */}
+                <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setCopyMint(token.mint); setCopySymbol(token.symbol ?? token.mint.slice(0, 6)); }}
+                    style={{
+                      padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(192,57,43,0.4)",
+                      background: "rgba(192,57,43,0.08)", color: "#C0392B",
+                      fontSize: 11, fontWeight: 700, cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 4,
+                    }}
+                  >
+                    🛡 跟單
+                  </button>
                 </div>
               </div>
 
@@ -1805,6 +1908,15 @@ function SmartMoneyPanel() {
             )}
           </div>
         </div>
+      )}
+      {/* Copy Trade Modal */}
+      {copyMint && (
+        <CopyTradeModal
+          mint={copyMint}
+          symbol={copySymbol}
+          walletAddress={walletAddress}
+          onClose={() => { setCopyMint(null); setCopySymbol(""); }}
+        />
       )}
     </div>
   );

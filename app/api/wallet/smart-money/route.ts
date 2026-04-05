@@ -1016,6 +1016,36 @@ async function handleConsensus24h(): Promise<NextResponse> {
   });
 }
 
+// ── discoverActiveWallets ─────────────────────────────────────────
+
+async function discoverActiveWallets(): Promise<Array<{ address: string; txCount: number }>> {
+  if (!HELIUS_API_KEY) return [];
+  try {
+    // Fetch recent SWAP transactions from Jupiter aggregator program
+    const JUPITER_V6 = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
+    const url = `https://api.helius.xyz/v0/addresses/${JUPITER_V6}/transactions?api-key=${HELIUS_API_KEY}&type=SWAP&limit=100`;
+    const res = await fetchWithTimeout(url, {}, 10000);
+    if (!res.ok) return [];
+    const txs = await res.json() as Array<{ feePayer?: string; timestamp?: number }>;
+
+    // Count unique fee payers (active traders) in last 1 hour
+    const cutoff = Math.floor(Date.now() / 1000) - 3600;
+    const counts: Record<string, number> = {};
+    for (const tx of txs) {
+      if (!tx.feePayer || !tx.timestamp || tx.timestamp < cutoff) continue;
+      counts[tx.feePayer] = (counts[tx.feePayer] ?? 0) + 1;
+    }
+
+    // Return top 20 most active wallets (not already in LABELED_WALLETS)
+    const labeled = new Set(LABELED_WALLETS.map(w => w.address));
+    return Object.entries(counts)
+      .filter(([addr]) => !labeled.has(addr))
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+      .map(([address, txCount]) => ({ address, txCount }));
+  } catch { return []; }
+}
+
 // ── GET handler ───────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
@@ -1027,6 +1057,17 @@ export async function GET(req: NextRequest) {
 
   // ── consensus_24h endpoint ─────────────────────────────────────
   if (type === "consensus_24h") return handleConsensus24h();
+
+  // ── discover endpoint ──────────────────────────────────────────
+  if (type === "discover") {
+    const discovered = await discoverActiveWallets();
+    return NextResponse.json({
+      wallets: discovered,
+      total: discovered.length,
+      source: HELIUS_API_KEY ? "helius_realtime" : "demo",
+      updatedAt: Date.now(),
+    });
+  }
 
   const walletAddress = url.searchParams.get("wallet") ?? url.searchParams.get("walletAddress");
   const limit = Math.min(20, parseInt(url.searchParams.get("limit") ?? "7"));
