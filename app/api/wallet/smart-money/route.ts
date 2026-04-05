@@ -596,53 +596,282 @@ function scoreToStars(score: number): 1|2|3|4|5 {
 
 // ── Demo data for consensus_24h (no API key) ──────────────────────
 function generateConsensusDemo() {
+  const now = Date.now();
+  const h = 3600000; // 1 hour in ms
+
   const demoTokens: Array<{
     mint: string; symbol: string;
     buyers: Array<{ shortAddr: string; twitter?: string; name?: string; labels: string[] }>;
     totalBuyUSD: number; firstSeenAt: number;
   }> = [
+    // ── Tier 5★ (高共識, Cabal+Whale+KOL 多人買入) ───────────────
     {
-      mint: "SaMaraXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", symbol: "Samara",
+      mint: "SaMaraDemo111111111111111111111111111111111", symbol: "$Samara",
       buyers: [
-        { shortAddr: "9jyq…AVVz", twitter: "@NachSOL",       name: "Nach",         labels: ["Cabal", "KOL"] },
-        { shortAddr: "2btY…v4EH", twitter: "@Ed_x0101",      name: "Ed_x區塊日記", labels: ["Smart_Money", "KOL"] },
-        { shortAddr: "5tzF…hV",   twitter: "@realpandapunks", name: "Panda",        labels: ["KOL", "Smart_Money"] },
-        { shortAddr: "C3nL…9hP",                                                     labels: ["Smart_Money", "Whale"] },
+        { shortAddr: "9jyq…AVVz", twitter: "@NachSOL",       name: "Nach",         labels: ["Cabal","KOL"] },
+        { shortAddr: "2btY…v4EH", twitter: "@Ed_x0101",      name: "Ed_x區塊日記", labels: ["Smart_Money","KOL"] },
+        { shortAddr: "5tzF…hV",   twitter: "@realpandapunks",name: "Panda",         labels: ["KOL","Smart_Money"] },
+        { shortAddr: "C3nL…9hP",                                                     labels: ["Smart_Money","Whale"] },
+        { shortAddr: "BNSw…RTH",                                                     labels: ["Cabal","Whale"] },
       ],
-      totalBuyUSD: 12120, firstSeenAt: Date.now() - 14400000,
+      totalBuyUSD: 18400, firstSeenAt: now - 2*h,
     },
+    {
+      mint: "WifDemo1111111111111111111111111111111111111", symbol: "$WIF",
+      buyers: [
+        { shortAddr: "DNfu…BHm", twitter: "@Ga__ke",      name: "Gake_2", labels: ["Smart_Money","KOL","HighLight"] },
+        { shortAddr: "Ae1W…kHY", twitter: "@AlphaSolana", name: "AlphaSOL", labels: ["Cabal","KOL"] },
+        { shortAddr: "EKpQ…cjm",                                             labels: ["Whale","Cabal"] },
+        { shortAddr: "GThU…PMt",                                             labels: ["Whale","Smart_Money"] },
+        { shortAddr: "9jyq…AVVz", twitter: "@NachSOL",    name: "Nach",    labels: ["Cabal","KOL"] },
+      ],
+      totalBuyUSD: 15200, firstSeenAt: now - 3*h,
+    },
+    {
+      mint: "PopcatDemo11111111111111111111111111111111", symbol: "POPCAT",
+      buyers: [
+        { shortAddr: "8tP3…PRP", twitter: "@LongzuAlpha", name: "Jinmu",  labels: ["Smart_Money","KOL"] },
+        { shortAddr: "BGq4…eJR",                                           labels: ["Smart_Money","KOL"] },
+        { shortAddr: "9vNB…BSy",                                           labels: ["Cabal","KOL"] },
+        { shortAddr: "JDKj…VAJ",                                           labels: ["Whale","HighLight"] },
+      ],
+      totalBuyUSD: 12800, firstSeenAt: now - 4*h,
+    },
+    // ── Tier 4★ ──────────────────────────────────────────────────
     {
       mint: "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263", symbol: "BONK",
       buyers: [
-        { shortAddr: "DNfu…BHm", twitter: "@Ga__ke",      name: "Gake_2", labels: ["Smart_Money", "KOL", "HighLight"] },
-        { shortAddr: "8tP3…PRP", twitter: "@LongzuAlpha", name: "Jinmu",  labels: ["Smart_Money", "KOL"] },
-        { shortAddr: "BNSw…RTH",                                           labels: ["Cabal", "Whale"] },
+        { shortAddr: "DNfu…BHm", twitter: "@Ga__ke",      name: "Gake_2", labels: ["Smart_Money","KOL","HighLight"] },
+        { shortAddr: "8tP3…PRP", twitter: "@LongzuAlpha", name: "Jinmu",  labels: ["Smart_Money","KOL"] },
+        { shortAddr: "BNSw…RTH",                                           labels: ["Cabal","Whale"] },
       ],
-      totalBuyUSD: 8500, firstSeenAt: Date.now() - 18000000,
+      totalBuyUSD: 9800, firstSeenAt: now - 5*h,
+    },
+    {
+      mint: "PnutDemo1111111111111111111111111111111111", symbol: "$PNUT",
+      buyers: [
+        { shortAddr: "AHLw…yMW",                            labels: ["Smart_Money","HighLight"] },
+        { shortAddr: "FWzn…RHf",                            labels: ["Smart_Money"] },
+        { shortAddr: "9jyq…AVVz", twitter: "@NachSOL", name: "Nach", labels: ["Cabal","KOL"] },
+        { shortAddr: "EKpQ…cjm",                            labels: ["Whale","Cabal"] },
+      ],
+      totalBuyUSD: 8100, firstSeenAt: now - 6*h,
     },
     {
       mint: "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN", symbol: "JUP",
       buyers: [
-        { shortAddr: "Ae1W…kHY", twitter: "@AlphaSolana", name: "AlphaSOL", labels: ["Cabal", "KOL"] },
-        { shortAddr: "EKpQ…cjm",                                              labels: ["Whale", "Cabal"] },
+        { shortAddr: "Ae1W…kHY", twitter: "@AlphaSolana", name: "AlphaSOL", labels: ["Cabal","KOL"] },
+        { shortAddr: "EKpQ…cjm",                                              labels: ["Whale","Cabal"] },
+        { shortAddr: "GThU…PMt",                                              labels: ["Whale","Smart_Money"] },
       ],
-      totalBuyUSD: 5200, firstSeenAt: Date.now() - 21600000,
+      totalBuyUSD: 7200, firstSeenAt: now - 7*h,
     },
+    {
+      mint: "TrumpDemo111111111111111111111111111111111", symbol: "$TRUMP",
+      buyers: [
+        { shortAddr: "JDKj…VAJ",                            labels: ["Whale","HighLight"] },
+        { shortAddr: "2xtN…cjo",                            labels: ["Smart_Money","Whale"] },
+        { shortAddr: "BGq4…eJR",                            labels: ["Smart_Money","KOL"] },
+      ],
+      totalBuyUSD: 6600, firstSeenAt: now - 8*h,
+    },
+    {
+      mint: "PyusdDemo111111111111111111111111111111111", symbol: "PYTH",
+      buyers: [
+        { shortAddr: "HXRi…Vxx", twitter: "@SolBigBrain", name: "BigBrain", labels: ["KOL"] },
+        { shortAddr: "DfXy…Djh",                                             labels: ["Whale","Smart_Money"] },
+        { shortAddr: "3AXh…WBB",                                             labels: ["Smart_Money","HighLight"] },
+      ],
+      totalBuyUSD: 5900, firstSeenAt: now - 9*h,
+    },
+    // ── Tier 3★ ──────────────────────────────────────────────────
     {
       mint: "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So", symbol: "mSOL",
       buyers: [
         { shortAddr: "HXRi…Vxx", twitter: "@SolBigBrain", name: "BigBrain", labels: ["KOL"] },
         { shortAddr: "9WzD…AWM",                                              labels: ["Whale"] },
+        { shortAddr: "CuieV…Rqq",                                             labels: ["Whale"] },
       ],
-      totalBuyUSD: 3100, firstSeenAt: Date.now() - 28800000,
+      totalBuyUSD: 5200, firstSeenAt: now - 10*h,
+    },
+    {
+      mint: "MewDemo11111111111111111111111111111111111", symbol: "$MEW",
+      buyers: [
+        { shortAddr: "5tzF…hV",   twitter: "@realpandapunks", name: "Panda", labels: ["KOL","Smart_Money"] },
+        { shortAddr: "FBTj…FPP",                                              labels: ["Cabal","Smart_Money"] },
+      ],
+      totalBuyUSD: 4800, firstSeenAt: now - 11*h,
     },
     {
       mint: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R", symbol: "RAY",
       buyers: [
-        { shortAddr: "FBTj…FPP",                            labels: ["Cabal", "Smart_Money"] },
-        { shortAddr: "3AXh…WBB",                            labels: ["Smart_Money", "HighLight"] },
+        { shortAddr: "FBTj…FPP",                            labels: ["Cabal","Smart_Money"] },
+        { shortAddr: "3AXh…WBB",                            labels: ["Smart_Money","HighLight"] },
       ],
-      totalBuyUSD: 2800, firstSeenAt: Date.now() - 36000000,
+      totalBuyUSD: 4200, firstSeenAt: now - 12*h,
+    },
+    {
+      mint: "BomeDemo1111111111111111111111111111111111", symbol: "BOME",
+      buyers: [
+        { shortAddr: "6kTG…N7A",                            labels: ["Smart_Money"] },
+        { shortAddr: "7ZBE…RV9",                            labels: ["Smart_Money"] },
+        { shortAddr: "HmRG…UBY",                            labels: ["Whale"] },
+      ],
+      totalBuyUSD: 3900, firstSeenAt: now - 13*h,
+    },
+    {
+      mint: "SlerfDemo111111111111111111111111111111111", symbol: "SLERF",
+      buyers: [
+        { shortAddr: "9vNB…BSy",                            labels: ["Cabal","KOL"] },
+        { shortAddr: "2btY…v4EH", twitter: "@Ed_x0101", name: "Ed_x區塊日記", labels: ["Smart_Money","KOL"] },
+      ],
+      totalBuyUSD: 3500, firstSeenAt: now - 14*h,
+    },
+    {
+      mint: "OrcaDemo1111111111111111111111111111111111", symbol: "ORCA",
+      buyers: [
+        { shortAddr: "AHLw…yMW",                            labels: ["Smart_Money","HighLight"] },
+        { shortAddr: "3XFM…vR3",                            labels: ["Whale"] },
+      ],
+      totalBuyUSD: 3200, firstSeenAt: now - 15*h,
+    },
+    {
+      mint: "PonkeDemo111111111111111111111111111111111", symbol: "PONKE",
+      buyers: [
+        { shortAddr: "J27m…rGrM",                           labels: ["Whale"] },
+        { shortAddr: "5Q54…4j1",                            labels: ["Smart_Money"] },
+      ],
+      totalBuyUSD: 2900, firstSeenAt: now - 15.5*h,
+    },
+    {
+      mint: "GoatDemo1111111111111111111111111111111111", symbol: "$GOAT",
+      buyers: [
+        { shortAddr: "FWzn…RHf",                            labels: ["Smart_Money"] },
+        { shortAddr: "DfXy…Djh",                            labels: ["Whale","Smart_Money"] },
+      ],
+      totalBuyUSD: 2600, firstSeenAt: now - 16*h,
+    },
+    // ── Tier 2★ ──────────────────────────────────────────────────
+    {
+      mint: "MoodengDemo1111111111111111111111111111111", symbol: "MOODENG",
+      buyers: [
+        { shortAddr: "7YttL…2G5",                           labels: ["Smart_Money"] },
+        { shortAddr: "6kTG…N7A",                            labels: ["Smart_Money"] },
+        { shortAddr: "CuieV…Rqq",                           labels: ["Whale"] },
+      ],
+      totalBuyUSD: 2400, firstSeenAt: now - 16.5*h,
+    },
+    {
+      mint: "GigaDemo1111111111111111111111111111111111", symbol: "GIGA",
+      buyers: [
+        { shortAddr: "7ZBE…RV9",                            labels: ["Smart_Money"] },
+        { shortAddr: "9WzD…AWM",                            labels: ["Whale"] },
+      ],
+      totalBuyUSD: 2200, firstSeenAt: now - 17*h,
+    },
+    {
+      mint: "ActDemo11111111111111111111111111111111111", symbol: "$ACT",
+      buyers: [
+        { shortAddr: "HmRG…UBY",                            labels: ["Whale"] },
+        { shortAddr: "3AXh…WBB",                            labels: ["Smart_Money","HighLight"] },
+      ],
+      totalBuyUSD: 2000, firstSeenAt: now - 17.5*h,
+    },
+    {
+      mint: "FartcoinDemo111111111111111111111111111111", symbol: "FARTCOIN",
+      buyers: [
+        { shortAddr: "6kTG…N7A",                            labels: ["Smart_Money"] },
+        { shortAddr: "3XFM…vR3",                            labels: ["Whale"] },
+      ],
+      totalBuyUSD: 1850, firstSeenAt: now - 18*h,
+    },
+    {
+      mint: "ZetaDemo1111111111111111111111111111111111", symbol: "ZETA",
+      buyers: [
+        { shortAddr: "FWzn…RHf",                            labels: ["Smart_Money"] },
+        { shortAddr: "J27m…rGrM",                           labels: ["Whale"] },
+      ],
+      totalBuyUSD: 1700, firstSeenAt: now - 18.5*h,
+    },
+    {
+      mint: "DriftDemo111111111111111111111111111111111", symbol: "DRIFT",
+      buyers: [
+        { shortAddr: "5Q54…4j1",                            labels: ["Smart_Money"] },
+        { shortAddr: "DfXy…Djh",                            labels: ["Whale","Smart_Money"] },
+      ],
+      totalBuyUSD: 1560, firstSeenAt: now - 19*h,
+    },
+    {
+      mint: "MyroDemo1111111111111111111111111111111111", symbol: "MYRO",
+      buyers: [
+        { shortAddr: "HmRG…UBY",                            labels: ["Whale"] },
+        { shortAddr: "FBTj…FPP",                            labels: ["Cabal","Smart_Money"] },
+      ],
+      totalBuyUSD: 1420, firstSeenAt: now - 19.5*h,
+    },
+    {
+      mint: "HarambeDemo1111111111111111111111111111111", symbol: "HARAMBE",
+      buyers: [
+        { shortAddr: "7ZBE…RV9",                            labels: ["Smart_Money"] },
+        { shortAddr: "3XFM…vR3",                            labels: ["Whale"] },
+      ],
+      totalBuyUSD: 1300, firstSeenAt: now - 20*h,
+    },
+    {
+      mint: "AtlasDemo111111111111111111111111111111111", symbol: "ATLAS",
+      buyers: [
+        { shortAddr: "9WzD…AWM",                            labels: ["Whale"] },
+        { shortAddr: "7YttL…2G5",                           labels: ["Smart_Money"] },
+      ],
+      totalBuyUSD: 1180, firstSeenAt: now - 20.5*h,
+    },
+    {
+      mint: "StepDemo1111111111111111111111111111111111", symbol: "STEP",
+      buyers: [
+        { shortAddr: "AHLw…yMW",                            labels: ["Smart_Money","HighLight"] },
+        { shortAddr: "CuieV…Rqq",                           labels: ["Whale"] },
+      ],
+      totalBuyUSD: 1060, firstSeenAt: now - 21*h,
+    },
+    {
+      mint: "SamoDemo1111111111111111111111111111111111", symbol: "SAMO",
+      buyers: [
+        { shortAddr: "FWzn…RHf",                            labels: ["Smart_Money"] },
+        { shortAddr: "J27m…rGrM",                           labels: ["Whale"] },
+      ],
+      totalBuyUSD:  960, firstSeenAt: now - 21.5*h,
+    },
+    {
+      mint: "CopeDemo1111111111111111111111111111111111", symbol: "COPE",
+      buyers: [
+        { shortAddr: "5Q54…4j1",                            labels: ["Smart_Money"] },
+        { shortAddr: "3XFM…vR3",                            labels: ["Whale"] },
+      ],
+      totalBuyUSD:  870, firstSeenAt: now - 22*h,
+    },
+    {
+      mint: "MngoDemo1111111111111111111111111111111111", symbol: "MNGO",
+      buyers: [
+        { shortAddr: "7YttL…2G5",                           labels: ["Smart_Money"] },
+        { shortAddr: "DfXy…Djh",                            labels: ["Whale","Smart_Money"] },
+      ],
+      totalBuyUSD:  790, firstSeenAt: now - 22.5*h,
+    },
+    {
+      mint: "StarDemo1111111111111111111111111111111111", symbol: "$STAR",
+      buyers: [
+        { shortAddr: "HmRG…UBY",                            labels: ["Whale"] },
+        { shortAddr: "AHLw…yMW",                            labels: ["Smart_Money","HighLight"] },
+      ],
+      totalBuyUSD:  720, firstSeenAt: now - 23*h,
+    },
+    {
+      mint: "MiladyDemo11111111111111111111111111111111", symbol: "MILADY",
+      buyers: [
+        { shortAddr: "FBTj…FPP",                            labels: ["Cabal","Smart_Money"] },
+        { shortAddr: "CuieV…Rqq",                           labels: ["Whale"] },
+      ],
+      totalBuyUSD:  650, firstSeenAt: now - 23.5*h,
     },
   ];
 
@@ -667,16 +896,16 @@ function generateConsensusDemo() {
     };
   });
 
+  // All 30 wallets shown, activity decays gracefully across tiers
   const activeWallets = LABELED_WALLETS.map((w, i) => ({
     address:       w.address,
     shortAddress:  w.address.slice(0, 6) + "…" + w.address.slice(-4),
     labels:        w.labels,
     twitter:       w.twitter,
     name:          w.name,
-    activityCount: Math.max(0, 4 - Math.floor(i / 5)),
+    activityCount: Math.max(1, 6 - Math.floor(i / 5)),
     tokens:        [] as string[],
-  })).filter(w => w.activityCount > 0)
-    .sort((a, b) => b.activityCount - a.activityCount);
+  })).sort((a, b) => b.activityCount - a.activityCount);
 
   return {
     consensusTokens,
