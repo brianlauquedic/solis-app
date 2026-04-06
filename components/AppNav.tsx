@@ -34,7 +34,7 @@ export default function AppNav() {
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <button
-          onClick={() => { setShowLanding(true); router.push("/"); }}
+          onClick={() => { setShowLanding(true); router.push("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
           style={{
             display: "flex", alignItems: "center", gap: 10,
             background: "none", border: "none", padding: 0, cursor: "pointer",
