@@ -1068,21 +1068,25 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
                   }}>{ACTION_LABEL[c.action] ?? c.action}</span>
                   <button
                     type="button"
-                    title="模擬觸發 → 發送通知到 AI 顧問"
+                    title="發送此條件通知到 AI 顧問聊天"
                     onClick={() => {
-                      fetch("/api/cron/alerts/test", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ label: c.label, metric: c.metric, severity: "warning" }),
-                      }).then(() => showStatus(`🔔 已發送通知到 AI 顧問：${c.label}`, "success"))
-                        .catch(() => showStatus("發送失敗", "error"));
+                      const msg = `⚠️ Guardian Alert — 條件觸發：${c.label}（當前值已達閾值）→ 請檢查您的倉位。要調整持倉嗎？`;
+                      // Store in localStorage so DefiAssistant picks it up instantly
+                      try {
+                        const pending = JSON.parse(localStorage.getItem("guardian_pending_alerts") ?? "[]") as string[];
+                        pending.push(msg);
+                        localStorage.setItem("guardian_pending_alerts", JSON.stringify(pending));
+                      } catch { /* ignore */ }
+                      // Dispatch window event for immediate cross-component delivery
+                      window.dispatchEvent(new CustomEvent("guardian-alert", { detail: { message: msg } }));
+                      showStatus(`📤 已發送到 AI 顧問：${c.label}`, "success");
                     }}
                     style={{
                       background: "none", border: "1px solid var(--border)", cursor: "pointer",
                       color: "var(--text-secondary)", fontSize: 10, padding: "2px 6px",
                       borderRadius: 4, lineHeight: 1.4, whiteSpace: "nowrap",
                     }}
-                  >🔔 提醒</button>
+                  >📤 通知 AI</button>
                   <button
                     onClick={() => deleteCondition(c.id)}
                     style={{

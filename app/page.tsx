@@ -323,8 +323,8 @@ function AppContent() {
               <TabButton label={t("tabAgent")} active={activeTab === "agent"} onClick={() => setActiveTab("agent")} />
             </div>
 
-            {/* Tab Content */}
-            {activeTab === "health" && (
+            {/* Tab Content — always mounted, hidden when inactive to preserve state */}
+            <div style={{ display: activeTab === "health" ? "block" : "none" }}>
               <ErrorBoundary fallbackLabel={t("tabHealth")}>
                 <HealthReport
                   walletAddress={walletAddress}
@@ -332,21 +332,21 @@ function AppContent() {
                   onDataLoaded={setWalletSnapshot}
                 />
               </ErrorBoundary>
-            )}
-            {activeTab === "token" && (
+            </div>
+            <div style={{ display: activeTab === "token" ? "block" : "none" }}>
               <ErrorBoundary fallbackLabel={t("tabToken")}>
                 <TokenAnalysis walletAddress={walletAddress} isDayMode={isDayMode} />
               </ErrorBoundary>
-            )}
-            {activeTab === "defi" && (
+            </div>
+            <div style={{ display: activeTab === "defi" ? "block" : "none" }}>
               <ErrorBoundary fallbackLabel={t("tabDefi")}>
                 <DefiAssistant
                   walletAddress={walletAddress}
                   walletSnapshot={walletSnapshot}
                 />
               </ErrorBoundary>
-            )}
-            {activeTab === "agent" && (
+            </div>
+            <div style={{ display: activeTab === "agent" ? "block" : "none" }}>
               <ErrorBoundary fallbackLabel={t("tabAgent")}>
                 <AgentPanel
                   walletAddress={walletAddress}
@@ -354,7 +354,7 @@ function AppContent() {
                   isDayMode={isDayMode}
                 />
               </ErrorBoundary>
-            )}
+            </div>
           </>
         )}
       </div>

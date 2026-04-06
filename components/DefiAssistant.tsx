@@ -504,8 +504,39 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
     return () => clearInterval(interval);
   }, []);
 
-  // ── Guardian cron alerts polling: poll /api/cron/alerts every 5 min ──
+  // ── Guardian alerts: window event (instant) + localStorage (on mount) + cron polling ──
   useEffect(() => {
+    // 1. Read any pending alerts from localStorage (injected by Guardian panel)
+    try {
+      const pending = JSON.parse(localStorage.getItem("guardian_pending_alerts") ?? "[]") as string[];
+      if (pending.length > 0) {
+        localStorage.removeItem("guardian_pending_alerts");
+        for (const msg of pending) {
+          setMessages(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            role: "assistant",
+            text: msg,
+            isAgentInitiated: true,
+          }]);
+        }
+      }
+    } catch { /* ignore */ }
+
+    // 2. Listen for real-time window events dispatched by Guardian panel
+    const handleGuardianAlert = (e: Event) => {
+      const detail = (e as CustomEvent<{ message: string }>).detail;
+      if (!detail?.message) return;
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        role: "assistant",
+        text: detail.message,
+        isAgentInitiated: true,
+      }]);
+      setToast({ id: Date.now(), text: detail.message.slice(0, 60) + "…" });
+    };
+    window.addEventListener("guardian-alert", handleGuardianAlert);
+
+    // 3. Poll /api/cron/alerts every 5 min for real cron-triggered alerts
     const check = () => {
       const since = lastAlertTimestampRef.current;
       fetch(`/api/cron/alerts${since > 0 ? `?since=${since}` : ""}`)
@@ -528,10 +559,12 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
         })
         .catch(() => {});
     };
-    // Check immediately on mount, then every 5 min
     check();
     const interval = setInterval(check, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("guardian-alert", handleGuardianAlert);
+    };
   }, []);
 
   // ── Watchlist price monitoring: re-fetch every 5 min + 30s offset ──
