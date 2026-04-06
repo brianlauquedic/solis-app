@@ -133,9 +133,6 @@ export default function Footer() {
             onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = "1"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = "0.5"; }}
           >𝕏 @sakuraaijp</a>
-          <span style={{ fontSize: 11, color: "var(--text-primary)", opacity: 0.4 }}>
-            {lang === "zh" ? "非投資建議" : lang === "ja" ? "投資助言ではありません" : "Not financial advice"}
-          </span>
         </div>
       </div>
     </footer>

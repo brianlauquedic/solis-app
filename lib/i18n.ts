@@ -16,9 +16,9 @@ export const translations = {
 
   // ── Hackathon badge ──────────────────────────────────────────────
   hackathonBadge: {
-    zh: "COLOSSEUM FRONTIER HACKATHON 2026 · AGENTIC ECONOMY TRACK",
-    en: "COLOSSEUM FRONTIER HACKATHON 2026 · AGENTIC ECONOMY TRACK",
-    ja: "COLOSSEUM FRONTIER HACKATHON 2026 · AGENTIC ECONOMY TRACK",
+    zh: "SAKURA · AGENTIC ECONOMY · BUILT ON SOLANA",
+    en: "SAKURA · AGENTIC ECONOMY · BUILT ON SOLANA",
+    ja: "SAKURA · AGENTIC ECONOMY · BUILT ON SOLANA",
   },
 
   // ── Hero ──────────────────────────────────────────────────────────
@@ -340,9 +340,9 @@ export const translations = {
 
   // ── Footer ────────────────────────────────────────────────────────
   footerText: {
-    zh: "Sakura · Colosseum Frontier Hackathon 2026 · Agentic Economy Track · Built on Solana",
-    en: "Sakura · Colosseum Frontier Hackathon 2026 · Agentic Economy Track · Built on Solana",
-    ja: "Sakura · Colosseum Frontier Hackathon 2026 · Agentic Economy Track · Built on Solana",
+    zh: "Sakura · Agentic Economy · Built on Solana",
+    en: "Sakura · Agentic Economy · Built on Solana",
+    ja: "Sakura · Agentic Economy · Built on Solana",
   },
 
   // ── Protocols ecosystem ────────────────────────────────────────────
