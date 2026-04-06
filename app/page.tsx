@@ -12,6 +12,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import SubscriptionBanner from "@/components/SubscriptionBanner";
 import { LanguageProvider, useLang } from "@/contexts/LanguageContext";
 import WaBijinSVG from "@/components/WaBijinSVG";
+import Footer from "@/components/Footer";
 import type { Lang } from "@/lib/i18n";
 
 type Tab = "health" | "token" | "defi" | "agent";
@@ -358,6 +359,7 @@ function AppContent() {
           </>
         )}
       </div>
+      <Footer />
     </main>
   );
 }
