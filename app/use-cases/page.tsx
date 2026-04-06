@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import WaBijinSVG from "@/components/WaBijinSVG";
 import { LanguageProvider, useLang } from "@/contexts/LanguageContext";
 import Footer from "@/components/Footer";
 import ThemeWrapper from "@/components/ThemeWrapper";
@@ -305,6 +306,117 @@ function KpiGrid({ items }: { items: Array<{ label: string; value: string; sub?:
   );
 }
 
+function LSTTable({ lang }: { lang: Lang }) {
+  const headers = [
+    { zh: "LST", en: "LST", ja: "LST" },
+    { zh: "APY", en: "APY", ja: "APY" },
+    { zh: "TVL", en: "TVL", ja: "TVL" },
+    { zh: "收益機制", en: "Yield Mechanism", ja: "利回りメカニズム" },
+  ];
+  const rows = [
+    { name: "jitoSOL", apy: "7.8%", tvl: "$1.31B", mech: { zh: "PoS + MEV 捕獲", en: "PoS + MEV Capture", ja: "PoS + MEV獲得" }, best: true },
+    { name: "mSOL",    apy: "7.2%", tvl: "$1.48B", mech: { zh: "Marinade PoS",   en: "Marinade PoS",   ja: "Marinade PoS" },  best: false },
+    { name: "bSOL",    apy: "6.9%", tvl: "$0.82B", mech: { zh: "Blaze PoS",      en: "Blaze PoS",      ja: "Blaze PoS" },     best: false },
+    { name: "stSOL",   apy: "6.1%", tvl: "$0.47B", mech: { zh: "Lido PoS",       en: "Lido PoS",       ja: "Lido PoS" },      best: false },
+  ];
+  return (
+    <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 8 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", background: "var(--bg-card-2)" }}>
+        <thead>
+          <tr style={{ borderBottom: "1px solid var(--border)" }}>
+            {headers.map((h, i) => (
+              <th key={i} style={{ padding: "8px 14px", fontSize: 10, color: "var(--text-muted)", textAlign: "left", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                {tx(h, lang)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i} style={{ borderBottom: i < rows.length - 1 ? "1px solid var(--border)" : "none" }}>
+              <td style={{ padding: "9px 14px", fontSize: 13, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-mono)" }}>
+                {row.name}
+                {row.best && <span style={{ fontSize: 9, fontWeight: 700, background: "var(--accent)", color: "#fff", borderRadius: 4, padding: "1px 5px", marginLeft: 6 }}>⭐</span>}
+              </td>
+              <td style={{ padding: "9px 14px", fontSize: 13, fontWeight: 700, color: "#3D7A5C", fontFamily: "var(--font-mono)" }}>{row.apy}</td>
+              <td style={{ padding: "9px 14px", fontSize: 13, color: "#C9A84C", fontFamily: "var(--font-mono)", fontWeight: 600 }}>{row.tvl}</td>
+              <td style={{ padding: "9px 14px", fontSize: 12, color: "var(--text-muted)" }}>{tx(row.mech, lang)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function LendingTable({ lang }: { lang: Lang }) {
+  const headers = [
+    { zh: "協議", en: "Protocol", ja: "プロトコル" },
+    { zh: "資產", en: "Asset", ja: "資産" },
+    { zh: "存款 APY", en: "Supply APY", ja: "預金APY" },
+    { zh: "借款 APY", en: "Borrow APY", ja: "借入APY" },
+  ];
+  const rows = [
+    { protocol: "Drift",    asset: "USDC", supplyApy: "5.2%", borrowApy: "8.4%", best: true },
+    { protocol: "Kamino",   asset: "USDC", supplyApy: "4.8%", borrowApy: "7.2%", best: false },
+    { protocol: "Kamino",   asset: "SOL",  supplyApy: "2.1%", borrowApy: "8.1%", best: false },
+    { protocol: "Marginfi", asset: "USDC", supplyApy: "4.5%", borrowApy: "6.9%", best: false },
+  ];
+  return (
+    <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 8 }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", background: "var(--bg-card-2)" }}>
+        <thead>
+          <tr style={{ borderBottom: "1px solid var(--border)" }}>
+            {headers.map((h, i) => (
+              <th key={i} style={{ padding: "8px 14px", fontSize: 10, color: "var(--text-muted)", textAlign: "left", fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                {tx(h, lang)}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={i} style={{ borderBottom: i < rows.length - 1 ? "1px solid var(--border)" : "none" }}>
+              <td style={{ padding: "9px 14px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                {row.protocol}
+                {row.best && <span style={{ fontSize: 9, fontWeight: 700, background: "#3D7A5C", color: "#fff", borderRadius: 4, padding: "1px 5px", marginLeft: 6 }}>最高</span>}
+              </td>
+              <td style={{ padding: "9px 14px", fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>{row.asset}</td>
+              <td style={{ padding: "9px 14px", fontSize: 13, color: "#3D7A5C", fontFamily: "var(--font-mono)", fontWeight: 600 }}>{row.supplyApy}</td>
+              <td style={{ padding: "9px 14px", fontSize: 13, color: "#B8832A", fontFamily: "var(--font-mono)", fontWeight: 600 }}>{row.borrowApy}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function WatchList({ items }: { items: Array<{ date: string; title: string; desc: string }> }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 8 }}>
+      {items.map((item, i) => (
+        <div key={i} style={{
+          display: "flex", gap: 14, alignItems: "flex-start",
+          background: "var(--bg-card-2)", border: "1px solid var(--border)",
+          borderRadius: 10, padding: "12px 16px",
+        }}>
+          <div style={{
+            fontSize: 10, fontWeight: 700, color: "var(--accent)",
+            background: "var(--accent-soft)", border: "1px solid rgba(192,57,43,0.25)",
+            borderRadius: 6, padding: "3px 9px", flexShrink: 0, marginTop: 2,
+            letterSpacing: "0.04em", fontFamily: "var(--font-mono)",
+          }}>{item.date}</div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>{item.title}</div>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.7 }}>{item.desc}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 function UseCasesContent() {
@@ -599,29 +711,52 @@ function UseCasesContent() {
     };
     const title: T3 = { zh: "Solana 生態全景週報 (W14 2026)", en: "Solana Ecosystem Weekly (W14 2026)", ja: "Solana エコシステム週報 (W14 2026)" };
     const intro: T3 = {
-      zh: "本報告基於 Helius 鏈上交易數據、Kamino 協議 API、Jupiter 聚合器指標及 30 個 GMGN 標記錢包的實時追蹤。數字會說話——但只有讀懂它們背後的邏輯，才能在 Solana 生態佔據信息優勢。",
-      en: "This report draws from Helius on-chain transaction feeds, Kamino protocol APIs, Jupiter aggregator metrics, and real-time surveillance of 30 GMGN-labeled wallets. Numbers tell a story — but only those who understand the logic behind them hold an edge in the Solana ecosystem.",
-      ja: "本レポートはHeliusオンチェーンデータ、Kaminoプロトコルのプロトコルアキュムレーター指標、30のGMGNラベル付きウォレットのリアルタイム監視に基づく。数字は語る——しかしその背後の論理を理解した者だけがSolana生態系でエッジを持つ。",
+      zh: "本報告基於 Helius 鏈上交易數據、Kamino / Marginfi / Drift 協議 API、Jupiter 聚合器指標、Magic Eden NFT 數據及 30 個 GMGN 標記錢包的實時追蹤，覆蓋 Solana 生態九個維度。數字會說話——但只有讀懂它們背後的邏輯，才能在這個生態佔據真正的信息優勢。",
+      en: "This report draws from Helius on-chain feeds, Kamino / Marginfi / Drift protocol APIs, Jupiter aggregator metrics, Magic Eden NFT data, and real-time surveillance of 30 GMGN-labeled wallets — covering nine dimensions of the Solana ecosystem. Numbers tell a story. Only those who understand the logic behind them hold a genuine edge.",
+      ja: "本レポートはHeliusオンチェーンデータ、Kamino / Marginfi / Driftプロトコルアキュムレーター指標、Jupiter、Magic Eden NFTデータ、30のGMGNラベル付きウォレットのリアルタイム監視に基づき、Solana生態系の9次元をカバーする。数字は語る——その背後の論理を理解した者だけが真のエッジを持つ。",
     };
 
     const kpiItems = L === "zh"
       ? [
-          { label: "Solana DeFi TVL", value: "$8.2B", sub: "+4.8% 週環比", highlight: true },
-          { label: "SOL 現價", value: "$172.40", sub: "+6.2% 本週" },
-          { label: "Jupiter 週交易量", value: "$7.9B", sub: "3 個月新高" },
+          { label: "Solana DeFi TVL", value: "$8.2B",    sub: "+4.8% 週環比",  highlight: true },
+          { label: "SOL 現價",         value: "$172.40", sub: "+6.2% 本週" },
+          { label: "Jupiter 週交易量", value: "$7.9B",    sub: "3 個月新高" },
+          { label: "SOL 全網質押率",   value: "65.2%",    sub: "vs ETH 27%" },
+          { label: "活躍驗證者",        value: "1,947",    sub: "去中心化新高" },
+          { label: "週協議收入",        value: "$2.1M",    sub: "+18.3% 週環比" },
         ]
       : L === "ja"
       ? [
-          { label: "Solana DeFi TVL", value: "$8.2B", sub: "+4.8% 週次", highlight: true },
-          { label: "SOL 現在価格", value: "$172.40", sub: "+6.2% 今週" },
-          { label: "Jupiter 週次取引量", value: "$7.9B", sub: "3ヶ月ぶりの高値" },
+          { label: "Solana DeFi TVL",   value: "$8.2B",    sub: "+4.8% 週次",        highlight: true },
+          { label: "SOL 現在価格",       value: "$172.40", sub: "+6.2% 今週" },
+          { label: "Jupiter 週次取引量", value: "$7.9B",    sub: "3ヶ月ぶりの高値" },
+          { label: "SOL ステーキング率", value: "65.2%",    sub: "vs ETH 27%" },
+          { label: "アクティブバリデーター", value: "1,947", sub: "分散化新高" },
+          { label: "週次プロトコル収入", value: "$2.1M",    sub: "+18.3% 週次" },
         ]
       : [
-          { label: "Solana DeFi TVL", value: "$8.2B", sub: "+4.8% WoW", highlight: true },
-          { label: "SOL Price", value: "$172.40", sub: "+6.2% this week" },
-          { label: "Jupiter Weekly Volume", value: "$7.9B", sub: "3-month high" },
+          { label: "Solana DeFi TVL",    value: "$8.2B",    sub: "+4.8% WoW",      highlight: true },
+          { label: "SOL Price",           value: "$172.40", sub: "+6.2% this week" },
+          { label: "Jupiter Weekly Vol",  value: "$7.9B",    sub: "3-month high" },
+          { label: "SOL Staking Rate",    value: "65.2%",    sub: "vs ETH 27%" },
+          { label: "Active Validators",   value: "1,947",    sub: "decentralization ATH" },
+          { label: "Weekly Protocol Rev", value: "$2.1M",    sub: "+18.3% WoW" },
         ];
 
+    // ── Network Health ──────────────────────────────────────────────────────
+    const networkNarrative: T3 = {
+      zh: "一條鏈的健康，不僅體現在代幣價格，更體現在它的基礎設施是否能在承壓狀態下穩定運轉。本週 Solana 的鏈上健康數據給出了令人信服的答案：平均 TPS <b style='color:var(--gold);font-weight:700'>3,247</b>，峰值達 <b style='color:var(--gold);font-weight:700'>65,000</b>，在全球活躍度最高的時段未出現任何擁堵。活躍驗證者達 <b style='color:var(--gold);font-weight:700'>1,947</b> 個——幾乎是以太坊的兩倍，這是去中心化程度的硬數據，不是敘事：",
+      en: "A chain's health is not revealed in its token price — it is revealed in whether its infrastructure holds steady under pressure. Solana's on-chain health metrics this week deliver a convincing answer: average TPS of <b style='color:var(--gold);font-weight:700'>3,247</b>, peaking at <b style='color:var(--gold);font-weight:700'>65,000</b> without a single congestion event during peak global activity. <b style='color:var(--gold);font-weight:700'>1,947</b> active validators — nearly twice Ethereum's count — decentralization measured in hard data, not narrative:",
+      ja: "チェーンの健全性はトークン価格に現れない——プレッシャー下でインフラが安定動作するかに現れる。今週のSolanaオンチェーン健全性データは説得力ある答えを示した：平均TPS <b style='color:var(--gold);font-weight:700'>3,247</b>、ピーク<b style='color:var(--gold);font-weight:700'>65,000</b>、グローバルピーク時でも輻輳ゼロ。アクティブバリデーター<b style='color:var(--gold);font-weight:700'>1,947</b>はイーサリアムの約2倍——物語ではなく実データによる分散化の証明：",
+    };
+    const networkRows = [
+      { label: { zh: "平均 TPS（本週）", en: "Average TPS (this week)", ja: "平均TPS（今週）" }, value: "3,247 | 峰值 65,000", status: "safe" as Status },
+      { label: { zh: "活躍驗證者節點", en: "Active Validator Nodes", ja: "アクティブバリデーター数" }, value: L === "zh" ? "1,947（vs ETH ~900）" : L === "ja" ? "1,947（vs ETH ~900）" : "1,947 (vs ETH ~900)", status: "safe" as Status },
+      { label: { zh: "平均區塊確認時間", en: "Avg Block Confirmation", ja: "平均ブロック確認時間" }, value: "0.4 秒 ✅", status: "safe" as Status },
+      { label: { zh: "本週協議手續費收入", en: "Weekly Protocol Fee Revenue", ja: "週次プロトコル手数料収入" }, value: "$2.1M (+18.3%)", status: "safe" as Status },
+    ];
+
+    // ── Protocol TVL ────────────────────────────────────────────────────────
     const protocolRows: ProtocolRow[] = [
       { name: "Kamino",   category: { zh: "借貸 / LP", en: "Lending / LP", ja: "レンディング/LP" }, tvl: "$2.10B", change: "+11.8%", atl: true },
       { name: "Marinade", category: { zh: "LST",        en: "LST",           ja: "LST" },             tvl: "$1.48B", change: "+6.2%" },
@@ -677,28 +812,75 @@ function UseCasesContent() {
       ja: "数字は嘘をつかない。Sakuraが継続追跡する30のGMGNラベル付きアドレス（KOL、Whale、Cabalの3分類）は、今週のネットポジション調整を通じて明確な方向判断を示した。オンチェーンで「先見の資金」として広く認識されるこれらのアドレスは、<b style='color:var(--gold);font-weight:700'>$2.4M</b>のSOLを純購入。しかし重要なのはその選択ロジック：Solanaインフラトークンを系統的に買い増しし、新発ミームを売却——スマートマネーがどのセクターに未来があるかをリアル資本で投票している：",
     };
 
+    // ── Lending ─────────────────────────────────────────────────────────────
+    const lendingNarrative: T3 = {
+      zh: "Solana 借貸市場的利率曲線正在描繪一個精確的牛市圖景。Drift 的 USDC 存款 APY 達 <b style='color:var(--gold);font-weight:700'>5.2%</b>，在 Solana 上以穩定幣獲得超越多數傳統銀行的存款利率已成為可執行的現實策略。而 Kamino 的 SOL 借款利率攀升至 <b style='color:var(--gold);font-weight:700'>8.1%</b>，折射出市場對槓桿做多 SOL 的強烈需求——這比社交媒體上任何喊單都更誠實：",
+      en: "Solana's lending rate curve is drawing a precise picture of bull market sentiment. Drift's USDC supply APY of <b style='color:var(--gold);font-weight:700'>5.2%</b> has shifted stablecoin yields above most traditional bank deposit rates from hypothesis to executable strategy. Meanwhile, Kamino's SOL borrow rate climbing to <b style='color:var(--gold);font-weight:700'>8.1%</b> reflects intense leveraged long demand — a more honest signal than any social media price call:",
+      ja: "Solanaの貸出市場の金利カーブは強気相場の正確な図を描いている。DriftのUSDC預金APY <b style='color:var(--gold);font-weight:700'>5.2%</b>は、大多数の銀行預金金利を超える安定コイン収益を仮説から実行可能戦略へと移行させた。KaminoのSOL借入金利が<b style='color:var(--gold);font-weight:700'>8.1%</b>まで上昇したことは、レバレッジドロング需要の強烈さを反映している：",
+    };
+
+    // ── LST ─────────────────────────────────────────────────────────────────
+    const lstNarrative: T3 = {
+      zh: "流動質押代幣正在成為 Solana DeFi 最優雅的基礎資產。全網 SOL 質押率本週達 <b style='color:var(--gold);font-weight:700'>65.2%</b>——遠超以太坊的 27%——這既是網絡安全性的硬指標，也是市場對 Solana 長期敘事投下的信任票。jitoSOL 以 <b style='color:var(--gold);font-weight:700'>7.8%</b> APY 稱冠，其超額回報來源是 Jito Labs 的 MEV 捕獲機制——在高交易量時段可額外貢獻 0.3–0.8% 年化加成，持有者無需承擔任何額外風險：",
+      en: "Liquid staking tokens are quietly becoming Solana DeFi's most elegant foundational assets. The network's SOL staking rate reached <b style='color:var(--gold);font-weight:700'>65.2%</b> this week — far ahead of Ethereum's 27% — a hard metric for network security and a market confidence vote in Solana's long-term thesis. jitoSOL leads at <b style='color:var(--gold);font-weight:700'>7.8%</b> APY, with excess returns sourced from Jito Labs' MEV capture mechanism, contributing an additional 0.3–0.8% annualized during high-volume periods at no added risk to holders:",
+      ja: "流動性ステーキングトークンはSolana DeFiの最も洗練された基盤資産として台頭している。今週のSOLステーキング率は<b style='color:var(--gold);font-weight:700'>65.2%</b>に達し、イーサリアムの27%を大きく上回る——ネットワークセキュリティのハード指標であり、Solanaの長期テーゼへの信頼票だ。jitoSOLが<b style='color:var(--gold);font-weight:700'>7.8%</b> APYで首位、超過収益はJito LabsのMEV獲得メカニズムに由来し、高取引量時に追加リスクなしで0.3〜0.8%年率加算：",
+    };
+
+    // ── NFT ─────────────────────────────────────────────────────────────────
+    const nftNarrative: T3 = {
+      zh: "Solana NFT 市場本週出現了一個值得記錄的結構性轉移。Magic Eden 週交易量下滑 4.2% 至 <b style='color:var(--gold);font-weight:700'>$28M</b>，而 Tensor 逆勢上漲 8.7% 至 <b style='color:var(--gold);font-weight:700'>$19M</b>——市場份額正在以每週可見的速度向 Tensor 重新分配。這種遷移往往不會因一個公告而發生，而是用戶以交易行為投票的結果。同期，Mad Lads 地板價穩守 <b style='color:var(--gold);font-weight:700'>82 SOL</b>，延續了 Solana 藍籌 NFT 的抗跌韌性：",
+      en: "Solana's NFT market registered a structural shift this week worth noting on record. Magic Eden's weekly volume declined 4.2% to <b style='color:var(--gold);font-weight:700'>$28 million</b>, while Tensor surged 8.7% to <b style='color:var(--gold);font-weight:700'>$19 million</b> — market share is being redistributed to Tensor at a weekly-visible pace. This kind of migration doesn't happen because of an announcement; it happens when users vote with their transactions. Meanwhile, Mad Lads floor held firm at <b style='color:var(--gold);font-weight:700'>82 SOL</b>, confirming Solana blue-chip NFT resilience:",
+      ja: "Solana NFT市場は今週、記録に値する構造的移行を示した。Magic Edenの週次取引量が4.2%減の<b style='color:var(--gold);font-weight:700'>$28M</b>、Tensorが8.7%増の<b style='color:var(--gold);font-weight:700'>$19M</b>と逆行——市場シェアは週次で可視的なペースでTensorへ再配分されている。この移行は発表によって起きるのではなく、ユーザーが取引で投票した結果だ。Mad Ladsのフロアは<b style='color:var(--gold);font-weight:700'>82 SOL</b>を維持：",
+    };
+    const nftRows = [
+      { label: { zh: "Magic Eden 週交易量", en: "Magic Eden Weekly Volume", ja: "Magic Eden週次取引量" }, value: "$28M (-4.2%) ⚠️", status: "warn" as Status },
+      { label: { zh: "Tensor 週交易量", en: "Tensor Weekly Volume", ja: "Tensor週次取引量" }, value: "$19M (+8.7%) ✅", status: "safe" as Status },
+      { label: { zh: "Mad Lads 地板價", en: "Mad Lads Floor Price", ja: "Mad Ladsフロア価格" }, value: L === "zh" ? "82 SOL ✅ 藍籌穩守" : L === "ja" ? "82 SOL ✅ ブルーチップ" : "82 SOL ✅ blue-chip", status: "safe" as Status },
+      { label: { zh: "DeGods 地板價", en: "DeGods Floor Price", ja: "DeGodsフロア価格" }, value: L === "zh" ? "12.4 SOL（以太坊回流）" : L === "ja" ? "12.4 SOL（ETH回流）" : "12.4 SOL (ETH returnees)", status: "info" as Status },
+    ];
+
+    // ── Watch ────────────────────────────────────────────────────────────────
+    const watchItems = L === "zh" ? [
+      { date: "4/14", title: "Firedancer 主網壓測啟動", desc: "下一代 Solana 驗證器客戶端正式開始主網壓力測試，目標 100 萬 TPS，或將重新定義鏈上性能上限" },
+      { date: "4/15", title: "Jupiter v4 流動性路由優化上線", desc: "深度集成 Meteora 動態 AMM，預計降低大額換幣滑點 15%，直接惠及機構級交易者" },
+      { date: "4/18", title: "Kamino Points Season 2 公告", desc: "積分激勵第二季——歷史上每次此類公告後，Kamino TVL 在 48 小時內平均上漲 22%" },
+    ] : L === "ja" ? [
+      { date: "4/14", title: "Firedancerメインネット負荷テスト開始", desc: "次世代Solanaバリデータークライアントの本番負荷テスト開始、目標100万TPS" },
+      { date: "4/15", title: "Jupiter v4流動性ルーティング最適化リリース", desc: "Meteora動的AMMの深度統合、大型スワップのスリッページ15%削減予定" },
+      { date: "4/18", title: "Kamino Points Season 2発表", desc: "ポイントインセンティブ第2シーズン——過去の同種発表後、Kamino TVLは48時間以内に平均22%上昇" },
+    ] : [
+      { date: "4/14", title: "Firedancer Mainnet Load Test Launch", desc: "Next-gen Solana validator client begins mainnet stress testing, targeting 1M TPS — could redefine on-chain performance ceilings" },
+      { date: "4/15", title: "Jupiter v4 Liquidity Routing Optimization", desc: "Deep Meteora dynamic AMM integration, projecting 15% slippage reduction on large swaps — direct benefit to institutional traders" },
+      { date: "4/18", title: "Kamino Points Season 2 Announcement", desc: "Incentive program season 2 — historically, similar announcements have pushed Kamino TVL up 22% on average within 48 hours" },
+    ];
+
     const findings: T3[] = [
       {
-        zh: "Kamino TVL 歷史新高 $2.1B 不是孤立數據點——它是機構資金從 meme 投機轉向穩定幣收益的鏈上確認，標誌著 Solana DeFi 正在從散戶賭場走向機構級資產管理平台",
-        en: "Kamino's $2.1B ATH is not an isolated data point — it is on-chain confirmation of institutional capital rotating from meme speculation into stablecoin yield, marking Solana DeFi's evolution from retail casino to institutional-grade asset management platform",
-        ja: "Kaminoの$2.1B過去最高は孤立したデータポイントではない——ミーム投機から安定コイン収益への機関資金シフトのオンチェーン確認であり、Solana DeFiが散歩カジノから機関グレードの資産管理プラットフォームへ進化している証拠"
+        zh: "Kamino TVL ATH $2.1B + Drift USDC 借款利率 8.4% 雙重確認：機構資金入場 + 槓桿牛市需求同步爆發——這兩個信號在過去兩輪牛市中從未同時出現在熊市環境",
+        en: "Kamino TVL ATH $2.1B + Drift USDC borrow rate 8.4% — dual confirmation: institutional capital entering + leveraged bull demand surging simultaneously. These two signals have never co-occurred in a bear market environment across the past two cycles",
+        ja: "Kamino TVL ATH $2.1B + Drift USDC借入金利8.4%が二重確認：機関資金流入とレバレッジ強気需要が同時爆発——これら2つのシグナルは過去2サイクルで弱気相場環境で同時発生したことがない"
       },
       {
-        zh: "pump.fun 畢業率回升（4.1%→5.7%）+ GoPlus 攔截 2,340 個高危合約，呈現出健康的生態自淨機制：質量差的代幣被過濾，質量好的獲得更多市場注意力——這正是一個成熟市場應有的樣子",
-        en: "pump.fun graduation rate recovery (4.1%→5.7%) combined with GoPlus blocking 2,340 high-risk contracts presents a healthy ecosystem self-cleansing mechanism: low-quality tokens filtered out, high-quality ones earning more market attention — exactly what a maturing market looks like",
-        ja: "pump.fun卒業率回復（4.1%→5.7%）とGoPlus による2,340件の高危険コントラクト遮断は、健全な生態系自己浄化メカニズムを示す：低品質トークンがフィルタリングされ、高品質トークンがより多くの市場注目を集める"
+        zh: "jitoSOL 7.8% APY + 全網質押率 65.2%（歷史最高）= Solana 網絡安全性達歷史峰值，長期持有者可在不放棄流動性的前提下獲得接近 8% 的真實年化",
+        en: "jitoSOL 7.8% APY + 65.2% network staking rate (all-time high) = Solana network security at historical peak. Long-term holders can capture close to 8% real annualized yield without sacrificing liquidity",
+        ja: "jitoSOL 7.8% APY + ネットワークステーキング率65.2%（過去最高）= Solanaネットワークセキュリティが歴史的ピーク。長期保有者は流動性を犠牲にせず約8%の実質年利を獲得可能"
       },
       {
-        zh: "30 個標記錢包的行為形成高度共識：增持 JUP、BONK、jitoSOL，清倉新發 meme。這是聰明錢在告訴市場：Solana 的未來在協議基礎設施，而不在下一個 24 小時內歸零的 meme",
-        en: "30 labeled wallets achieved striking behavioral consensus: accumulating JUP, BONK, jitoSOL while liquidating new meme launches. Smart money is telling the market where it sees Solana's future — in protocol infrastructure, not in the next meme that goes to zero within 24 hours",
-        ja: "30のラベル付きウォレットが顕著な行動的コンセンサスを形成：JUP、BONK、jitoSOLを積み上げながら新発ミームを清算。スマートマネーはSolanaの未来がどこにあるかを市場に伝えている——プロトコルインフラであり、24時間以内にゼロになる次のミームではない"
+        zh: "Tensor 週交易量 +8.7% vs Magic Eden -4.2%：NFT 平台遷移已在鏈上發生，數據早於任何公告——這正是鏈上分析相對市場情緒的核心優勢所在",
+        en: "Tensor +8.7% vs Magic Eden -4.2% week-over-week: NFT platform migration has already occurred on-chain, data preceding any official announcement — this is precisely where on-chain analysis holds a structural edge over market sentiment",
+        ja: "Tensor +8.7% vs Magic Eden -4.2%：NFTプラットフォーム移行はすでにオンチェーンで発生し、どの公式発表よりも先にデータが示した——これがオンチェーン分析が市場センチメントに対して持つ構造的優位性"
+      },
+      {
+        zh: "30 個標記錢包增持 JUP/BONK/jitoSOL 同步清倉新發 meme：聰明錢用真實資本完成了投票，Solana 的未來在協議基礎設施，不在下一個 24 小時歸零的 meme",
+        en: "30 labeled wallets accumulating JUP/BONK/jitoSOL while liquidating new meme launches: smart money has cast its vote with real capital — Solana's future lies in protocol infrastructure, not in the next meme that goes to zero within 24 hours",
+        ja: "30ウォレットがJUP/BONK/jitoSOLを積み上げ新発ミームを清算：スマートマネーがリアル資本で投票完了——Solanaの未来はプロトコルインフラにあり、24時間以内にゼロになる次のミームにはない"
       },
     ];
 
     const verdict: T3 = {
-      zh: "✅ 本週 Solana 生態的信號指向一致：TVL 創新高、聰明錢系統性增持基礎設施代幣、DEX 交易量達季高——這不是普通的上漲週，這是生態成熟化加速的週。唯一需要警惕的是 pump.fun 的長尾風險，而 Sakura GoPlus 本週已為每一位用戶自動攔截了 2,340 個潛在 rug 合約。",
-      en: "✅ This week's Solana signals converge on a single thesis: TVL at all-time highs, smart money systematically accumulating infrastructure tokens, DEX volume at a seasonal peak. This is not an ordinary up week — it is ecosystem maturation accelerating. The one caveat remains pump.fun's long-tail risk, which Sakura GoPlus addressed by automatically blocking 2,340 potential rug contracts for every user this week.",
-      ja: "✅ 今週のSolanaシグナルは一つの命題に収束する：TVLが過去最高、スマートマネーがインフラトークンを系統的に積み上げ、DEX取引量が季節的ピーク。これは普通の上昇週ではない——生態系の成熟化が加速している週だ。唯一の注意点はpump.funのロングテールリスクだが、Sakura GoPlusが今週すべてのユーザーに対して2,340の潜在的rugコントラクトを自動遮断することで対処した。",
+      zh: "✅ 本週 Solana 生態呈現機構化加速的五重確認：TVL 新高、借貸利率映射槓桿需求、LST 質押率達歷史最高、NFT 平台格局重塑、聰明錢系統性建倉基礎設施代幣。這不是一個普通的上漲週——這是生態成熟化加速的週。Firedancer 下週壓測是下一個催化劑。Sakura GoPlus 本週已為每一位用戶自動攔截 2,340 個潛在 rug 合約。",
+      en: "✅ This week's Solana ecosystem presents five-fold confirmation of accelerating institutionalization: TVL at new highs, lending rates mapping leveraged demand, LST staking rate at all-time high, NFT platform landscape reshaping, smart money systematically building infrastructure positions. This is not an ordinary up week — it is ecosystem maturation accelerating. Firedancer's load test next week is the next catalyst. Sakura GoPlus blocked 2,340 potential rug contracts for every user this week, automatically.",
+      ja: "✅ 今週のSolana生態系は機関化加速の5重確認を示す：TVL新高値、貸出金利がレバレッジ需要を反映、LSTステーキング率が過去最高、NFTプラットフォーム格局再編、スマートマネーがインフラポジションを系統的に構築。普通の上昇週ではない——生態系成熟化が加速している週だ。来週のFiredancer負荷テストが次の触媒。Sakura GoPlusは今週すべてのユーザーに対して2,340のrugコントラクトを自動遮断。",
     };
 
     function NarrativePara({ t3 }: { t3: T3 }) {
@@ -713,32 +895,55 @@ function UseCasesContent() {
     return (
       <CaseCard>
         <QuestionBubble text={tx(q, L)} />
-        <SakuraHeader sources={L === "zh" ? "Helius · Jupiter · Kamino · GoPlus · pump.fun · GMGN · 6 數據源" : L === "ja" ? "Helius · Jupiter · Kamino · GoPlus · pump.fun · GMGN · 6 データ源" : "Helius · Jupiter · Kamino · GoPlus · pump.fun · GMGN · 6 Sources"} />
+        <SakuraHeader sources={L === "zh" ? "Helius · Jupiter · Kamino · Marginfi · Drift · GoPlus · pump.fun · GMGN · Magic Eden · 9 數據源" : L === "ja" ? "Helius · Jupiter · Kamino · Marginfi · Drift · GoPlus · pump.fun · GMGN · Magic Eden · 9 データ源" : "Helius · Jupiter · Kamino · Marginfi · Drift · GoPlus · pump.fun · GMGN · Magic Eden · 9 Sources"} />
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 20, marginBottom: 16 }} />
         <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-heading)", letterSpacing: "0.01em" }}>{tx(title, L)}</h2>
         <p style={{ margin: "0 0 24px", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.9, fontStyle: "italic", borderLeft: "2px solid var(--border)", paddingLeft: 14 }}>{tx(intro, L)}</p>
 
-        <ReportSection emoji="🎯" title={L === "zh" ? "本週市場關鍵指標" : L === "ja" ? "今週の主要市場指標" : "Key Market Context"} />
+        <ReportSection emoji="🎯" title={L === "zh" ? "本週核心指標" : L === "ja" ? "今週の主要指標" : "Key Metrics This Week"} />
         <KpiGrid items={kpiItems} />
 
-        <ReportSection emoji="📊" title={L === "zh" ? "DeFi 協議 TVL 分析" : L === "ja" ? "DeFiプロトコルTVL分析" : "DeFi Protocol TVL Analysis"} />
+        <ReportSection emoji="🌐" title={L === "zh" ? "SOL 鏈上網絡健康度" : L === "ja" ? "SOLオンチェーンネットワーク健全性" : "SOL On-Chain Network Health"} />
+        <NarrativePara t3={networkNarrative} />
+        <TableCaption text={L === "zh" ? "Solana 網絡基礎指標（本週）：" : L === "ja" ? "Solanaネットワーク基本指標（今週）：" : "Solana Network Fundamentals (this week):"} />
+        <MetricsTable rows={networkRows} lang={L} />
+
+        <ReportSection emoji="📊" title={L === "zh" ? "DeFi 協議 TVL 全景" : L === "ja" ? "DeFiプロトコルTVL全景" : "DeFi Protocol TVL Landscape"} />
         <NarrativePara t3={tvlNarrative} />
         <TableCaption text={L === "zh" ? "Solana 主要 DeFi 協議 TVL 一覽（本週）：" : L === "ja" ? "Solana主要DeFiプロトコルTVL一覧（今週）：" : "Major Solana DeFi Protocol TVL (this week):"} />
         <ProtocolTable rows={protocolRows} lang={L} />
 
-        <ReportSection emoji="📈" title={L === "zh" ? "DEX 交易量分佈" : L === "ja" ? "DEX取引量分布" : "DEX Volume Distribution"} />
+        <ReportSection emoji="🏦" title={L === "zh" ? "借貸市場利率深度" : L === "ja" ? "貸出市場金利深度" : "Lending Market Rate Deep-Dive"} />
+        <NarrativePara t3={lendingNarrative} />
+        <TableCaption text={L === "zh" ? "Solana 主要借貸協議利率對比（本週）：" : L === "ja" ? "Solana主要貸出プロトコル金利比較（今週）：" : "Solana Major Lending Protocol Rates (this week):"} />
+        <LendingTable lang={L} />
+
+        <ReportSection emoji="🪙" title={L === "zh" ? "LST 流動質押生態" : L === "ja" ? "LST流動性ステーキング生態系" : "LST Liquid Staking Ecosystem"} />
+        <NarrativePara t3={lstNarrative} />
+        <TableCaption text={L === "zh" ? "主要 LST 收益比較（本週）：" : L === "ja" ? "主要LST利回り比較（今週）：" : "Major LST Yield Comparison (this week):"} />
+        <LSTTable lang={L} />
+
+        <ReportSection emoji="📈" title={L === "zh" ? "DEX 交易量深度分析" : L === "ja" ? "DEX取引量深度分析" : "DEX Volume Deep-Dive"} />
         <NarrativePara t3={dexNarrative} />
         <DexShareBar segments={dexSegments} totalVol="$7.9B" lang={L} />
 
-        <ReportSection emoji="🚀" title={L === "zh" ? "pump.fun 生態監測" : L === "ja" ? "pump.fun エコシステムモニター" : "pump.fun Ecosystem Monitor"} />
+        <ReportSection emoji="🚀" title={L === "zh" ? "pump.fun 生態信號" : L === "ja" ? "pump.fun エコシステムシグナル" : "pump.fun Ecosystem Signal"} />
         <NarrativePara t3={pumpNarrative} />
         <TableCaption text={L === "zh" ? "pump.fun 本週核心指標：" : L === "ja" ? "pump.fun 今週主要指標：" : "pump.fun Key Metrics This Week:"} />
         <MetricsTable rows={pumpRows} lang={L} />
+
+        <ReportSection emoji="🎨" title={L === "zh" ? "NFT 與遊戲生態" : L === "ja" ? "NFT & ゲーム生態系" : "NFT & Gaming Ecosystem"} />
+        <NarrativePara t3={nftNarrative} />
+        <TableCaption text={L === "zh" ? "Solana NFT 市場本週數據：" : L === "ja" ? "Solana NFT市場今週データ：" : "Solana NFT Market This Week:"} />
+        <MetricsTable rows={nftRows} lang={L} />
 
         <ReportSection emoji="🐋" title={L === "zh" ? "聰明錢資金流向" : L === "ja" ? "スマートマネー資金フロー" : "Smart Money Capital Flow"} />
         <NarrativePara t3={flowNarrative} />
         <TableCaption text={L === "zh" ? "30 個標記錢包本週動向：" : L === "ja" ? "30ラベルウォレット今週の動き：" : "30 Labeled Wallet Activity This Week:"} />
         <MetricsTable rows={flowRows} lang={L} />
+
+        <ReportSection emoji="🔭" title={L === "zh" ? "下週關注焦點" : L === "ja" ? "来週の注目ポイント" : "What to Watch Next Week"} />
+        <WatchList items={watchItems} />
 
         <div style={{ marginTop: 28 }}>
           <KeyFindings items={findings.map(f => tx(f, L))} />
@@ -770,11 +975,9 @@ function UseCasesContent() {
         padding: "14px 40px", display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none" }}>
-          <div style={{
-            width: 28, height: 28, background: "var(--accent)", borderRadius: 6,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, fontWeight: 700, color: "#fff",
-          }}>S</div>
+          <div style={{ width: 28, height: 28, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+            <WaBijinSVG size={28} />
+          </div>
           <span style={{ fontSize: 15, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-heading)" }}>Sakura</span>
         </Link>
         <div style={{ display: "flex", gap: 20, alignItems: "center" }}>

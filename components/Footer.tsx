@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import WaBijinSVG from "@/components/WaBijinSVG";
 import { useLang } from "@/contexts/LanguageContext";
 
 const X_URL = "https://x.com/sakuraaijp";
@@ -47,11 +48,9 @@ export default function Footer() {
         {/* Brand */}
         <div style={{ minWidth: 200, maxWidth: 260 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <div style={{
-              width: 28, height: 28, background: "var(--accent)",
-              borderRadius: 6, display: "flex", alignItems: "center",
-              justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#fff",
-            }}>S</div>
+            <div style={{ width: 28, height: 28, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+              <WaBijinSVG size={28} />
+            </div>
             <span style={{ fontSize: 16, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-heading)" }}>
               Sakura
             </span>

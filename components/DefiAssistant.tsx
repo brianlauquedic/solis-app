@@ -338,12 +338,13 @@ const QUICK_ACTION_DEFS: Array<{
   icon: string; labelKey: string; protocol: string | null;
   subKey: string; color: string; promptKey: string | null;
 }> = [
-  { icon: "🫙", labelKey: "qaStakeSOL",      protocol: "Marinade Finance", subKey: "qaStakeSub",    color: "#8B5CF6", promptKey: "suggStakeSOL" },
-  { icon: "🌿", labelKey: "qaUSDCYield",     protocol: "Kamino Finance",   subKey: "qaUSDCSub",     color: "#10B981", promptKey: "suggUSDCYield" },
-  { icon: "🌊", labelKey: "qaTokenSwap",     protocol: null,               subKey: "qaSwapSub",     color: "#06B6D4", promptKey: "suggSwapSOL" },
-  { icon: "🪷", labelKey: "qaYieldOpp",      protocol: null,               subKey: "qaYieldSub",    color: "#F59E0B", promptKey: "suggAllYield" },
-  { icon: "🐋", labelKey: "qaSmartMoney",    protocol: null,               subKey: "qaSmartSub",    color: "#C0392B", promptKey: null },
-  { icon: "🏭", labelKey: "qaAgentWorkshop", protocol: null,               subKey: "qaWorkshopSub", color: "#8B5CF6", promptKey: null },
+  { icon: "🫙", labelKey: "qaStakeSOL",       protocol: "Marinade Finance", subKey: "qaStakeSub",       color: "#8B5CF6", promptKey: "suggStakeSOL" },
+  { icon: "🌿", labelKey: "qaUSDCYield",      protocol: "Kamino Finance",   subKey: "qaUSDCSub",        color: "#10B981", promptKey: "suggUSDCYield" },
+  { icon: "🌊", labelKey: "qaTokenSwap",      protocol: null,               subKey: "qaSwapSub",        color: "#06B6D4", promptKey: "suggSwapSOL" },
+  { icon: "🪷", labelKey: "qaYieldOpp",       protocol: null,               subKey: "qaYieldSub",       color: "#F59E0B", promptKey: "suggAllYield" },
+  { icon: "🐋", labelKey: "qaSmartMoney",     protocol: null,               subKey: "qaSmartSub",       color: "#C0392B", promptKey: null },
+  { icon: "📊", labelKey: "qaWeeklyReport",   protocol: null,               subKey: "qaWeeklyReportSub",color: "#C9A84C", promptKey: "suggWeeklyReport" },
+  { icon: "🏭", labelKey: "qaAgentWorkshop",  protocol: null,               subKey: "qaWorkshopSub",    color: "#8B5CF6", promptKey: null },
 ];
 
 // ── Suggestion Chips ─────────────────────────────────────────────

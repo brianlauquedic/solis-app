@@ -4,6 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getDeviceId } from "@/lib/device-id";
 import { payWithPhantom } from "@/lib/x402";
+import WaBijinSVG from "@/components/WaBijinSVG";
+import { LanguageProvider, useLang } from "@/contexts/LanguageContext";
+import type { Lang } from "@/lib/i18n";
 
 type SubscriptionTier = "free" | "basic" | "pro";
 type BillingPeriod = "monthly" | "annual";
@@ -84,7 +87,12 @@ const CREDIT_COSTS: { icon: string; label: string; cost: number; feature: string
 ];
 
 export default function PricingPage() {
+  return <LanguageProvider><PricingInner /></LanguageProvider>;
+}
+
+function PricingInner() {
   const router = useRouter();
+  const { lang, setLang } = useLang();
   const [billing, setBilling] = useState<BillingPeriod>("monthly");
   const [planType, setPlanType] = useState<"personal" | "enterprise">("personal");
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
@@ -162,6 +170,15 @@ export default function PricingPage() {
   const plans = status?.plans ?? DEFAULT_PLANS;
   const currentTier = status?.tier ?? "free";
 
+  const tx = (zh: string, en: string, ja: string) =>
+    lang === "en" ? en : lang === "ja" ? ja : zh;
+
+  const LANG_LABELS: { lang: Lang; flag: string; label: string }[] = [
+    { lang: "zh", flag: "🇹🇼", label: "中文" },
+    { lang: "en", flag: "🇺🇸", label: "EN" },
+    { lang: "ja", flag: "🇯🇵", label: "日本語" },
+  ];
+
   const TIER_STYLE = {
     free:  { accent: "var(--text-secondary)", border: "var(--border)", bg: "var(--bg-card)", badge: "" },
     basic: { accent: "#8B5CF6", border: "rgba(139,92,246,0.35)", bg: "rgba(139,92,246,0.06)", badge: "🔵" },
@@ -209,12 +226,9 @@ export default function PricingPage() {
             color: "var(--text-primary)", fontSize: 20, fontWeight: 800,
           }}
         >
-          <span style={{
-            width: 28, height: 28, borderRadius: 6,
-            background: "var(--accent)", color: "#fff",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, fontWeight: 900,
-          }}>S</span>
+          <div style={{ width: 28, height: 28, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
+            <WaBijinSVG size={28} />
+          </div>
           <span style={{ fontFamily: "var(--font-heading, 'Noto Serif JP', serif)", letterSpacing: "0.05em" }}>
             Sakura
           </span>
@@ -225,19 +239,37 @@ export default function PricingPage() {
           color: "var(--text-primary)",
           borderBottom: "2px solid var(--accent)",
           paddingBottom: 2,
-        }}>定價</span>
+        }}>{tx("定價", "Pricing", "料金")}</span>
 
-        <button
-          onClick={() => router.push("/")}
-          style={{
-            padding: "7px 18px", borderRadius: 8,
-            background: "var(--accent)", border: "none",
-            color: "#fff", fontSize: 13, fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          進入應用程序 →
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Language switcher */}
+          <div style={{ display: "flex", gap: 4 }}>
+            {LANG_LABELS.map(item => (
+              <button
+                key={item.lang}
+                onClick={() => setLang(item.lang)}
+                style={{
+                  padding: "4px 10px", borderRadius: 6, border: "none",
+                  fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  background: lang === item.lang ? "var(--accent)" : "var(--bg-card-2, var(--bg-card))",
+                  color: lang === item.lang ? "#fff" : "var(--text-secondary)",
+                  transition: "all 0.15s",
+                }}
+              >{item.flag} {item.label}</button>
+            ))}
+          </div>
+          <button
+            onClick={() => router.push("/")}
+            style={{
+              padding: "7px 18px", borderRadius: 8,
+              background: "var(--accent)", border: "none",
+              color: "#fff", fontSize: 13, fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {tx("進入應用程序 →", "Launch App →", "アプリを開く →")}
+          </button>
+        </div>
       </header>
 
       {/* ── Main Content ────────────────────────────────────────────── */}
@@ -251,7 +283,7 @@ export default function PricingPage() {
             letterSpacing: "0.05em",
             color: "var(--text-primary)",
             margin: "0 0 24px",
-          }}>定價</h1>
+          }}>{tx("定價", "Pricing", "料金")}</h1>
 
           {/* Plan type tabs */}
           <div style={{
@@ -273,7 +305,7 @@ export default function PricingPage() {
                   transition: "all 0.15s",
                 }}
               >
-                {t === "personal" ? "個人" : "企業"}
+                {t === "personal" ? tx("個人", "Personal", "個人") : tx("企業", "Enterprise", "エンタープライズ")}
               </button>
             ))}
           </div>
@@ -314,7 +346,7 @@ export default function PricingPage() {
                   fontSize: 13, fontWeight: billing === "monthly" ? 700 : 400,
                   color: billing === "monthly" ? "var(--text-primary)" : "var(--text-secondary)",
                   cursor: "pointer",
-                }} onClick={() => setBilling("monthly")}>按月支付</span>
+                }} onClick={() => setBilling("monthly")}>{tx("按月支付", "Monthly", "月払い")}</span>
 
                 {/* Toggle switch */}
                 <div
@@ -340,7 +372,7 @@ export default function PricingPage() {
                   fontSize: 13, fontWeight: billing === "annual" ? 700 : 400,
                   color: billing === "annual" ? "var(--text-primary)" : "var(--text-secondary)",
                   cursor: "pointer",
-                }} onClick={() => setBilling("annual")}>按年支付</span>
+                }} onClick={() => setBilling("annual")}>{tx("按年支付", "Annual", "年払い")}</span>
 
                 {billing === "annual" && (
                   <span style={{
@@ -350,7 +382,7 @@ export default function PricingPage() {
                     border: "1px solid rgba(16,185,129,0.3)",
                     borderRadius: 20, padding: "2px 8px",
                     whiteSpace: "nowrap",
-                  }}>節省 {savingsPct}%</span>
+                  }}>{tx("節省", "Save", "節約")} {savingsPct}%</span>
                 )}
               </div>
             </div>
@@ -402,7 +434,7 @@ export default function PricingPage() {
                         background: "var(--accent)",
                         color: "#fff", fontSize: 11, fontWeight: 700,
                         padding: "3px 16px", borderRadius: 20, whiteSpace: "nowrap",
-                      }}>推薦</div>
+                      }}>{tx("推薦", "Recommended", "おすすめ")}</div>
                     )}
                     {isCurrent && plan.tier !== "free" && (
                       <div style={{
@@ -411,7 +443,7 @@ export default function PricingPage() {
                         background: style.accent, color: "#000",
                         fontSize: 11, fontWeight: 700,
                         padding: "3px 16px", borderRadius: 20, whiteSpace: "nowrap",
-                      }}>當前方案</div>
+                      }}>{tx("當前方案", "Current Plan", "現在のプラン")}</div>
                     )}
 
                     {/* Plan name */}
@@ -427,7 +459,7 @@ export default function PricingPage() {
                           fontSize: 10, background: `${style.accent}20`,
                           color: style.accent, border: `1px solid ${style.accent}40`,
                           borderRadius: 4, padding: "1px 6px", fontWeight: 600,
-                        }}>使用中</span>
+                        }}>{tx("使用中", "Active", "使用中")}</span>
                       )}
                     </div>
 
@@ -489,12 +521,12 @@ export default function PricingPage() {
                       } as React.CSSProperties}
                     >
                       {isCurrent
-                        ? "🌸 當前方案"
+                        ? `🌸 ${tx("當前方案", "Current Plan", "現在のプラン")}`
                         : plan.tier === "free"
-                          ? "免費開始"
+                          ? tx("免費開始", "Get Started Free", "無料で始める")
                           : isActivating
-                            ? "支付中..."
-                            : `訂閱 ${plan.label} · $${price} USDC`}
+                            ? tx("支付中...", "Processing...", "処理中...")
+                            : `${tx("訂閱", "Subscribe", "登録")} ${plan.label} · $${price} USDC`}
                     </button>
 
                     {/* Divider */}
@@ -542,7 +574,7 @@ export default function PricingPage() {
               <h3 style={{
                 fontSize: 16, fontWeight: 700, margin: "0 0 20px",
                 color: "var(--text-primary)",
-              }}>功能點數消耗</h3>
+              }}>{tx("功能點數消耗", "Credit Cost per Feature", "機能別クレジット消費")}</h3>
               <div style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, 1fr)",
