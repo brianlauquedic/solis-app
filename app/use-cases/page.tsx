@@ -269,33 +269,36 @@ function DexShareBar({ segments, totalVol, lang }: { segments: ShareSegment[]; t
 function ReportSection({ emoji, title }: { emoji: string; title: string }) {
   return (
     <div style={{
-      display: "flex", alignItems: "center", gap: 8,
-      fontSize: 17, fontWeight: 700, color: "var(--text-primary)",
-      marginTop: 32, marginBottom: 12,
+      display: "flex", alignItems: "center", gap: 10,
+      fontSize: 20, fontWeight: 700, color: "var(--text-primary)",
+      marginTop: 36, marginBottom: 14,
+      paddingBottom: 12, borderBottom: "1px solid var(--border)",
     }}>
-      <span>{emoji}</span>
-      <span>{title}</span>
+      <span style={{ fontSize: 18 }}>{emoji}</span>
+      <span style={{ fontFamily: "var(--font-heading)", letterSpacing: "0.01em" }}>{title}</span>
     </div>
   );
 }
 
 function TableCaption({ text }: { text: string }) {
   return (
-    <p style={{ margin: "0 0 8px", fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>{text}</p>
+    <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "var(--text-primary)", letterSpacing: "0.01em" }}>{text}</p>
   );
 }
 
 function KpiGrid({ items }: { items: Array<{ label: string; value: string; sub?: string; highlight?: boolean }> }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 4 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 6 }}>
       {items.map((item, i) => (
         <div key={i} style={{
-          background: "var(--bg-card-2)", border: "1px solid var(--border)",
-          borderRadius: 10, padding: "12px 16px",
+          background: "var(--bg-card-2)",
+          border: `1px solid ${item.highlight ? "rgba(201,168,76,0.4)" : "var(--border)"}`,
+          borderLeft: item.highlight ? "3px solid #C9A84C" : "1px solid var(--border)",
+          borderRadius: 10, padding: "16px 18px",
         }}>
-          <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 4 }}>{item.label}</div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: item.highlight ? "#C9A84C" : "var(--text-primary)", fontFamily: "var(--font-mono)" }}>{item.value}</div>
-          {item.sub && <div style={{ fontSize: 11, color: "#3D7A5C", marginTop: 3 }}>{item.sub}</div>}
+          <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6, letterSpacing: "0.04em", textTransform: "uppercase" }}>{item.label}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: item.highlight ? "#C9A84C" : "var(--text-primary)", fontFamily: "var(--font-mono)", lineHeight: 1.1 }}>{item.value}</div>
+          {item.sub && <div style={{ fontSize: 11, color: "#3D7A5C", marginTop: 5, fontWeight: 600 }}>{item.sub}</div>}
         </div>
       ))}
     </div>
@@ -596,9 +599,9 @@ function UseCasesContent() {
     };
     const title: T3 = { zh: "Solana 生態全景週報 (W14 2026)", en: "Solana Ecosystem Weekly (W14 2026)", ja: "Solana エコシステム週報 (W14 2026)" };
     const intro: T3 = {
-      zh: "根據最新鏈上數據，以下是本週 Solana 生態的全面情報，覆蓋 DeFi 協議、DEX 交易量、pump.fun 生態以及聰明錢資金流向四個維度：",
-      en: "Based on the latest on-chain data, here's the complete Solana ecosystem intelligence for this week, covering DeFi protocols, DEX volume, pump.fun ecosystem, and smart money capital flows:",
-      ja: "最新のオンチェーンデータに基づき、今週のSolana生態系の完全な情報をお届けします。DeFiプロトコル、DEX取引量、pump.funエコシステム、スマートマネー資金フローの4次元でカバーします：",
+      zh: "本報告基於 Helius 鏈上交易數據、Kamino 協議 API、Jupiter 聚合器指標及 30 個 GMGN 標記錢包的實時追蹤。數字會說話——但只有讀懂它們背後的邏輯，才能在 Solana 生態佔據信息優勢。",
+      en: "This report draws from Helius on-chain transaction feeds, Kamino protocol APIs, Jupiter aggregator metrics, and real-time surveillance of 30 GMGN-labeled wallets. Numbers tell a story — but only those who understand the logic behind them hold an edge in the Solana ecosystem.",
+      ja: "本レポートはHeliusオンチェーンデータ、Kaminoプロトコルのプロトコルアキュムレーター指標、30のGMGNラベル付きウォレットのリアルタイム監視に基づく。数字は語る——しかしその背後の論理を理解した者だけがSolana生態系でエッジを持つ。",
     };
 
     const kpiItems = L === "zh"
@@ -631,9 +634,9 @@ function UseCasesContent() {
     ];
 
     const tvlNarrative: T3 = {
-      zh: "本週 Solana DeFi TVL 總量重回 <strong>$8.2B</strong>，創 2025 年 11 月以來新高。其中 Kamino 借貸協議 TVL 突破 <strong>$2.1B</strong>（歷史新高 ✅），機構資金顯著轉向穩定幣收益策略：",
-      en: "Solana DeFi TVL this week climbed back to <strong>$8.2B</strong>, a high not seen since November 2025. Kamino lending TVL broke through <strong>$2.1B</strong> (all-time high ✅), signaling a clear institutional shift toward stablecoin yield strategies:",
-      ja: "今週のSolana DeFi TVLは<strong>$8.2B</strong>まで回復し、2025年11月以来の高値。Kamino貸出TVLは<strong>$2.1B</strong>を突破（過去最高 ✅）、機関資金がステーブルコイン収益戦略へ明確にシフト：",
+      zh: "Kamino Finance 的借貸 TVL 本週突破 <b style='color:var(--gold);font-weight:700'>$2.1B</b>，創下協議歷史新高——這個數字背後，是一個正在發生的深層資本遷徙。精明資金正悄然撤離高波動的 meme 賽道，轉向有真實收益支撐的穩定幣 Vault。這一模式在過去兩輪牛市中均出現在中期整固之後、下一段主升浪發動之前。整體 Solana DeFi TVL 重回 <b style='color:var(--gold);font-weight:700'>$8.2B</b>，為 2025 年 11 月以來首次：",
+      en: "Kamino Finance's lending TVL breached <b style='color:var(--gold);font-weight:700'>$2.1 billion</b> this week — a protocol all-time high that signals more than growth. Sophisticated capital is quietly exiting high-volatility meme exposure and rotating into stablecoin yield vaults with real cash flows. This pattern has historically emerged in mid-cycle consolidation phases, preceding the next major price impulse. Total Solana DeFi TVL reclaimed <b style='color:var(--gold);font-weight:700'>$8.2 billion</b>, a level not seen since November 2025:",
+      ja: "Kamino Financeの貸出TVLが今週<b style='color:var(--gold);font-weight:700'>$2.1B</b>を突破し、プロトコル過去最高を記録——この数字は単なる成長以上のことを意味する。精巧な資本が高ボラティリティのミームポジションを静かに解消し、実際のキャッシュフローを持つステーブルコイン収益Vaultへシフトしている。このパターンは過去2回の強気相場で中期調整後、次の主要上昇前に見られた。Solana DeFi TVL総額は<b style='color:var(--gold);font-weight:700'>$8.2B</b>を回復：",
     };
 
     const dexSegments: ShareSegment[] = [
@@ -644,9 +647,9 @@ function UseCasesContent() {
     ];
 
     const dexNarrative: T3 = {
-      zh: "本週 Solana DEX 總交易量達 <strong>$7.9B</strong>，為近三個月最高。Jupiter 聚合器持續主導市場，獨佔 <strong>61%</strong> 份額（$4.8B），Raydium 以 19% 居次，Solana DEX 流動性高度集中：",
-      en: "Total Solana DEX volume this week reached <strong>$7.9B</strong>, a 3-month high. Jupiter aggregator continues to dominate with a commanding <strong>61%</strong> market share ($4.8B), followed by Raydium at 19%. DEX liquidity remains highly concentrated:",
-      ja: "今週のSolana DEX総取引量は<strong>$7.9B</strong>と3ヶ月ぶりの高水準。Jupiterアグリゲーターは<strong>61%</strong>のシェア（$4.8B）で市場を圧倒的に支配、Raydiumが19%で続く：",
+      zh: "Jupiter 對 Solana DEX 格局的統治力本週進一步固化。這個聚合器以 <b style='color:var(--gold);font-weight:700'>$4.8B</b> 的週交易量獨佔生態 <b style='color:var(--gold);font-weight:700'>61%</b> 的流動性份額——這種集中度令人聯想到以太坊 Uniswap 的鼎盛時期，並已引發協議層面流動性風險的學術討論。值得注意的是：Raydium 以 19% 保持穩固的二線地位，而 Orca 的 11% 則主要來自機構 LP 的集中流動性策略。Solana DEX 總交易量本週達 <b style='color:var(--gold);font-weight:700'>$7.9B</b>，近三個月峰值：",
+      en: "Jupiter's grip on Solana's DEX landscape tightened further this week. The aggregator's <b style='color:var(--gold);font-weight:700'>$4.8 billion</b> in volume represented <b style='color:var(--gold);font-weight:700'>61%</b> of all on-chain trading activity — a dominance level that draws comparison to Uniswap's peak years on Ethereum and has already prompted academic debate on protocol-level liquidity concentration risk. Notably, Raydium holds a solid 19% second-tier position, while Orca's 11% is driven primarily by institutional LP concentrated liquidity strategies. Total Solana DEX volume reached a 3-month peak of <b style='color:var(--gold);font-weight:700'>$7.9 billion</b>:",
+      ja: "JupiterのSolana DEX支配力は今週さらに強化された。このアグリゲーターの<b style='color:var(--gold);font-weight:700'>$4.8B</b>の取引量は全オンチェーン取引の<b style='color:var(--gold);font-weight:700'>61%</b>を占め、イーサリアムのUniswap全盛期と比較され、プロトコルレベルの流動性集中リスクについての学術的議論を引き起こしている。Raydiumが19%の堅固な2位を維持し、Orcaの11%は主に機関LPの集中流動性戦略に起因する。Solana DEX総取引量は<b style='color:var(--gold);font-weight:700'>$7.9B</b>と3ヶ月ぶりの高値：",
     };
 
     const pumpRows = [
@@ -657,9 +660,9 @@ function UseCasesContent() {
     ];
 
     const pumpNarrative: T3 = {
-      zh: "本週 pump.fun 新幣上線量回落至 <strong>14,820</strong>（-18.7%），但畢業率從上週 4.1% 回升至 <strong>5.7%</strong>，新幣整體質量趨向改善。值得注意的是，Sakura 集成的 GoPlus 安全引擎本週共攔截 <strong>2,340 個</strong>高危合約：",
-      en: "pump.fun new token launches pulled back to <strong>14,820</strong> (-18.7%) this week, but the graduation rate recovered from last week's 4.1% to <strong>5.7%</strong>, pointing to improving token quality. Notably, Sakura's integrated GoPlus safety engine blocked <strong>2,340</strong> high-risk contracts:",
-      ja: "今週のpump.fun新トークン上場数は<strong>14,820</strong>（-18.7%）に減少したが、卒業率は先週の4.1%から<strong>5.7%</strong>に回復し、新トークンの品質が改善傾向。SakuraのGoPlus安全エンジンが今週<strong>2,340件</strong>の高危険コントラクトを遮断：",
+      zh: "pump.fun 的生態健康數據本週傳遞出一個值得深思的分叉信號。新幣上線量回落至 <b style='color:var(--gold);font-weight:700'>14,820</b> 枚（週環比 -18.7%），但這不是衰退——而是篩選。畢業率從上週的 4.1% 回升至 <b style='color:var(--gold);font-weight:700'>5.7%</b>，意味著市場正在以更高的標準過濾代幣：上線的少了，但能存活的質量更高。這一「去粗取精」的自淨效應，與 Sakura 集成的 GoPlus 安全引擎形成雙重保護——後者本週自動攔截了 <b style='color:var(--gold);font-weight:700'>2,340 個</b>高危合約：",
+      en: "pump.fun's ecosystem health metrics sent a fork in the road signal this week — one that deserves careful reading. New token launches declined to <b style='color:var(--gold);font-weight:700'>14,820</b> (-18.7% week-over-week), but this is not contraction — it's curation. The graduation rate climbed from last week's 4.1% to <b style='color:var(--gold);font-weight:700'>5.7%</b>, meaning the market is filtering with higher standards: fewer launches, but the survivors are of measurably higher quality. This natural self-cleansing effect is reinforced by Sakura's integrated GoPlus safety engine, which auto-blocked <b style='color:var(--gold);font-weight:700'>2,340</b> high-risk contracts during this week's launch cycle:",
+      ja: "pump.funの生態系健全性データは今週、注意深く読む必要のある分岐シグナルを発した。新トークン上場数は<b style='color:var(--gold);font-weight:700'>14,820</b>（前週比-18.7%）に減少したが、これは縮小ではなく選別だ。卒業率が先週の4.1%から<b style='color:var(--gold);font-weight:700'>5.7%</b>に上昇——市場はより高い基準でフィルタリングしている：上場数は減ったが、生き残るトークンの品質は測定可能なほど向上している。この自然な自己浄化効果は、SakuraのGoPlus安全エンジンによって強化され、今週の上場サイクルで<b style='color:var(--gold);font-weight:700'>2,340件</b>の高危険コントラクトを自動遮断：",
     };
 
     const flowRows = [
@@ -669,27 +672,39 @@ function UseCasesContent() {
     ];
 
     const flowNarrative: T3 = {
-      zh: "Sakura 追蹤的 30 個 GMGN 標記錢包（KOL + Whale + Cabal）本週淨買入 SOL <strong>$2.4M</strong>，聰明錢集體看漲 Solana 生態——但買的是藍籌，不是 meme：",
-      en: "The 30 GMGN-labeled wallets tracked by Sakura (KOL + Whale + Cabal) net-purchased <strong>$2.4M</strong> in SOL this week — smart money is collectively bullish on the Solana ecosystem, but they're buying blue chips, not memes:",
-      ja: "Sakuraが追跡する30のGMGNラベル付きウォレット（KOL+Whale+Cabal）が今週<strong>$2.4M</strong>分のSOLを純購入 — スマートマネーはSolana生態系に強気だが、買っているのはミームではなくブルーチップ：",
+      zh: "數字不說謊。Sakura 持續追蹤的 30 個 GMGN 標記地址（涵蓋 KOL、大戶、Cabal 三類標籤），在本週的頭寸調整中透露出一個無可辯駁的方向判斷。這批在鏈上被廣泛視為「先知資金」的地址，本週淨買入 SOL <b style='color:var(--gold);font-weight:700'>$2.4M</b>。但更重要的是他們的選擇邏輯：系統性增持 Solana 生態基礎設施代幣，同步清倉新發 meme——這是聰明錢在用真實資本，對未來的賽道格局進行投票：",
+      en: "The numbers don't equivocate. The 30 GMGN-labeled addresses continuously tracked by Sakura — spanning KOL, Whale, and Cabal classifications — made an unambiguous directional statement through their net positioning this week. These wallets, widely regarded on-chain as oracle capital, net-purchased <b style='color:var(--gold);font-weight:700'>$2.4 million</b> in SOL. But what matters more is the selection logic: systematically accumulating Solana infrastructure tokens while distributing newly launched memes — smart money voting with real capital on which sector has a future:",
+      ja: "数字は嘘をつかない。Sakuraが継続追跡する30のGMGNラベル付きアドレス（KOL、Whale、Cabalの3分類）は、今週のネットポジション調整を通じて明確な方向判断を示した。オンチェーンで「先見の資金」として広く認識されるこれらのアドレスは、<b style='color:var(--gold);font-weight:700'>$2.4M</b>のSOLを純購入。しかし重要なのはその選択ロジック：Solanaインフラトークンを系統的に買い増しし、新発ミームを売却——スマートマネーがどのセクターに未来があるかをリアル資本で投票している：",
     };
 
     const findings: T3[] = [
-      { zh: "Kamino 借貸 TVL 創歷史新高 $2.1B，機構資金選擇穩定幣收益而非高風險 meme，是本週最強結構性信號", en: "Kamino lending TVL hit all-time high $2.1B — institutional capital choosing stablecoin yield over high-risk meme is the strongest structural signal this week", ja: "Kamino貸出TVLが過去最高の$2.1Bを記録 — 機関資金がミームより安定コイン収益を選択するのが今週最強の構造シグナル" },
-      { zh: "pump.fun 畢業率從上週 4.1% 回升至 5.7%，新幣質量趨向改善；GoPlus 本週已自動攔截 2,340 個高危合約，保護 Sakura 用戶免受 rug pull", en: "pump.fun graduation rate recovered from last week's 4.1% to 5.7%, token quality improving; GoPlus auto-blocked 2,340 dangerous contracts this week, shielding Sakura users from rug pulls", ja: "pump.funの卒業率が先週の4.1%から5.7%に回復；GoPlus は今週2,340の危険コントラクトを自動遮断し、Sakuraユーザーをrug pullから保護" },
-      { zh: "30 個標記錢包本週淨買入 SOL $2.4M，聰明錢持續增持生態藍籌（JUP/jitoSOL），同步減持新發 meme——方向清晰", en: "30 labeled wallets net-bought $2.4M in SOL — smart money accumulating ecosystem blue-chips (JUP/jitoSOL) while distributing new meme launches. Direction is clear.", ja: "30のラベル付きウォレットが$2.4M純購入 — スマートマネーはブルーチップ（JUP/jitoSOL）を買い増し、新規ミームを売却。方向性は明確。" },
+      {
+        zh: "Kamino TVL 歷史新高 $2.1B 不是孤立數據點——它是機構資金從 meme 投機轉向穩定幣收益的鏈上確認，標誌著 Solana DeFi 正在從散戶賭場走向機構級資產管理平台",
+        en: "Kamino's $2.1B ATH is not an isolated data point — it is on-chain confirmation of institutional capital rotating from meme speculation into stablecoin yield, marking Solana DeFi's evolution from retail casino to institutional-grade asset management platform",
+        ja: "Kaminoの$2.1B過去最高は孤立したデータポイントではない——ミーム投機から安定コイン収益への機関資金シフトのオンチェーン確認であり、Solana DeFiが散歩カジノから機関グレードの資産管理プラットフォームへ進化している証拠"
+      },
+      {
+        zh: "pump.fun 畢業率回升（4.1%→5.7%）+ GoPlus 攔截 2,340 個高危合約，呈現出健康的生態自淨機制：質量差的代幣被過濾，質量好的獲得更多市場注意力——這正是一個成熟市場應有的樣子",
+        en: "pump.fun graduation rate recovery (4.1%→5.7%) combined with GoPlus blocking 2,340 high-risk contracts presents a healthy ecosystem self-cleansing mechanism: low-quality tokens filtered out, high-quality ones earning more market attention — exactly what a maturing market looks like",
+        ja: "pump.fun卒業率回復（4.1%→5.7%）とGoPlus による2,340件の高危険コントラクト遮断は、健全な生態系自己浄化メカニズムを示す：低品質トークンがフィルタリングされ、高品質トークンがより多くの市場注目を集める"
+      },
+      {
+        zh: "30 個標記錢包的行為形成高度共識：增持 JUP、BONK、jitoSOL，清倉新發 meme。這是聰明錢在告訴市場：Solana 的未來在協議基礎設施，而不在下一個 24 小時內歸零的 meme",
+        en: "30 labeled wallets achieved striking behavioral consensus: accumulating JUP, BONK, jitoSOL while liquidating new meme launches. Smart money is telling the market where it sees Solana's future — in protocol infrastructure, not in the next meme that goes to zero within 24 hours",
+        ja: "30のラベル付きウォレットが顕著な行動的コンセンサスを形成：JUP、BONK、jitoSOLを積み上げながら新発ミームを清算。スマートマネーはSolanaの未来がどこにあるかを市場に伝えている——プロトコルインフラであり、24時間以内にゼロになる次のミームではない"
+      },
     ];
 
     const verdict: T3 = {
-      zh: "✅ Solana 生態本週系統性走強，機構資金首選 Kamino + LST。pump.fun 品質回升但風險仍高——Sakura GoPlus 本週已攔截 2,340 個潛在 rug 合約，幫助用戶迴避這些風險。",
-      en: "✅ Solana ecosystem showed systematic strength this week — institutional capital prefers Kamino + LST. pump.fun quality improving but risk remains high — Sakura GoPlus blocked 2,340 potential rug contracts this week, protecting every Sakura user automatically.",
-      ja: "✅ Solana生態系は今週系統的に強化 — 機関資金はKamino+LSTを優先。pump.funの品質は改善中だがリスクは依然高い — Sakura GoPlusは今週2,340の潜在的rugコントラクトを遮断し、全ユーザーを自動保護。",
+      zh: "✅ 本週 Solana 生態的信號指向一致：TVL 創新高、聰明錢系統性增持基礎設施代幣、DEX 交易量達季高——這不是普通的上漲週，這是生態成熟化加速的週。唯一需要警惕的是 pump.fun 的長尾風險，而 Sakura GoPlus 本週已為每一位用戶自動攔截了 2,340 個潛在 rug 合約。",
+      en: "✅ This week's Solana signals converge on a single thesis: TVL at all-time highs, smart money systematically accumulating infrastructure tokens, DEX volume at a seasonal peak. This is not an ordinary up week — it is ecosystem maturation accelerating. The one caveat remains pump.fun's long-tail risk, which Sakura GoPlus addressed by automatically blocking 2,340 potential rug contracts for every user this week.",
+      ja: "✅ 今週のSolanaシグナルは一つの命題に収束する：TVLが過去最高、スマートマネーがインフラトークンを系統的に積み上げ、DEX取引量が季節的ピーク。これは普通の上昇週ではない——生態系の成熟化が加速している週だ。唯一の注意点はpump.funのロングテールリスクだが、Sakura GoPlusが今週すべてのユーザーに対して2,340の潜在的rugコントラクトを自動遮断することで対処した。",
     };
 
     function NarrativePara({ t3 }: { t3: T3 }) {
       return (
         <p
-          style={{ margin: "0 0 12px", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.9 }}
+          style={{ margin: "0 0 14px", fontSize: 14, color: "var(--text-secondary)", lineHeight: 2.0 }}
           dangerouslySetInnerHTML={{ __html: tx(t3, L) }}
         />
       );
@@ -700,8 +715,8 @@ function UseCasesContent() {
         <QuestionBubble text={tx(q, L)} />
         <SakuraHeader sources={L === "zh" ? "Helius · Jupiter · Kamino · GoPlus · pump.fun · GMGN · 6 數據源" : L === "ja" ? "Helius · Jupiter · Kamino · GoPlus · pump.fun · GMGN · 6 データ源" : "Helius · Jupiter · Kamino · GoPlus · pump.fun · GMGN · 6 Sources"} />
         <div style={{ borderTop: "1px solid var(--border)", paddingTop: 20, marginBottom: 16 }} />
-        <h2 style={{ margin: "0 0 10px", fontSize: 22, fontWeight: 700, color: "var(--text-primary)" }}>{tx(title, L)}</h2>
-        <p style={{ margin: "0 0 20px", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.8 }}>{tx(intro, L)}</p>
+        <h2 style={{ margin: "0 0 10px", fontSize: 24, fontWeight: 700, color: "var(--text-primary)", fontFamily: "var(--font-heading)", letterSpacing: "0.01em" }}>{tx(title, L)}</h2>
+        <p style={{ margin: "0 0 24px", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.9, fontStyle: "italic", borderLeft: "2px solid var(--border)", paddingLeft: 14 }}>{tx(intro, L)}</p>
 
         <ReportSection emoji="🎯" title={L === "zh" ? "本週市場關鍵指標" : L === "ja" ? "今週の主要市場指標" : "Key Market Context"} />
         <KpiGrid items={kpiItems} />
