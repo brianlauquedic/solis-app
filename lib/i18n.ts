@@ -630,7 +630,8 @@ export const translations = {
   chatErrorRetry:      { zh: "抱歉，暫時無法回答，請稍後重試。", en: "Sorry, I'm unable to answer right now. Please try again later.", ja: "申し訳ありませんが、現在お答えできません。後ほど再試行してください。" },
   chatErrorNetwork:    { zh: "發生錯誤，請重試。", en: "An error occurred. Please try again.", ja: "エラーが発生しました。再試行してください。" },
   chatErrorNetworkRetry: { zh: "網絡錯誤，請稍後重試。", en: "Network error. Please try again later.", ja: "ネットワークエラーです。後ほど再試行してください。" },
-  chatWelcomeBack:     { zh: "歡迎回來！上次我們討論了「{topic}」，繼續嗎？", en: "Welcome back! Last time we discussed \"{topic}\" — shall we continue?", ja: "おかえりなさい！前回は「{topic}」について話しました。続けますか？" },
+  chatWelcomeBack:        { zh: "歡迎回來！上次我們討論了「{topic}」，繼續嗎？", en: "Welcome back! Last time we discussed \"{topic}\" — shall we continue?", ja: "おかえりなさい！前回は「{topic}」について話しました。続けますか？" },
+  chatWelcomeBackGeneric: { zh: "歡迎回來！要繼續上次的討論嗎？", en: "Welcome back! Ready to continue where we left off?", ja: "おかえりなさい！前回の続きはいかがですか？" },
   // ── Risk levels ──────────────────────────────────────────────────
   riskLow:    { zh: "低",  en: "Low",    ja: "低" },
   riskMedium: { zh: "中",  en: "Medium", ja: "中" },

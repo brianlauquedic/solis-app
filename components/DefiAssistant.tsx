@@ -356,7 +356,7 @@ const SUGGESTION_KEYS = [
 
 // ── Main Component ───────────────────────────────────────────────
 export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [wallet, setWallet] = useState<WalletSnapshot>(
     walletSnapshot ?? { solBalance: 0, totalUSD: 0, idleUSDC: 0 }
   );
@@ -427,10 +427,16 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
           ? memory.sessionSummary.slice(0, 60)
           : lastUserMsg?.text?.slice(0, 50) ?? "";
         if (preview) {
+          // If the stored topic contains CJK characters but the current UI lang is not Chinese,
+          // show a generic welcome to avoid displaying the wrong-language topic.
+          const hasCJK = /[\u3000-\u9fff\uf900-\ufaff]/.test(preview);
+          const topicMismatch = hasCJK && lang !== "zh";
           setMessages(prev => [...prev, {
             id: Date.now(),
             role: "assistant",
-            text: t("chatWelcomeBack", { topic: `${preview}${preview.length >= 50 ? "…" : ""}` }),
+            text: topicMismatch
+              ? t("chatWelcomeBackGeneric")
+              : t("chatWelcomeBack", { topic: `${preview}${preview.length >= 50 ? "…" : ""}` }),
           }]);
         }
       }
