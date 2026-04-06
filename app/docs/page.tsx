@@ -884,52 +884,6 @@ function DocsContent() {
 
         </main>
 
-        {/* ── Right Anchor Nav ── */}
-        <aside style={{
-          width: 180, flexShrink: 0,
-          padding: "40px 20px",
-          position: "sticky", top: 56, height: "calc(100vh - 56px)",
-          overflowY: "auto",
-          display: "flex", flexDirection: "column",
-        }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 12 }}>
-            {lang === "zh" ? "本頁目錄" : lang === "ja" ? "このページ" : "On This Page"}
-          </div>
-          {[
-            { id: "intro", label: lang === "zh" ? "簡介" : lang === "ja" ? "はじめに" : "Introduction" },
-            { id: "why", label: lang === "zh" ? "為何打造" : lang === "ja" ? "なぜ作ったか" : "Why We Built It" },
-            { id: "who", label: lang === "zh" ? "適合誰" : lang === "ja" ? "誰のため" : "Who Is It For" },
-            { id: "diff", label: lang === "zh" ? "差異化比較" : lang === "ja" ? "機能比較" : "Comparison" },
-            { id: "health", label: lang === "zh" ? "持倉體檢" : lang === "ja" ? "ポートフォリオ" : "Health Check" },
-            { id: "security", label: lang === "zh" ? "安全分析" : lang === "ja" ? "セキュリティ" : "Security" },
-            { id: "advisor", label: lang === "zh" ? "AI 顧問" : lang === "ja" ? "AIアドバイザー" : "AI Advisor" },
-            { id: "agent", label: lang === "zh" ? "再平衡 Agent" : lang === "ja" ? "リバランス" : "Rebalance Agent" },
-            { id: "smartmoney", label: lang === "zh" ? "聰明錢" : lang === "ja" ? "スマートマネー" : "Smart Money" },
-            { id: "guardian", label: "Guardian" },
-            { id: "gmgn", label: lang === "zh" ? "K 線圖" : lang === "ja" ? "Kラインチャート" : "GMGN Chart" },
-            { id: "copytrade", label: lang === "zh" ? "複製交易" : lang === "ja" ? "コピートレード" : "Copy Trade" },
-            { id: "goplus", label: "GoPlus" },
-            { id: "helius", label: "Helius" },
-            { id: "claude", label: "Claude AI" },
-            { id: "noncustodial", label: lang === "zh" ? "非託管" : lang === "ja" ? "非カストディアル" : "Non-Custodial" },
-            { id: "x402", label: "x402" },
-            { id: "start", label: lang === "zh" ? "如何開始" : lang === "ja" ? "はじめ方" : "Getting Started" },
-          ].map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={() => scrollTo(id)}
-              style={{
-                display: "block", width: "100%", textAlign: "left",
-                padding: "4px 8px", border: "none", borderRadius: 4,
-                background: "transparent",
-                color: activeSection === id ? "var(--accent)" : "var(--text-muted)",
-                fontSize: 12, cursor: "pointer", marginBottom: 2,
-                fontWeight: activeSection === id ? 600 : 400,
-                borderLeft: activeSection === id ? "2px solid var(--accent)" : "2px solid transparent",
-              }}
-            >{label}</button>
-          ))}
-        </aside>
 
       </div>
 
