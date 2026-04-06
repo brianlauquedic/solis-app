@@ -176,8 +176,9 @@ export async function GET() {
     }
   } catch { /* ignore */ }
 
-  // ── Staking ratio (getVoteAccounts + getSupply) ───────────────────────────────
+  // ── Staking ratio + active validators (getVoteAccounts + getSupply) ─────────────
   let stakingRatio: string | null = null;
+  let activeValidators: number | null = null;
   try {
     type VoteAccount = { activatedStake: number };
     type VoteAccountsResult = { current: VoteAccount[]; delinquent: VoteAccount[] };
@@ -186,13 +187,16 @@ export async function GET() {
     const va = voteAccountsRaw as VoteAccountsResult | null;
     const sup = supplyRaw as SupplyResult | null;
 
-    if (va && sup?.value?.total && sup.value.total > 0) {
-      const totalStake = [
-        ...(va.current ?? []),
-        ...(va.delinquent ?? []),
-      ].reduce((sum, v) => sum + (v.activatedStake ?? 0), 0);
-      const pct = (totalStake / sup.value.total) * 100;
-      if (pct > 30 && pct < 100) stakingRatio = `${pct.toFixed(1)}%`;
+    if (va) {
+      activeValidators = (va.current ?? []).length;
+      if (sup?.value?.total && sup.value.total > 0) {
+        const totalStake = [
+          ...(va.current ?? []),
+          ...(va.delinquent ?? []),
+        ].reduce((sum, v) => sum + (v.activatedStake ?? 0), 0);
+        const pct = (totalStake / sup.value.total) * 100;
+        if (pct > 30 && pct < 100) stakingRatio = `${pct.toFixed(1)}%`;
+      }
     }
   } catch { /* ignore */ }
 
@@ -249,6 +253,7 @@ export async function GET() {
     clusterNodes: clusterNodes ? clusterNodes.toLocaleString() : null,
     epochInfo,
     stakingRatio,
+    validators: activeValidators ? activeValidators.toLocaleString() : null,
 
     // Protocol TVLs
     protocols: {
