@@ -309,7 +309,7 @@ function DocsContent() {
   const content = lang === "zh" ? {
     pageLabel: "使用手冊",
     pageTitle: "Sakura 使用手冊",
-    pageDesc: "每一個 DeFi 決策都值得被認真對待。本手冊帶您深入了解 Sakura 如何用安全、數據與 AI 推理，保護並增長您在 Solana 上的每一分資產。",
+    pageDesc: "在 Solana 上，一個正確的決策和一個代價慘重的錯誤之間，往往只差五秒鐘的數據。這本手冊解釋 Sakura 如何把這五秒鐘交還給你。",
     statsLabel: "平台核心數據",
     stats: [
       { v: "30+", l: "聰明錢標籤地址" },
@@ -320,15 +320,15 @@ function DocsContent() {
     ],
     introTitle: "在點擊確認之前",
     introDesc: "某個週五晚上，一個擁有 8 萬粉絲的 Twitter KOL 發出一條推文：「這個代幣要動了，準備好了嗎？」四分鐘內，超過兩百個錢包完成了買入。第六分鐘，那個代幣的流動性池被創辦人一鍵抽走。所有買入者的資金歸零。這些人沒有做錯任何事——他們只是沒有一個工具，能在點擊確認之前告訴他們真相。",
-    introPara2: "Sakura 是為了讓你成為沒有買的那個人而存在的。不是靠運氣，不是靠直覺——靠的是一個在你確認之前就已經完成所有工作的系統。安全評分出來了，聰明錢比對完了，收益效率算好了。你拿到的不是 AI 的猜測，而是有根據的判斷。更重要的是：Sakura 做出的每一個判斷，都永久寫入 Solana 鏈上。這個行業第一次有了一個你不需要盲目相信的 AI 工具——因為它說的每一句話，都可以被任何人獨立驗證。",
+    introPara2: "Sakura 是為了讓你成為沒有買的那個人而存在的。不是靠運氣，不是靠直覺——靠的是一個在你確認之前就已經完成所有工作的系統。安全評分出來了，聰明錢比對完了，收益效率算好了。你拿到的不是 AI 的猜測，而是有根據的判斷。你不需要相信 Sakura——AI 說的每一句話，背後都有 Solana 鏈上的 SHA-256 哈希值作為依據。你可以自己驗證它。",
     diffLabel: "差異化比較",
     whyTitle: "這個行業有一個沒人說出口的事實",
     whyDesc: "做 DeFi 的散戶和機構，用的根本不是同一個層級的工具。機構在建倉任何代幣之前，有完整的鏈上安全審計、有聰明錢數據庫、有多協議收益橫向對比——散戶有的，是 Twitter 和直覺。這個信息差，每天都在以真實的資金損失被填補。而最讓人沮喪的是：大多數損失，在發生之前就已經可以被預防。",
-    whyPara2: "Sakura 的起點只是一個問題：如果這些工具能讓機構避開損失，為什麼持有 Phantom 錢包的普通人不能用？答案不是技術上做不到。是沒有人去做。我們選擇去做——不是做月費 SaaS，不是讓你把資產交給任何人保管，而是一個真正屬於你的工具：私鑰不離設備，AI 判斷上鏈存證，用多少付多少，沒有任何隱性成本。",
+    whyPara2: "Sakura 從一個問題出發，也從一個選擇出發：如果這些工具能讓機構避開損失，為什麼持有 Phantom 錢包的普通人不能用？答案不是技術上做不到。是沒有人去做。我們選擇去做——不是做月費 SaaS，不是讓你把資產交給任何人保管，而是一個真正屬於你的工具：私鑰不離設備，AI 判斷上鏈存證，用多少付多少，沒有任何隱性成本。",
     whoTitle: "Sakura 為誰而生",
     whoItems: [
       { icon: "👤", title: "剛進入 DeFi 的新人", desc: "群組裡 200 個人都說買了。你打開錢包，手停在確認按鈕上——你不確定。這種不確定不是懦弱，是本能在保護你。Sakura 的安全分析就是給這個本能一個答案：五秒鐘，告訴你這個代幣有沒有資格讓你點下去。" },
-      { icon: "📊", title: "深度 DeFi 研究者", desc: "你見過太多 AI 工具說「這個代幣看起來不錯」，卻說不清楚不錯在哪裡。你需要的是數據，不是觀點。MACD/RSI/Fibonacci 六指標共振分析，加上 30 個聰明錢地址的真實鏈上行為——這才是你做出決策需要的原材料。" },
+      { icon: "📊", title: "深度 DeFi 研究者", desc: "你打開一個 AI 聊天框，貼上合約地址，它回覆：「這個代幣有一定潛力，但建議您做好自己的研究。」這句話一分錢信息都沒有。你要的是 MACD/RSI/Fibonacci 六指標共振分析，加上 30 個聰明錢地址今天在鏈上真正做了什麼——判斷需要原材料，不需要觀點。" },
       { icon: "🐋", title: "跟單與聰明錢追蹤者", desc: "你跟了一個 Whale，買了同一個代幣。三天後你發現那個合約有凍結權限，而那個 Whale 一小時前就跑了。這不是假設場景。Sakura 的安全閘口在這一刻之前介入：GoPlus 評分低於 70，複製按鈕不解鎖。" },
       { icon: "⚙️", title: "重視收益效率的持有者", desc: "你持有 USDC，它在錢包裡躺著。你知道應該拿去賺收益，但不知道哪個協議最安全、哪個 APY 最真實。這是合理的困境。Sakura 的自主 Agent 替你把這個問題解決完：掃描持倉，計算最優配置，告訴你每年能多賺多少，再給你一鍵執行的方案。" },
     ],
@@ -410,11 +410,13 @@ function DocsContent() {
     heliusTitle: "Helius — Solana 最快的鏈上數據層",
     heliusDesc: "原始的 Solana 鏈上數據是混亂的、未分類的——你看到一筆交易，但不知道它是 SWAP、NFT 鑄造、還是質押。Helius 的增強型 API 替你做了這個解析。Sakura 用這個能力識別聰明錢地址的真實行為：不是看他們的餘額，而是看他們在過去 24 小時裡，到底用鏈上行為說了什麼話、買了什麼、賣了什麼。",
     claudeTitle: "Claude Sonnet 4.6 — 業界最先進的 AI 推理引擎",
-    claudeDesc: "AI 模型決定了 Sakura 能理解多複雜的問題、能調用多少工具、能給出多精準的建議。Sakura 選擇了 Anthropic 的 Claude Sonnet 4.6——目前在複雜指令跟隨和多步驟工具調用上綜合表現最強的模型之一。結合 Solana Agent Kit 的 11 個原生工具，Sakura 的 AI 不只是回答問題，而是能主動查數據、生成交易指令、做多步驟推理。每一個推理步驟都有 SHA-256 記錄在鏈上——這意味著 Sakura 是可以被追責的 AI，不是說完就忘的聊天框。",
+    claudeDesc: "當你向 Sakura 問了一個問題，得到了一個讓你覺得「這個 AI 真的在幫我」的答案——這種感覺不是偶然。它來自 Anthropic 的 Claude Sonnet 4.6，目前在複雜指令理解和多步驟工具調用上公認表現最強的 AI 模型之一。結合 Solana Agent Kit 的 11 個原生工具，Sakura 的 AI 不只是回答問題，而是能主動查數據、生成交易指令、做多步驟推理。每一個推理步驟都有 SHA-256 記錄在鏈上——這是一個可以被追責的 AI，不是說完就忘的聊天框。",
     ncTitle: "非託管設計 — 您的資產永遠屬於您",
     ncDesc: "「非託管」這個詞在 DeFi 被用濫了。我們說的非託管，是指 Sakura 的代碼裡不存在任何存儲你私鑰的機制——在架構上，這條路就不存在。所有鏈上交易的最終簽名，發生在你的 Phantom 錢包裡，在你的設備上，需要你的明確確認。Sakura 生成交易指令，你決定要不要簽。這條線從設計上就不能被越過。",
     x402Title: "x402 微支付 — 用多少付多少，沒有月費陷阱",
     x402Desc: "月費訂閱有一個本質問題：它讓你為沒用到的功能付錢。你一個月只用三次，費用一分不少扣。x402 的邏輯是相反的：用一次，付一次；不用，不付。每個功能有 3 次免費配額，超出後每次 $0.05–$0.10 USDC，通過 Phantom 在鏈上直接支付。這不只是付費模式的差異，這是對用戶時間和資金的一種尊重。",
+    closingTitle: "每一個決策，都有憑有據",
+    closingDesc: "那個週五晚上買了代幣的兩百個人，他們不是不夠謹慎。他們只是沒有 Sakura。DeFi 從來都是一場信息博弈——擁有完整數據的人做決策，沒有數據的人靠運氣。Sakura 的目的只有一個：讓每一個打開 Phantom 錢包的人，都能用上曾經只屬於機構的信息工具。連接錢包，免費開始。前三次分析，Sakura 請客。",
     startTitle: "五分鐘上手 Sakura",
     startSteps: [
       { n: "1", t: "安裝 Phantom", d: "去 phantom.app，安裝瀏覽器擴展，如果你已有助記詞就直接導入。整個過程不超過兩分鐘。這是你在 Solana 上的身份——Sakura 需要讀它，但永遠不會碰它。" },
@@ -427,7 +429,7 @@ function DocsContent() {
   } : lang === "ja" ? {
     pageLabel: "ドキュメント",
     pageTitle: "Sakura ドキュメント",
-    pageDesc: "すべてのDeFi判断は、正確な情報に基づくべきです。このドキュメントは、SakuraがどのようにAI、セキュリティ、オンチェーンデータを組み合わせてあなたのSolana資産を守り、増やすのかを完全に説明します。",
+    pageDesc: "Solanaでは、正しい判断と壊滅的な誤りの差は、多くの場合5秒分のデータです。このハンドブックは、SakuraがどのようにそのX秒をあなたの側に置くかを説明します。",
     statsLabel: "プラットフォームデータ",
     stats: [
       { v: "30+", l: "ラベル付きウォレット" },
@@ -438,15 +440,15 @@ function DocsContent() {
     ],
     introTitle: "確認を押す前に",
     introDesc: "ある金曜の夜、フォロワー8万人のKOLが一言投稿しました：「このトークン、動くよ。準備できてる？」4分以内に200以上のウォレットが買い入れました。6分後、デプロイヤーが流動性プールを引き抜きました。買い入れたすべての人の資金がゼロになりました。彼らは不注意だったわけでも、初心者だったわけでもありません。ただ、確認ボタンを押す前に真実を教えてくれるツールが、誰にもなかっただけです。",
-    introPara2: "Sakuraは、あなたがその200人の中に入らないために存在します。運でも直感でもなく——確認ボタンを押す前にすべての作業が終わっているシステムがあるからです。安全スコアは出ています。スマートマネーの照合は完了しています。収益計算も済んでいます。あなたが受け取るのはAIの推測ではなく、根拠のある判断です。そしてSakuraが下したすべての判断はSolanaチェーンに永久記録されます。この業界で初めて、AIの言葉を盲目的に信じなくて済むツールが存在します——なぜなら、AIが言ったことはすべて、誰でも独立して検証できるからです。",
+    introPara2: "Sakuraは、あなたがその200人の中に入らないために存在します。運でも直感でもなく——確認ボタンを押す前にすべての作業が終わっているシステムがあるからです。安全スコアは出ています。スマートマネーの照合は完了しています。収益計算も済んでいます。あなたが受け取るのはAIの推測ではなく、根拠のある判断です。Sakuraを信頼する必要はありません——すべてのAI判断の背後には、何を、いつ、なぜ言ったかを証明するSolana上のSHA-256ハッシュがあります。あなた自身で検証できます。",
     diffLabel: "機能比較",
     whyTitle: "業界が口に出さない事実",
     whyDesc: "リテール投資家と機関投資家は、まったく同じ情報環境で戦っていません。機関投資家がポジションを取る前には、オンチェーンセキュリティ監査、スマートマネーデータフロー、マルチプロトコル収益比較があります。リテールにあるのは、TwitterとGut feelingです。この情報格差は毎日、リアルマネーの損失として埋められています——そしてその損失のほとんどは、すでに存在していたデータがあれば防げたはずです。",
-    whyPara2: "Sakuraの出発点はシンプルな問いです：これらのツールが機関投資家の損失回避に役立つなら、Phantomウォレットを持つ普通の人がそれを使えない理由はあるのか？答えは技術的な限界ではありません——誰も作っていなかっただけです。私たちはそれを作りました。月額課金のSaaSとしてではなく、資産を第三者に預けるサービスとしてでもなく——本当にあなたのものとして：秘密鍵はデバイスから離れず、AI判断はオンチェーンに記録され、使った分だけ支払います。隠れたコストは一切ありません。",
+    whyPara2: "Sakuraは一つの問いと、一つの意図的な選択から始まりました：これらのツールが機関投資家の損失回避に役立つなら、Phantomウォレットを持つ普通の人がそれを使えない理由はあるのか？答えは技術的な限界ではありません——誰も作っていなかっただけです。私たちはそれを作りました。月額課金のSaaSとしてではなく、資産を第三者に預けるサービスとしてでもなく——本当にあなたのものとして：秘密鍵はデバイスから離れず、AI判断はオンチェーンに記録され、使った分だけ支払います。隠れたコストは一切ありません。",
     whoTitle: "誰のためのツールか",
     whoItems: [
       { icon: "👤", title: "DeFiを始めたばかりの方", desc: "グループで200人が「買った」と言っている。あなたはウォレットを開いて、確認ボタンの前で手が止まります。その迷いは弱さではなく、本能があなたを守ろうとしているサインです。Sakuraのセキュリティ分析はその本能に答えを出します：5秒で、このトークンがあなたのお金に値するかどうかを教えます。" },
-      { icon: "📊", title: "深度のあるDeFiリサーチャー", desc: "「このトークンは良さそう」と自信満々に言うだけで、なぜ良いのかを説明できないAIツールをあなたは見飽きています。必要なのは意見ではなくデータ——MACD/RSI/Fibonacci 6指標の共鳴分析と、30以上のラベル付きウォレットのリアルなオンチェーン行動。それが意思決定の原材料です。" },
+      { icon: "📊", title: "深度のあるDeFiリサーチャー", desc: "AIチャットウィンドウを開き、コントラクトアドレスを貼り付けると「このトークンには可能性がありますが、ご自身でリサーチしてください」という返答が来ます。その文には使える情報がゼロです。必要なのはMACD/RSI/Fibonacci 6指標の共鳴分析と、30以上のラベル付きウォレットが今日オンチェーンで実際に何をしたか——判断には原材料が必要であり、意見は不要です。" },
       { icon: "🐋", title: "コピートレーダー", desc: "あるWhaleと同じトークンを買いました。3日後、そのコントラクトに凍結権限があったことが判明します。そのWhaleは1時間前にすでに退場していました。これは仮定のシナリオではありません。SakuraのセキュリティゲートはGoPlus スコアが70を下回ればコピーボタンを解放しません。" },
       { icon: "⚙️", title: "収益効率を重視するホルダー", desc: "USDCを持っています。財布に眠っています。運用すべきだとわかっている。でも、どのプロトコルが本当に安全で、どのAPYが本物で、どれがロックアップを要求するかがわからない。それは合理的な問題です。SakuraのAutonomous Agentがそれを完全に解決します：保有状況をスキャンし、最適配分を計算し、年間でいくら多く稼げるかを示し、ワンクリックのプランを提示します。" },
     ],
@@ -528,11 +530,13 @@ function DocsContent() {
     heliusTitle: "Helius — Solana最速のオンチェーンデータ層",
     heliusDesc: "生のSolanaオンチェーンデータはノイズが多く、未解析です。取引が見えますが、それがSWAPなのか、NFTミントなのか、ステーキング入金なのかがわかりません。HeliusのEnhanced APIがその解析を行います。Sakuraはこれを使ってスマートマネーアドレスが実際に何をしているかを追跡します：残高ではなく行動——何を買い、何を売り、いつそれをしたか。",
     claudeTitle: "Claude Sonnet 4.6 — 業界最先端のAI推論エンジン",
-    claudeDesc: "AIモデルはSakuraがどれほど複雑な問題を理解できるか、どれほど多くのツールを呼び出せるか、どれほど精度の高い提案ができるかを決定します。SakuraはAnthropic Claude Sonnet 4.6を使用——複雑な指示フォローとマルチステップツール呼び出しにおいて現在最高のパフォーマンスを持つモデルの一つです。11のSolana Agent Kitネイティブツールと組み合わせることで、SakuraのAIは単に質問に答えるだけでなく、ライブデータを能動的に照会し、トランザクション命令を生成し、複数ステップで推論します。すべてのステップはSolanaにSHA-256ハッシュとして記録されます——これは説明責任を問えるAIであり、言ったことを忘れるチャットウィンドウではありません。",
+    claudeDesc: "Sakuraに質問して「このAIは本当に自分を助けている」と感じる——その感覚は偶然ではありません。AnthropicのClaude Sonnet 4.6から来ています。複雑な指示理解とマルチステップのツール呼び出しにおいて、現在公認で最も高いパフォーマンスを持つAIモデルの一つです。11のSolana Agent Kitネイティブツールと組み合わせることで、SakuraのAIは単に質問に答えるだけでなく、ライブデータを能動的に照会し、トランザクション命令を生成し、複数ステップで推論します。すべてのステップはSolanaにSHA-256ハッシュとして記録されます——説明責任を問えるAIであり、言ったことを忘れるチャットウィンドウではありません。",
     ncTitle: "非カストディアル設計 — あなたの資産は永遠にあなたのもの",
     ncDesc: "「非カストディアル」はDeFiで使い古された言葉です。Sakuraにおける実際の意味：あなたの秘密鍵を保存するメカニズムがコードベースに存在しません——アーキテクチャ上、そのパスは存在しません。すべてのオンチェーントランザクションの最終署名は、あなたのPhantomウォレット内で、あなたのデバイス上で、あなたの明示的な確認を必要として行われます。Sakuraは命令を生成します。署名するかどうかはあなたが決めます。その境界線は設計上、越えることができません。",
     x402Title: "x402マイクロペイメント — 使った分だけ支払い、月額の罠なし",
     x402Desc: "サブスクリプションモデルには本質的な問題があります：使っていない機能に対して支払いをさせられます。月に3回しか使わなくても、全額引き落とされます。x402はその論理を完全に逆転させます：1回使えば1回分支払う；使わなければ何も支払わない。各機能には3回の無料クォータがあります。それを超えると$0.05–$0.10 USDCで、Phantom経由でオンチェーンに直接支払います。これは単に価格モデルの違いではありません。誰の時間とお金が尊重されるべきかという哲学の違いです。",
+    closingTitle: "すべての判断に、根拠がある",
+    closingDesc: "あの金曜の夜にトークンを買い入れた200以上のウォレットは、不注意だったわけではありません。ただSakuraがなかっただけです。DeFiは本質的に情報戦です——完全なデータを持つ人が決断し、データを持たない人は運に頼ります。Sakuraの目的はシンプルです：Phantomウォレットを開くすべての人が、かつては機関投資家だけが持てた情報ツールを使えるようにすること。ウォレットを接続してください。最初の3回の分析は無料です。今持っている情報から、始めましょう。",
     startTitle: "5分でSakuraを使い始める",
     startSteps: [
       { n: "1", t: "Phantomをインストール", d: "phantom.appへ行き、ブラウザ拡張機能をインストールし、既存のウォレットがあればシードフレーズをインポートします。2分以内に完了します。これはSolanaでのあなたのアイデンティティです——Sakuraはそれを読む必要がありますが、決して触れません。" },
@@ -545,7 +549,7 @@ function DocsContent() {
   } : {
     pageLabel: "Documentation",
     pageTitle: "Sakura Documentation",
-    pageDesc: "Every DeFi decision deserves more than a gut feeling. This guide explains precisely how Sakura uses AI, security data, and on-chain proof to protect and grow every dollar you hold on Solana.",
+    pageDesc: "On Solana, the difference between a sound decision and a catastrophic one is often five seconds of data. This handbook explains how Sakura puts those five seconds on your side.",
     statsLabel: "Platform At a Glance",
     stats: [
       { v: "30+", l: "Labeled Smart Wallets" },
@@ -556,15 +560,15 @@ function DocsContent() {
     ],
     introTitle: "Before You Click Confirm",
     introDesc: "On a Friday evening, a KOL with 80,000 followers posted one sentence: \"This token is about to run. Are you ready?\" Over two hundred wallets bought in within four minutes. By minute six, the deployer had drained the liquidity pool. Every wallet that bought in lost everything. These weren't careless people. They weren't new to crypto. They simply had no tool that could tell them the truth before they clicked confirm.",
-    introPara2: "Sakura exists so that you're the one who didn't buy — not through luck, but because you knew. In the moment before you confirm a transaction, the security scan is done, the smart money cross-check is complete, the yield calculation is ready. You're not relying on the AI's opinion. You're looking at evidence. And every piece of reasoning Sakura produces is hashed with SHA-256 and recorded permanently on Solana. For the first time in this industry, you don't have to take the AI's word for it — because every word is permanently verifiable.",
+    introPara2: "Sakura exists so that you're the one who didn't buy — not through luck, but because you knew. In the moment before you confirm a transaction, the security scan is done, the smart money cross-check is complete, the yield calculation is ready. You're not relying on the AI's opinion. You're looking at evidence. You don't have to trust Sakura — behind every AI judgment is a SHA-256 hash on Solana that proves exactly what was said, when, and why. You can verify it yourself.",
     diffLabel: "Capability Comparison",
     whyTitle: "A Fact the Industry Rarely Says Out Loud",
     whyDesc: "Retail traders and institutional investors are not operating in the same information environment. Before any institution takes a position, it has on-chain security audits, smart money data feeds, and multi-protocol yield comparisons. Retail has Twitter and gut instinct. This information gap is filled every single day with real money lost — and most of those losses were preventable with data that already existed.",
-    whyPara2: "Sakura starts from a simple question: if these tools help institutions avoid losses, why can't someone holding a Phantom wallet use them? The answer was never technical limitation — no one had built it yet. We built it. Not as a subscription SaaS. Not as a service requiring you to hand your assets to a third party. A tool that is genuinely yours: keys never leave your device, AI reasoning is recorded on-chain, you pay per use. Nothing is hidden.",
+    whyPara2: "Sakura begins with a question, and a deliberate choice: if these tools help institutions avoid losses, why can't someone holding a Phantom wallet use them? The answer was never technical limitation — no one had built it yet. We built it. Not as a subscription SaaS. Not as a service requiring you to hand your assets to a third party. A tool that is genuinely yours: keys never leave your device, AI reasoning is recorded on-chain, you pay per use. Nothing is hidden.",
     whoTitle: "Who Sakura Is For",
     whoItems: [
       { icon: "👤", title: "New to DeFi", desc: "Two hundred people in the group already bought. You open your wallet, hand hovering over confirm — and you hesitate. That hesitation isn't weakness. It's your instinct doing its job. Sakura gives that instinct an answer: five seconds, and you know whether this token deserves your money." },
-      { icon: "📊", title: "Serious DeFi Researchers", desc: "You've seen enough AI tools confidently say \"this token looks good\" without being able to explain why. You need raw material — MACD/RSI/Fibonacci 6-indicator confluence, and the actual on-chain behavior of 30+ labeled wallets. Not an opinion. Data." },
+      { icon: "📊", title: "Serious DeFi Researchers", desc: "You've opened an AI chat window, pasted in a contract address, and received: \"This token shows some potential — but please do your own research.\" That sentence contains zero usable information. What you need is MACD/RSI/Fibonacci 6-indicator confluence analysis, and what 30+ labeled wallets actually did on-chain today. Decisions need raw material. Not opinions." },
       { icon: "🐋", title: "Copy Traders", desc: "You followed a Whale into a token. Three days later you discover the contract had freeze authority — and that Whale had already exited an hour before you realized. That's not a hypothetical. Sakura's security gate exists for exactly this: GoPlus score below 70 means the copy button doesn't unlock." },
       { icon: "⚙️", title: "Yield Efficiency Seekers", desc: "You have USDC sitting idle. You know it should be working. But you don't know which protocol is actually safe, which APY is real, which one requires lock-up. That's a reasonable problem, not carelessness. Sakura's Autonomous Agent solves it completely: scans your holdings, finds the optimal allocation, tells you how much more per year, gives you a one-click plan." },
     ],
@@ -646,11 +650,13 @@ function DocsContent() {
     heliusTitle: "Helius — Solana's Fastest On-Chain Data Layer",
     heliusDesc: "Raw Solana on-chain data is noisy and unparsed. You see a transaction, but not what kind — is it a SWAP, an NFT mint, a staking deposit? Helius Enhanced API makes that distinction. Sakura uses this to track what smart money addresses are actually doing on-chain: not their balance, but their behavior — what they bought, what they sold, and when.",
     claudeTitle: "Claude Sonnet 4.6 — The Most Advanced AI Reasoning Engine Available",
-    claudeDesc: "The AI model determines how complex a question Sakura can understand, how many tools it can call, and how precise its recommendations can be. Sakura uses Anthropic's Claude Sonnet 4.6 — one of the strongest models available for complex instruction following and multi-step tool invocation. Paired with 11 native Solana Agent Kit tools, Sakura's AI actively queries live data, generates transaction instructions, and reasons across multiple steps. Every step is SHA-256 hashed and recorded on Solana — making this an AI that can be held accountable, not a chat window that forgets what it said.",
+    claudeDesc: "When you ask Sakura a question and get an answer that makes you think \"this AI is actually helping me\" — that feeling isn't accidental. It comes from Anthropic's Claude Sonnet 4.6, one of the strongest-performing models available for complex instruction following and multi-step tool invocation. Paired with 11 native Solana Agent Kit tools, Sakura's AI doesn't just answer questions — it actively queries live data, generates transaction instructions, and reasons across multiple steps. Every step is SHA-256 hashed on Solana — an AI that can be held accountable, not a chat window that forgets what it said.",
     ncTitle: "Non-Custodial Architecture — Your Assets Are Always Yours",
     ncDesc: "\"Non-custodial\" gets used loosely in DeFi. Here's what it actually means in Sakura: there is no mechanism in our codebase that stores your private key. Architecturally, the path doesn't exist. Every on-chain transaction is signed inside your Phantom wallet, on your device, requiring your explicit confirmation. Sakura generates the instruction. You decide whether to sign. That line cannot be crossed by design.",
     x402Title: "x402 Micropayments — Pay for What You Use, No Subscription Traps",
     x402Desc: "Subscription models have a fundamental problem: you pay for features you don't use. Use it three times in a month, you still pay full price. x402 inverts that logic entirely: one use, one payment; no use, nothing charged. Every feature comes with 3 free uses. After that, $0.05–$0.10 USDC per use, paid on-chain via Phantom. It's not just a different pricing model. It's a different philosophy about whose time and money deserves respect.",
+    closingTitle: "Every Decision. On the Record.",
+    closingDesc: "The two hundred wallets that bought in that Friday evening weren't careless. They just didn't have Sakura. DeFi has always been an information game — people with complete data make decisions; people without data make guesses. Sakura's purpose is straightforward: give everyone who opens a Phantom wallet access to the same quality of information that used to belong only to institutions. Connect your wallet. Your first three analyses are free. Start with what you know right now.",
     startTitle: "Up and Running in Five Minutes",
     startSteps: [
       { n: "1", t: "Install Phantom", d: "Go to phantom.app, install the browser extension, import your existing wallet or create one. Under two minutes. This is your identity on Solana — Sakura needs to read it, but will never touch it." },
@@ -881,6 +887,35 @@ function DocsContent() {
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* ── CLOSING ── */}
+          <div id="closing" style={{
+            marginTop: 64, padding: "36px 40px",
+            background: "var(--accent-soft)",
+            borderRadius: 16,
+            border: "1px solid rgba(192,57,43,0.2)",
+            borderLeft: "4px solid var(--accent)",
+          }}>
+            <h2 style={{
+              margin: "0 0 16px", fontSize: 22, fontWeight: 400,
+              fontFamily: "var(--font-heading)", color: "var(--text-primary)",
+              letterSpacing: "0.01em",
+            }}>{content.closingTitle}</h2>
+            <p style={{
+              margin: "0 0 24px", fontSize: 15, color: "var(--text-secondary)",
+              lineHeight: 2, maxWidth: 560,
+            }}>{content.closingDesc}</p>
+            <a href="/" style={{
+              display: "inline-block", padding: "10px 24px",
+              background: "var(--accent)", color: "#fff",
+              borderRadius: 8, textDecoration: "none",
+              fontSize: 13, fontWeight: 600,
+            }}>
+              {lang === "zh" ? "連接 Phantom — 免費開始"
+                : lang === "ja" ? "Phantomを接続 — 無料で始める"
+                : "Connect Phantom — Start Free"}
+            </a>
           </div>
 
         </main>
