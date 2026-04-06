@@ -147,7 +147,7 @@ async function writeMemoOnChain(memoText: string): Promise<{ sig: string } | { e
   try {
     await window.solana.connect({ onlyIfTrusted: true });
     const pubkey = window.solana.publicKey;
-    if (!pubkey) return { error: "未连接钱包" };
+    if (!pubkey) return { error: "walletNotConnected" };
 
     const senderPubkey = new PublicKey(pubkey.toString());
     const { blockhash } = await connection.getLatestBlockhash("confirmed");
@@ -166,7 +166,7 @@ async function writeMemoOnChain(memoText: string): Promise<{ sig: string } | { e
     const { signature } = await window.solana.signAndSendTransaction(tx);
     return { sig: signature };
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "交易被拒绝";
+    const msg = e instanceof Error ? e.message : "txRejected";
     return { error: msg };
   }
 }
@@ -269,11 +269,11 @@ function ProofPanel({ ai }: { ai: AIAnalysis }) {
               fontSize: 11, fontWeight: 700,
               color: ai.simulation.isHoneypot ? "#EF4444" : "#10B981",
             }}>
-              {ai.simulation.isHoneypot ? "卖出模拟失败 — 疑似蜜罐" : "卖出路径验证通过"}
+              {ai.simulation.isHoneypot ? t("simulationFailed") : t("simulationPassed")}
             </span>
             <span style={{ fontSize: 10, color: "var(--text-secondary)", marginLeft: 8 }}>
               {ai.simulation.reason}
-              {ai.simulation.priceImpactPct !== null && ` · 卖出冲击 ${ai.simulation.priceImpactPct.toFixed(2)}%`}
+              {ai.simulation.priceImpactPct !== null && ` ${t("sellImpact", { pct: ai.simulation.priceImpactPct.toFixed(2) })}`}
             </span>
           </div>
           <span style={{ fontSize: 9, color: "var(--text-muted)", whiteSpace: "nowrap" }}>simulateTx</span>
@@ -338,7 +338,7 @@ function ProofPanel({ ai }: { ai: AIAnalysis }) {
               borderRadius: 6, padding: "6px 12px", whiteSpace: "nowrap",
             }}
           >
-            Solscan 查看 →
+            {t("solscanView")} →
           </a>
         </div>
       ) : (
@@ -359,7 +359,7 @@ function ProofPanel({ ai }: { ai: AIAnalysis }) {
             }}
           >
             {memoStatus === "paying" ? (
-              <>🌿 支付 0.10 USDC...</>
+              <>{t("payingUSDC")}</>
             ) : memoStatus === "sending" ? (
               <>🌿 {t("writingOnchain")}</>
             ) : (
@@ -392,7 +392,7 @@ function ProofPanel({ ai }: { ai: AIAnalysis }) {
           <div><span style={{ color: "#8B5CF6" }}>timestamp</span>: {ai.proofData.timestamp}</div>
           <div><span style={{ color: "#8B5CF6" }}>hashAlgo</span>: &quot;{ai.proofData.hashAlgo}&quot;</div>
           <div style={{ marginTop: 8, color: "var(--text-muted)", fontSize: 10 }}>
-            // SHA-256 哈希已通过 Phantom 写入 Solana 交易 Memo，永久不可篡改
+            // {t("onchainMemoNote")}
           </div>
         </div>
       )}
@@ -685,7 +685,7 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
                 border: `1px solid ${analyzeQuota.remaining >= 2 ? "#10B98130" : "#F59E0B30"}`,
                 borderRadius: 6, padding: "2px 8px",
               }}>
-                🆓 {analyzeQuota.remaining}/3 次免费剩余
+                {t("agentFreeRemaining", { n: analyzeQuota.remaining })}
               </span>
             ) : (
               <span style={{
@@ -693,7 +693,7 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
                 background: "#8B5CF615", border: "1px solid #8B5CF630",
                 borderRadius: 6, padding: "2px 8px",
               }}>
-                💰 免费次数已用完 · 继续分析 $0.10 USDC/次
+                {t("agentFreeExhausted")}
               </span>
             )}
           </div>
@@ -909,9 +909,9 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {premiumStatus === "paying" ? "🌿 支付中..." :
-                   premiumStatus === "loading" ? "🌿 生成中..." :
-                   "解锁 1.00 USDC 深度报告"}
+                  {premiumStatus === "paying" ? t("payingInProgress2") :
+                   premiumStatus === "loading" ? t("generatingReport") :
+                   t("unlockDeepReport")}
                 </button>
               </div>
               {premiumStatus === "error" && (
@@ -929,7 +929,7 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
               borderRadius: 16, padding: 20, marginBottom: 16,
             }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#8B5CF6", marginBottom: 12 }}>
-                ⛩️ AI 深度分析報告{premiumData.demoMode ? "（演示模式）" : "（已验证付款）"}
+                {premiumData.demoMode ? t("premiumReportDemo") : t("premiumReportPaid")}
               </div>
               <div style={{
                 fontSize: 12, color: "var(--text-primary)", lineHeight: 1.8,
@@ -993,14 +993,14 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
                 {tokenData.holderCount !== null && (
                   <Stat
                     value={tokenData.holderCount.toLocaleString()}
-                    label="持币地址总数"
+                    label={t("totalHolders")}
                     color="#8B5CF6"
                   />
                 )}
                 {tokenData.top10HolderPct !== null && (
                   <Stat
                     value={`${tokenData.top10HolderPct}%`}
-                    label="前10地址占比"
+                    label={t("top10HolderPct")}
                     color={parseFloat(tokenData.top10HolderPct) > 50 ? "#EF4444" : "#10B981"}
                   />
                 )}

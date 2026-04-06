@@ -77,7 +77,8 @@ function saveMandate(walletAddress: string, signed: SignedMandate) {
 
 function checkMandateCompliance(
   plan: RebalancePlan,
-  mandate: Mandate
+  mandate: Mandate,
+  tFn: (key: string, vars?: Record<string, string | number>) => string
 ): { compliant: boolean; violations: string[] } {
   const violations: string[] = [];
   const total = plan.currentAllocation.sol + plan.currentAllocation.usdc +
@@ -86,15 +87,15 @@ function checkMandateCompliance(
   for (const action of plan.actions) {
     const pct = total > 0 ? (action.amount / total) * 100 : 0;
     if ((action.type === "stake" || action.type === "lend") && pct > mandate.maxStakePct) {
-      violations.push(`${action.protocol} 占比 ${pct.toFixed(0)}% 超過限制 ${mandate.maxStakePct}%`);
+      violations.push(tFn("violationStakeLimit", { protocol: action.protocol, pct: pct.toFixed(0), limit: mandate.maxStakePct }));
     }
     if (pct > mandate.maxSingleProtocolPct) {
-      violations.push(`單協議 ${action.protocol} 占比 ${pct.toFixed(0)}% 超過 ${mandate.maxSingleProtocolPct}%`);
+      violations.push(tFn("violationSingleProtocol", { protocol: action.protocol, pct: pct.toFixed(0), limit: mandate.maxSingleProtocolPct }));
     }
     const protocolKey = action.protocol.toLowerCase().split(" ")[0];
     const allowed = mandate.allowedProtocols.some(p => protocolKey.includes(p));
     if (!allowed) {
-      violations.push(`協議 ${action.protocol} 不在你的允许列表中`);
+      violations.push(tFn("violationNotAllowed", { protocol: action.protocol }));
     }
   }
   return { compliant: violations.length === 0, violations };
@@ -361,7 +362,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = 
           network: "solana-mainnet",
           description: body402.description ?? "Sakura Agent 分析 · $0.10 USDC",
         });
-        if ("error" in payResult) throw new Error("支付取消：" + payResult.error);
+        if ("error" in payResult) throw new Error(t("paymentCancelledMsg") + ": " + payResult.error);
         setAgentPaymentSig(payResult.sig);
         res = await fetch("/api/agent/rebalance", {
           method: "POST",
@@ -379,7 +380,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = 
       setPlan(data);
       // Check mandate compliance if user has a signed mandate
       if (signedMandate) {
-        setComplianceResult(checkMandateCompliance(data, signedMandate.mandate));
+        setComplianceResult(checkMandateCompliance(data, signedMandate.mandate, t as (key: string, vars?: Record<string, string | number>) => string));
       }
       setAgentState("done");
     } catch (e: unknown) {
@@ -656,9 +657,9 @@ export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = 
           color: complianceResult.compliant ? "#10B981" : "#EF4444",
         }}>
           {complianceResult.compliant ? (
-            "✅ 執行方案符合你的 On-Chain Mandate 約束"
+            t("mandateCompliant")
           ) : (
-            <>⚠️ Mandate 合規檢查不通過：
+            <>{t("mandateNonCompliant")}
               <ul style={{ margin: "6px 0 0 16px", padding: 0 }}>
                 {complianceResult.violations.map((v, i) => <li key={i}>{v}</li>)}
               </ul>

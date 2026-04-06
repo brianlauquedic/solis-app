@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getDeviceId } from "@/lib/device-id";
 import { payWithPhantom } from "@/lib/x402";
+import { useLang } from "@/contexts/LanguageContext";
+import type { TranslationKey } from "@/lib/i18n";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -59,6 +61,7 @@ export function SubscriptionBadge({
   onClick?: () => void;
 }) {
   const router = useRouter();
+  const { t } = useLang();
   const [status, setStatus] = useState<{ tier: SubscriptionTier; credits: number; days: number | null } | null>(null);
 
   useEffect(() => {
@@ -83,22 +86,22 @@ export function SubscriptionBadge({
   if (!status || status.tier === "free") {
     return (
       <button onClick={handleClick} style={{ ...base, background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)" }}>
-        🆓 {status ? `${status.credits}點` : "免費版"} · 升級
+        🆓 {status ? t("creditPoints", { cost: status.credits }) : t("freeVersion")} · {t("upgradeLink")}
       </button>
     );
   }
   if (status.tier === "pro") {
     return (
       <button onClick={handleClick} style={{ ...base, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.35)", color: "#D97706" }}>
-        ⭐ Pro · {status.credits.toLocaleString()}點
-        {status.days !== null && ` · ${status.days}天`}
+        ⭐ Pro · {t("creditPoints", { cost: status.credits.toLocaleString() })}
+        {status.days !== null && ` · ${status.days}${t("daysUnit")}`}
       </button>
     );
   }
   return (
     <button onClick={handleClick} style={{ ...base, background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.35)", color: "#8B5CF6" }}>
-      🔵 Basic · {status.credits.toLocaleString()}點
-      {status.days !== null && ` · ${status.days}天`}
+      🔵 Basic · {t("creditPoints", { cost: status.credits.toLocaleString() })}
+      {status.days !== null && ` · ${status.days}${t("daysUnit")}`}
     </button>
   );
 }
@@ -106,6 +109,7 @@ export function SubscriptionBadge({
 // ── Credit meter bar ──────────────────────────────────────────────
 
 function CreditMeter({ balance, total, tier }: { balance: number; total: number; tier: SubscriptionTier }) {
+  const { t } = useLang();
   const pct = Math.min(100, (balance / total) * 100);
   const color = tier === "pro" ? "#F59E0B" : tier === "basic" ? "#8B5CF6" : "var(--text-secondary)";
   const lowCredit = pct < 20;
@@ -113,7 +117,7 @@ function CreditMeter({ balance, total, tier }: { balance: number; total: number;
     <div style={{ marginBottom: 20 }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 12 }}>
         <span style={{ color: lowCredit ? "#EF4444" : "var(--text-secondary)" }}>
-          {lowCredit ? "⚠️" : "💎"} 剩餘點數
+          {lowCredit ? "⚠️" : "💎"} {t("remainingCredits")}
         </span>
         <span style={{ color: lowCredit ? "#EF4444" : color, fontWeight: 700 }}>
           {balance.toLocaleString()} / {total.toLocaleString()}
@@ -128,7 +132,7 @@ function CreditMeter({ balance, total, tier }: { balance: number; total: number;
       </div>
       {lowCredit && (
         <div style={{ fontSize: 10, color: "#EF4444", marginTop: 4 }}>
-          點數不足 20%，建議續費或升級以免中斷使用
+          {t("lowCreditsWarning")}
         </div>
       )}
     </div>
@@ -138,6 +142,7 @@ function CreditMeter({ balance, total, tier }: { balance: number; total: number;
 // ── Main SubscriptionBanner — now routes to /pricing page ─────────
 
 export default function SubscriptionBanner({ walletAddress, onSubscriptionChange: _onSubscriptionChange }: Props) {
+  const { t } = useLang();
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -161,7 +166,7 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
 
   async function handleSubscribe(tier: "basic" | "pro") {
     if (!walletAddress) {
-      setMessage({ type: "error", text: "請先連接 Phantom 錢包" });
+      setMessage({ type: "error", text: t("guardianNoWallet") });
       return;
     }
     const plan = status?.plans.find(p => p.tier === tier);
@@ -193,14 +198,14 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
       const data = await res.json() as { success?: boolean; message?: string; error?: string };
 
       if (data.success) {
-        setMessage({ type: "success", text: data.message ?? "訂閱已啟用！" });
+        setMessage({ type: "success", text: data.message ?? t("subscriptionActivated") });
         await fetchStatus();
         _onSubscriptionChange?.(tier);
       } else {
-        setMessage({ type: "error", text: data.error ?? "訂閱啟用失敗" });
+        setMessage({ type: "error", text: data.error ?? t("subscriptionFailed") });
       }
     } catch (err) {
-      setMessage({ type: "error", text: err instanceof Error ? err.message : "支付失敗" });
+      setMessage({ type: "error", text: err instanceof Error ? err.message : t("paymentFailed") });
     } finally {
       setActivating(null);
     }
@@ -240,10 +245,10 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
               <div>
                 <h2 style={{ fontSize: 26, fontWeight: 800, color: "var(--text-primary)", margin: 0 }}>
-                  Sakura 點數系統
+                  {t("creditSystemTitle")}
                 </h2>
                 <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 6, margin: "6px 0 0" }}>
-                  按實際 AI 調用成本計費 · USDC 鏈上支付 · 30天有效
+                  {t("creditSystemDesc")}
                 </p>
               </div>
               <button onClick={() => setOpen(false)} style={{
@@ -267,20 +272,20 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
               borderRadius: 12, padding: "14px 20px", marginBottom: 24,
             }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>
-                功能點數消耗
+                {t("featureCreditCost")}
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px" }}>
                 {status?.creditCosts && Object.entries(status.creditCosts).map(([feature, cost]) => (
                   <div key={feature} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
-                    <span style={{ color: "#8B5CF6", fontWeight: 700 }}>{cost} 点</span>
+                    <span style={{ color: "#8B5CF6", fontWeight: 700 }}>{t("creditPoints", { cost })}</span>
                     <span style={{ color: "var(--text-secondary)" }}>·</span>
                     <span style={{ color: "var(--text-secondary)" }}>
-                      {feature === "advisor_deep" ? "🧠 AI 深度分析 (Sonnet 4.6)" :
-                       feature === "advisor"      ? "🤖 AI 对话 (Haiku)" :
-                       feature === "analyze"      ? "🔍 安全分析" :
-                       feature === "agent"        ? "⚡ Agent 执行" :
-                       feature === "portfolio"    ? "📊 组合优化" :
-                       feature === "verify"       ? "✅ 链上验证" : feature}
+                      {feature === "advisor_deep" ? t("featureAIAnalysis") :
+                       feature === "advisor"      ? t("featureAIChat") :
+                       feature === "analyze"      ? t("featureSecScan") :
+                       feature === "agent"        ? t("featureAgentRun") :
+                       feature === "portfolio"    ? t("featurePortfolio") :
+                       feature === "verify"       ? t("featureOnchain") : feature}
                     </span>
                   </div>
                 ))}
@@ -307,13 +312,13 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
                       transition: "all 0.15s",
                     }}
                   >
-                    {p === "monthly" ? "按月" : "按年"}
+                    {p === "monthly" ? t("billingMonthly") : t("billingAnnual")}
                     {p === "annual" && (
                       <span style={{
                         marginLeft: 6, fontSize: 10,
                         background: "#10B98120", color: "#10B981",
                         padding: "1px 5px", borderRadius: 4,
-                      }}>省30%</span>
+                      }}>{t("savePct", { pct: 30 })}</span>
                     )}
                   </button>
                 ))}
@@ -334,10 +339,10 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
 
             {/* Plans grid */}
             {loading ? (
-              <div style={{ textAlign: "center", color: "var(--text-secondary)", padding: 40 }}>載入中...</div>
+              <div style={{ textAlign: "center", color: "var(--text-secondary)", padding: 40 }}>{t("loadingPlans")}</div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-                {(status?.plans ?? DEFAULT_PLANS).map((plan) => {
+                {(status?.plans ?? getDefaultPlans(t)).map((plan) => {
                   const colors = TIER_COLORS[plan.tier];
                   const isCurrent = plan.tier === currentTier;
                   const price = billingPeriod === "annual" ? plan.priceAnnual : plan.priceMonthly;
@@ -357,7 +362,7 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
                           background: "var(--accent)",
                           color: "#fff", fontSize: 10, fontWeight: 700,
                           padding: "3px 14px", borderRadius: 20, whiteSpace: "nowrap",
-                        }}>推荐</div>
+                        }}>{t("recommended")}</div>
                       )}
                       {isCurrent && plan.tier !== "free" && (
                         <div style={{
@@ -366,7 +371,7 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
                           background: colors.accent, color: "#000",
                           fontSize: 10, fontWeight: 700,
                           padding: "3px 14px", borderRadius: 20, whiteSpace: "nowrap",
-                        }}>當前計劃</div>
+                        }}>{t("currentPlan")}</div>
                       )}
 
                       {/* Plan name */}
@@ -377,7 +382,7 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
                       {/* Price */}
                       <div style={{ marginBottom: 18 }}>
                         {plan.priceMonthly === 0 ? (
-                          <span style={{ fontSize: 32, fontWeight: 900, color: "var(--text-primary)" }}>免费</span>
+                          <span style={{ fontSize: 32, fontWeight: 900, color: "var(--text-primary)" }}>{t("free")}</span>
                         ) : (
                           <>
                             <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
@@ -386,11 +391,11 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
                                   ? (plan.priceAnnual / 12).toFixed(1)
                                   : plan.priceMonthly}
                               </span>
-                              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>USDC/月</span>
+                              <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t("perMonth")}</span>
                             </div>
                             {billingPeriod === "annual" && plan.priceAnnual > 0 && (
                               <div style={{ fontSize: 11, color: "#10B981", marginTop: 2 }}>
-                                按年付 ${plan.priceAnnual} · 省 ${plan.savingsAnnual}
+                                {t("annualBilling", { annual: plan.priceAnnual, saving: plan.savingsAnnual })}
                               </div>
                             )}
                           </>
@@ -403,14 +408,14 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
                         borderRadius: 10, padding: "10px 14px", marginBottom: 18,
                       }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>月点数</span>
+                          <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{t("monthlyCredits")}</span>
                           <span style={{ fontSize: 22, fontWeight: 900, color: colors.accent }}>
                             {plan.credits.toLocaleString()}
                           </span>
                         </div>
                         {plan.rollover > 0 && (
                           <div style={{ fontSize: 10, color: "#10B981", marginTop: 4 }}>
-                            + 最多結轉 {plan.rollover.toLocaleString()} 点到下月
+                            {t("creditRollover", { n: plan.rollover.toLocaleString() })}
                           </div>
                         )}
                         {plan.credits === 100 && (
@@ -446,14 +451,14 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
                           width: "100%", padding: "10px 0", borderRadius: 10,
                           border: "1px solid var(--border)", background: "transparent",
                           color: "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "default",
-                        }}>當前計劃</button>
+                        }}>{t("currentPlan")}</button>
                       ) : isCurrent ? (
                         <button disabled style={{
                           width: "100%", padding: "10px 0", borderRadius: 10,
                           border: `1px solid ${colors.accent}`,
                           background: `${colors.accent}20`,
                           color: colors.text, fontSize: 13, fontWeight: 700, cursor: "default",
-                        }}>✅ 已訂閱</button>
+                        }}>{t("subscribedLabel")}</button>
                       ) : (
                         <button
                           onClick={() => handleSubscribe(plan.tier as "basic" | "pro")}
@@ -470,8 +475,8 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
                           }}
                         >
                           {isActivating
-                            ? "支付中..."
-                            : `訂閱 · $${price} USDC/${billingPeriod === "annual" ? "年" : "月"}`}
+                            ? t("payingInProgress")
+                            : t("subscribeNow", { price, period: billingPeriod === "annual" ? t("billingAnnual") : t("billingMonthly") })}
                         </button>
                       )}
                     </div>
@@ -488,10 +493,7 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
             }}>
               <span style={{ fontSize: 18 }}>🔒</span>
               <div style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                <strong style={{ color: "var(--text-secondary)" }}>鏈上支付，完全透明。</strong>{" "}
-                訂閱費透過 Phantom 直接發送至 Sakura 費用錢包（USDC on Solana）。
-                點數按實際 AI API 成本設計：深度分析（Sonnet 4.6 + 擴展思考）80 点，
-                簡單對話（Haiku）30 点，安全分析 10 点。Basic 可結轉 500 点，無綁定、隨時停止。
+                {t("subscriptionFooterNote")}
               </div>
             </div>
           </div>
@@ -503,23 +505,25 @@ export default function SubscriptionBanner({ walletAddress, onSubscriptionChange
 
 // ── Default plans fallback ─────────────────────────────────────────
 
-const DEFAULT_PLANS: PlanInfo[] = [
-  {
-    tier: "free", label: "Free", priceMonthly: 0, priceAnnual: 0,
-    currency: "USDC", credits: 100, rollover: 0, savingsAnnual: 0,
-    features: ["100 點/月", "1次 AI 顧問 / 10次安全分析", "體驗全部功能"],
-    recommended: false,
-  },
-  {
-    tier: "basic", label: "Basic", priceMonthly: 8, priceAnnual: 67,
-    currency: "USDC", credits: 1500, rollover: 500, savingsAnnual: 29,
-    features: ["1,500 點/月 + 結轉500点", "~50次 AI 對話 / ~18次深度分析", "智能錢包追蹤 + MCP 工具", "Guardian 借貸健康監控"],
-    recommended: true,
-  },
-  {
-    tier: "pro", label: "Pro", priceMonthly: 28, priceAnnual: 235,
-    currency: "USDC", credits: 6000, rollover: 2000, savingsAnnual: 101,
-    features: ["6,000 點/月 + 結轉2,000", "~75次 AI 顧問 / ~600次安全分析", "MCP API 無限存取", "最高優先級回應"],
-    recommended: false,
-  },
-];
+function getDefaultPlans(t: (key: TranslationKey, vars?: Record<string, string | number>) => string): PlanInfo[] {
+  return [
+    {
+      tier: "free", label: "Free", priceMonthly: 0, priceAnnual: 0,
+      currency: "USDC", credits: 100, rollover: 0, savingsAnnual: 0,
+      features: [t("planFreeFeature1"), t("planFreeFeature2"), t("planFreeFeature3")],
+      recommended: false,
+    },
+    {
+      tier: "basic", label: "Basic", priceMonthly: 8, priceAnnual: 67,
+      currency: "USDC", credits: 1500, rollover: 500, savingsAnnual: 29,
+      features: [t("planBasicFeature1"), t("planBasicFeature2"), t("planBasicFeature3"), t("planBasicFeature4")],
+      recommended: true,
+    },
+    {
+      tier: "pro", label: "Pro", priceMonthly: 28, priceAnnual: 235,
+      currency: "USDC", credits: 6000, rollover: 2000, savingsAnnual: 101,
+      features: [t("planProFeature1"), t("planProFeature2"), t("planProFeature3"), t("planProFeature4")],
+      recommended: false,
+    },
+  ];
+}

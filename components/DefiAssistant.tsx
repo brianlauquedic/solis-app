@@ -335,24 +335,24 @@ function OpportunityPanel({
 
 // ── Quick Actions (sub populated dynamically with live APY) ──────
 const QUICK_ACTION_DEFS: Array<{
-  icon: string; label: string; protocol: string | null;
-  fallbackSub: string; color: string; prompt: string | null;
+  icon: string; labelKey: string; protocol: string | null;
+  subKey: string; color: string; promptKey: string | null;
 }> = [
-  { icon: "🫙", label: "質押 SOL",    protocol: "Marinade Finance", fallbackSub: "Marinade / Jito",    color: "#8B5CF6", prompt: "幫我質押 SOL 獲取最高收益" },
-  { icon: "🌿", label: "USDC 理财",   protocol: "Kamino Finance",   fallbackSub: "Kamino Finance",     color: "#10B981", prompt: "我的 USDC 存哪里利息最高" },
-  { icon: "🌊", label: "代幣兑換",    protocol: null,               fallbackSub: "Jupiter 最優路由",   color: "#06B6D4", prompt: "把 1 SOL 換成 USDC" },
-  { icon: "🪷", label: "收益机会",    protocol: null,               fallbackSub: "全部 DeFi 机会排行", color: "#F59E0B", prompt: "给我看所有收益机会" },
-  { icon: "🐋", label: "聰明錢追蹤",  protocol: null,               fallbackSub: "24h 共識買入信號",   color: "#C0392B", prompt: null },
-  { icon: "🏭", label: "Agent Workshop", protocol: null,            fallbackSub: "自然語言創建 Agent", color: "#8B5CF6", prompt: null },
+  { icon: "🫙", labelKey: "qaStakeSOL",      protocol: "Marinade Finance", subKey: "qaStakeSub",    color: "#8B5CF6", promptKey: "suggStakeSOL" },
+  { icon: "🌿", labelKey: "qaUSDCYield",     protocol: "Kamino Finance",   subKey: "qaUSDCSub",     color: "#10B981", promptKey: "suggUSDCYield" },
+  { icon: "🌊", labelKey: "qaTokenSwap",     protocol: null,               subKey: "qaSwapSub",     color: "#06B6D4", promptKey: "suggSwapSOL" },
+  { icon: "🪷", labelKey: "qaYieldOpp",      protocol: null,               subKey: "qaYieldSub",    color: "#F59E0B", promptKey: "suggAllYield" },
+  { icon: "🐋", labelKey: "qaSmartMoney",    protocol: null,               subKey: "qaSmartSub",    color: "#C0392B", promptKey: null },
+  { icon: "🏭", labelKey: "qaAgentWorkshop", protocol: null,               subKey: "qaWorkshopSub", color: "#8B5CF6", promptKey: null },
 ];
 
 // ── Suggestion Chips ─────────────────────────────────────────────
-const SUGGESTIONS = [
-  "幫我質押 SOL 獲取最高收益",
-  "我的 USDC 存哪里利息最高",
-  "把 1 SOL 換成 USDC",
-  "给我看所有收益机会",
-];
+const SUGGESTION_KEYS = [
+  "suggStakeSOL",
+  "suggUSDCYield",
+  "suggSwapSOL",
+  "suggAllYield",
+] as const;
 
 // ── Main Component ───────────────────────────────────────────────
 export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) {
@@ -993,13 +993,13 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                 background: "#10B98115", border: "1px solid #10B98130",
                 borderRadius: 10, padding: "2px 8px",
               }}>
-                ● 實時 APY
+                {t("liveAPYLabel")}
               </span>
             )}
             {messages.length > 0 && (
               <button
                 onClick={exportAnalysis}
-                title="導出分析報告"
+                title={t("exportReport")}
                 style={{
                   padding: "4px 10px", borderRadius: 6, border: "1px solid var(--border)",
                   background: "var(--bg-card)", color: "var(--text-secondary)",
@@ -1007,7 +1007,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                   display: "flex", alignItems: "center", gap: 4,
                 }}
               >
-                📄 導出
+                {t("exportBtn")}
               </button>
             )}
             {messages.length > 0 && (
@@ -1132,18 +1132,18 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                 : null;
               const sub = liveOpp
                 ? `${qa.protocol?.split(" ")[0]}，APY ${liveOpp.apyDisplay}`
-                : qa.fallbackSub;
-              const isSmartMoney    = qa.label === "聰明錢追蹤";
-              const isAgentFactory = qa.label === "Agent Workshop";
-              const isToggle       = qa.prompt === null;
+                : t(qa.subKey as Parameters<typeof t>[0]);
+              const isSmartMoney    = qa.labelKey === "qaSmartMoney";
+              const isAgentFactory = qa.labelKey === "qaAgentWorkshop";
+              const isToggle       = qa.promptKey === null;
               const isActive       = (isSmartMoney && showSmartMoney) || (isAgentFactory && showAgentFactory);
               return (
                 <button
-                  key={qa.label}
+                  key={qa.labelKey}
                   onClick={() => {
                     if (isSmartMoney)    { setShowSmartMoney(v => !v); setShowAgentFactory(false); }
                     else if (isAgentFactory) { setShowAgentFactory(v => !v); setShowSmartMoney(false); }
-                    else if (!isToggle)  sendMessage(qa.prompt!);
+                    else if (!isToggle)  sendMessage(t(qa.promptKey as Parameters<typeof t>[0]));
                   }}
                   style={{
                     background: isActive ? "var(--accent-soft)" : "var(--bg-card)",
@@ -1156,7 +1156,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                 >
                   <span style={{ fontSize: 20 }}>{qa.icon}</span>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: isActive ? "var(--accent)" : qa.color }}>{qa.label}</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: isActive ? "var(--accent)" : qa.color }}>{t(qa.labelKey as Parameters<typeof t>[0])}</div>
                     <div style={{ fontSize: 10, color: "var(--text-secondary)", marginTop: 2 }}>{sub}</div>
                   </div>
                 </button>
@@ -1168,12 +1168,12 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
             display: "flex", gap: 8, flexWrap: "wrap",
             paddingTop: 12, marginTop: 4,
           }}>
-            {SUGGESTIONS.map(s => (
-              <button key={s} onClick={() => sendMessage(s)} style={{
+            {SUGGESTION_KEYS.map(sk => (
+              <button key={sk} onClick={() => sendMessage(t(sk as Parameters<typeof t>[0]))} style={{
                 background: "var(--bg-base)", border: "1px solid var(--border)",
                 borderRadius: 20, padding: "5px 12px",
                 fontSize: 11, color: "#8B5CF6", cursor: "pointer",
-              }}>{s}</button>
+              }}>{t(sk as Parameters<typeof t>[0])}</button>
             ))}
           </div>
         </div>
@@ -1199,8 +1199,8 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
             </div>
             <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
               {advisorQuota.remaining > 0
-                ? <>還剩 <strong style={{ color: "#10B981" }}>{advisorQuota.remaining}/3</strong> 次免費 · 超出后每次 <strong style={{ color: "var(--text-primary)" }}>0.50 USDC</strong></>
-                : <>免費次數已用完 · 發送消息時自動支付 <strong style={{ color: "var(--text-primary)" }}>0.50 USDC</strong></>}
+                ? t("advisorQuotaRemaining", { n: advisorQuota.remaining })
+                : t("advisorQuotaExhausted")}
             </div>
           </div>
           <span style={{
@@ -1210,7 +1210,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
             border: `1px solid ${advisorQuota.remaining > 0 ? "#10B98140" : "#8B5CF640"}`,
             borderRadius: 6, padding: "3px 8px", whiteSpace: "nowrap",
           }}>
-            {advisorQuota.remaining > 0 ? `🆓 ${advisorQuota.remaining}/3 次免費` : "💰 0.50 USDC/次"}
+            {advisorQuota.remaining > 0 ? t("advisorFreeBadge", { n: advisorQuota.remaining }) : "💰 0.50 USDC/次"}
           </span>
         </div>
       )}
@@ -1219,7 +1219,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
           fontSize: 11, color: "#10B981", textAlign: "center",
           padding: "6px 0 10px",
         }}>
-          ✅ 已支付 · {advisorPaymentSig.slice(0, 12)}...
+          {t("paymentConfirmedMsg")} · {advisorPaymentSig.slice(0, 12)}...
         </div>
       )}
 

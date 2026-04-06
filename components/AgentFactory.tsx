@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { AgentType, AgentConfig } from "@/app/api/agent-factory/parse/route";
+import { useLang } from "@/contexts/LanguageContext";
 
 // ── Types ────────────────────────────────────────────────────────
 interface SavedAgent extends AgentConfig {
@@ -17,12 +18,14 @@ const ICONS: Record<AgentType, string> = {
   scheduled_report: "📊",
   smart_copy:       "🐋",
 };
-const TYPE_LABELS: Record<AgentType, string> = {
-  price_alert:      "價格警報",
-  auto_trade:       "自動交易",
-  scheduled_report: "定時報告",
-  smart_copy:       "聰明錢跟單",
-};
+
+// ── Template cards (use key references for label/example) ─────────
+const TEMPLATES: { icon: string; labelKey: "agentTypePriceAlert" | "agentTypeAutoTrade" | "agentTypeReport" | "agentTypeSmartCopy"; exampleKey: "agentExamplePriceAlert" | "agentExampleAutoTrade" | "agentExampleReport" | "agentExampleSmartCopy"; type: AgentType }[] = [
+  { icon: "🔔", labelKey: "agentTypePriceAlert",  exampleKey: "agentExamplePriceAlert", type: "price_alert" },
+  { icon: "📈", labelKey: "agentTypeAutoTrade",    exampleKey: "agentExampleAutoTrade",  type: "auto_trade" },
+  { icon: "📊", labelKey: "agentTypeReport",       exampleKey: "agentExampleReport",     type: "scheduled_report" },
+  { icon: "🐋", labelKey: "agentTypeSmartCopy",    exampleKey: "agentExampleSmartCopy",  type: "smart_copy" },
+];
 
 function loadAgents(): SavedAgent[] {
   if (typeof window === "undefined") return [];
@@ -34,16 +37,9 @@ function saveAgents(agents: SavedAgent[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(agents));
 }
 
-// ── Template cards ────────────────────────────────────────────────
-const TEMPLATES: { icon: string; label: string; example: string; type: AgentType }[] = [
-  { icon: "🔔", label: "價格警報",    example: "SOL 跌到 $140 提醒我",       type: "price_alert" },
-  { icon: "📈", label: "自動交易",    example: "WIF > $0.20 自動買 $50",      type: "auto_trade" },
-  { icon: "📊", label: "定時報告",    example: "每天早9點生成市場報告",       type: "scheduled_report" },
-  { icon: "🐋", label: "聰明錢跟單",  example: "聰明錢共識 ⭐⭐⭐ 以上通知", type: "smart_copy" },
-];
-
 // ── Main Component ────────────────────────────────────────────────
 export default function AgentFactory() {
+  const { t } = useLang();
   const [agents, setAgents]           = useState<SavedAgent[]>([]);
   const [input, setInput]             = useState("");
   const [parsing, setParsing]         = useState(false);
@@ -52,6 +48,17 @@ export default function AgentFactory() {
   const [saved, setSaved]             = useState(false);
 
   useEffect(() => { setAgents(loadAgents()); }, []);
+
+  // Inside component: compute type labels dynamically
+  const typeLabel = (type: string) => {
+    const map: Record<string, string> = {
+      price_alert:      t("agentTypePriceAlert"),
+      auto_trade:       t("agentTypeAutoTrade"),
+      scheduled_report: t("agentTypeReport"),
+      smart_copy:       t("agentTypeSmartCopy"),
+    };
+    return map[type] ?? type;
+  };
 
   async function handleParse() {
     if (!input.trim() || parsing) return;
@@ -64,12 +71,12 @@ export default function AgentFactory() {
       });
       const data = await res.json() as AgentConfig & { error?: string };
       if (data.error || !data.type) {
-        setParseError(data.error ?? "解析失敗，請重新描述");
+        setParseError(data.error ?? t("parseFailed"));
       } else {
         setParsed(data);
       }
     } catch {
-      setParseError("網絡錯誤，請重試");
+      setParseError(t("guardianNetErr"));
     } finally {
       setParsing(false);
     }
@@ -110,6 +117,8 @@ export default function AgentFactory() {
     setParseError(null);
   }
 
+  const enabledCount = agents.filter(a => a.enabled).length;
+
   return (
     <div style={{
       background: "var(--bg-card)",
@@ -128,20 +137,20 @@ export default function AgentFactory() {
         }}>🏭</div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "var(--font-heading)", letterSpacing: "0.04em" }}>
-            Agent Workshop
+            {t("agentFactoryTitle")}
           </div>
           <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-            用自然語言創建自動化 Agent
+            {t("agentFactorySubtitle")}
           </div>
         </div>
       </div>
 
       {/* Template chips */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-        {TEMPLATES.map(t => (
+        {TEMPLATES.map(tmpl => (
           <button
-            key={t.type}
-            onClick={() => useTemplate(t.example)}
+            key={tmpl.type}
+            onClick={() => useTemplate(t(tmpl.exampleKey))}
             style={{
               background: "var(--bg-card-2)", border: "1px solid var(--border)",
               borderRadius: 20, padding: "5px 12px", cursor: "pointer",
@@ -152,8 +161,8 @@ export default function AgentFactory() {
             onMouseEnter={e => { (e.currentTarget.style.borderColor = "var(--accent)"); (e.currentTarget.style.color = "var(--text-primary)"); }}
             onMouseLeave={e => { (e.currentTarget.style.borderColor = "var(--border)"); (e.currentTarget.style.color = "var(--text-secondary)"); }}
           >
-            <span>{t.icon}</span>
-            <span>{t.label}</span>
+            <span>{tmpl.icon}</span>
+            <span>{t(tmpl.labelKey)}</span>
           </button>
         ))}
       </div>
@@ -164,7 +173,7 @@ export default function AgentFactory() {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleParse(); } }}
-          placeholder='例："SOL 跌到 $140 提醒我" 或 "每天早9點報告"'
+          placeholder={t("agentInputPlaceholder")}
           style={{
             flex: 1, background: "var(--bg-card-2)", border: "1px solid var(--border)",
             borderRadius: 8, padding: "10px 14px", color: "var(--text-primary)",
@@ -182,7 +191,7 @@ export default function AgentFactory() {
             transition: "all 0.15s", whiteSpace: "nowrap",
           }}
         >
-          {parsing ? "解析中…" : "AI 解析"}
+          {parsing ? t("parsingInProgress") : t("aiParseBtn")}
         </button>
       </div>
 
@@ -210,7 +219,7 @@ export default function AgentFactory() {
                 {parsed.displayName}
               </div>
               <div style={{ fontSize: 11, color: "var(--accent)" }}>
-                {TYPE_LABELS[parsed.type]}
+                {typeLabel(parsed.type)}
               </div>
             </div>
           </div>
@@ -226,7 +235,7 @@ export default function AgentFactory() {
                 cursor: "pointer",
               }}
             >
-              ✓ 確認創建
+              {t("confirmCreate")}
             </button>
             <button
               onClick={() => setParsed(null)}
@@ -236,7 +245,7 @@ export default function AgentFactory() {
                 color: "var(--text-secondary)", fontSize: 12, cursor: "pointer",
               }}
             >
-              取消
+              {t("cancel")}
             </button>
           </div>
         </div>
@@ -249,7 +258,7 @@ export default function AgentFactory() {
           borderRadius: 8, padding: "10px 14px", fontSize: 12,
           color: "var(--green)", marginBottom: 12,
         }}>
-          ✓ Agent 已創建並啟用
+          {t("agentCreatedSuccess")}
         </div>
       )}
 
@@ -257,7 +266,7 @@ export default function AgentFactory() {
       {agents.length > 0 && (
         <div>
           <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 10, marginTop: 4 }}>
-            我的 Agent（{agents.filter(a => a.enabled).length}/{agents.length} 啟用中）
+            {t("myAgentsList", { active: enabledCount, total: agents.length })}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {agents.map(agent => (
@@ -276,13 +285,13 @@ export default function AgentFactory() {
                     {agent.displayName}
                   </div>
                   <div style={{ fontSize: 10, color: "var(--text-secondary)", marginTop: 2 }}>
-                    {TYPE_LABELS[agent.type]} · {new Date(agent.createdAt).toLocaleDateString("zh-TW")}
+                    {typeLabel(agent.type)} · {new Date(agent.createdAt).toLocaleDateString("zh-TW")}
                   </div>
                 </div>
                 {/* Toggle */}
                 <button
                   onClick={() => handleToggle(agent.id)}
-                  title={agent.enabled ? "暫停" : "啟用"}
+                  title={agent.enabled ? t("pauseAgent") : t("enableAgent")}
                   style={{
                     background: agent.enabled ? "var(--green)" : "var(--bg-card)",
                     border: `1px solid ${agent.enabled ? "var(--green)" : "var(--border)"}`,
@@ -292,7 +301,7 @@ export default function AgentFactory() {
                     transition: "all 0.15s",
                   }}
                 >
-                  {agent.enabled ? "啟用" : "暫停"}
+                  {agent.enabled ? t("enableAgent") : t("pauseAgent")}
                 </button>
                 {/* Delete */}
                 <button

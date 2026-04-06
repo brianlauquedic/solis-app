@@ -5,6 +5,7 @@ import { lookupProof, getAllProofs, ProofRecord } from "@/lib/proof-store";
 import Link from "next/link";
 import { getDeviceId } from "@/lib/device-id";
 import { payWithPhantom } from "@/lib/x402";
+import { useLang } from "@/contexts/LanguageContext";
 
 const SOLIS_FEE_WALLET = "Goc5kAMb9NTXjobxzZogAWaHwajmQjw7CdmATWJN1mQh";
 
@@ -25,6 +26,7 @@ interface ChainMemoResult {
 }
 
 export default function VerifyPage() {
+  const { t, lang } = useLang();
   const [input, setInput] = useState("");
   const [result, setResult] = useState<ProofRecord | null | "not-found">(null);
   const [recentProofs, setRecentProofs] = useState<ProofRecord[]>([]);
@@ -138,7 +140,7 @@ export default function VerifyPage() {
           }}>S</div>
           <span style={{ fontSize: 16, fontWeight: 800, color: "#fff" }}>Sakura</span>
         </Link>
-        <span style={{ fontSize: 12, color: "#60A5FA" }}>可验证 AI 推理 · Verifiable AI Reasoning</span>
+        <span style={{ fontSize: 12, color: "#60A5FA" }}>{t("verifyPageHeader")}</span>
       </header>
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "48px 24px" }}>
@@ -154,12 +156,10 @@ export default function VerifyPage() {
             🔐 ON-CHAIN REASONING PROOF
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 900, color: "#fff", marginBottom: 12 }}>
-            可验证 AI 推理
+            {t("verifyPageTitle")}
           </h1>
           <p style={{ fontSize: 14, color: "#64748B", lineHeight: 1.7, maxWidth: 520, margin: "0 auto" }}>
-            Sakura 每次 AI 分析（代币安全 / DeFi 建议 / 收益推荐）时，将推理数据生成 SHA-256 哈希，
-            可一键写入 Solana 链上 Memo。任何人都可以在此验证——这是 Solana 生态
-            <span style={{ color: "#9945FF", fontWeight: 700 }}> Verifiable Compute</span> 的完整实践。
+            {t("verifyPageDesc")}
           </p>
         </div>
 
@@ -169,9 +169,9 @@ export default function VerifyPage() {
           marginBottom: 32,
         }}>
           {[
-            { step: "01", title: "AI 推理生成", desc: "代币分析 / DeFi 建议 / 收益推荐均生成可验证推理" },
-            { step: "02", title: "SHA-256 哈希写链", desc: "推理数据哈希后一键写入 Solana Memo，永久不可篡改" },
-            { step: "03", title: "全球可验证", desc: "任何人在此输入哈希即可验证 AI 原始推理内容" },
+            { step: "01", title: t("verifyStep1Title"), desc: t("verifyStep1Desc") },
+            { step: "02", title: t("verifyStep2Title"), desc: t("verifyStep2Desc") },
+            { step: "03", title: t("verifyStep3Title"), desc: t("verifyStep3Desc") },
           ].map(s => (
             <div key={s.step} style={{
               background: "#13131A", border: "1px solid #1E1E2E",
@@ -194,7 +194,7 @@ export default function VerifyPage() {
         }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#60A5FA" }}>
-              🔗 链上验证 — 输入 Solana 交易签名
+              {t("chainVerifyTitle")}
             </div>
             {verifyQuota && !verifyQuota.admin && (
               <div style={{
@@ -212,7 +212,7 @@ export default function VerifyPage() {
             )}
           </div>
           <div style={{ fontSize: 11, color: "#334155", marginBottom: 14 }}>
-            直接从 Solana 区块链读取 AI 推理 Memo，三层验证：决策 + 模拟证明 + Mandate 约束
+            {t("chainVerifyDesc")}
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <input
@@ -239,7 +239,7 @@ export default function VerifyPage() {
                 color: chainLoading ? "#475569" : "#60A5FA", cursor: chainLoading ? "not-allowed" : "pointer",
                 whiteSpace: "nowrap",
               }}
-            >{chainLoading ? "查询中..." : "链上查询 →"}</button>
+            >{chainLoading ? t("querying") : t("chainQuery")}</button>
           </div>
 
           {/* Chain result */}
@@ -255,14 +255,14 @@ export default function VerifyPage() {
                     borderRadius: 10, padding: "12px 14px",
                   }}>
                     <div style={{ fontSize: 10, color: "#10B981", fontWeight: 700, marginBottom: 6 }}>
-                      LAYER 1 — AI 决策摘要
+                      {t("layer1Title")}
                     </div>
                     <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.6 }}>
                       {chainResult.layers.decision ?? chainResult.memo}
                     </div>
                     <div style={{ fontSize: 10, color: "#334155", marginTop: 6, fontFamily: "monospace" }}>
                       Slot {chainResult.slot} ·{" "}
-                      {chainResult.blockTime ? new Date(chainResult.blockTime * 1000).toLocaleString("zh-CN") : "—"}
+                      {chainResult.blockTime ? new Date(chainResult.blockTime * 1000).toLocaleString(lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : "zh-TW") : "—"}
                       {chainResult.feePayer ? ` · ${chainResult.feePayer.slice(0, 8)}...` : ""}
                     </div>
                   </div>
@@ -274,7 +274,7 @@ export default function VerifyPage() {
                       borderRadius: 10, padding: "12px 14px",
                     }}>
                       <div style={{ fontSize: 10, color: "#F59E0B", fontWeight: 700, marginBottom: 6 }}>
-                        LAYER 2 — 模拟交易安全证明
+                        {t("layer2Title")}
                       </div>
                       <div style={{ fontSize: 12, color: "#94A3B8" }}>
                         {chainResult.layers.simulationProof}
@@ -289,7 +289,7 @@ export default function VerifyPage() {
                       borderRadius: 10, padding: "12px 14px",
                     }}>
                       <div style={{ fontSize: 10, color: "#8B5CF6", fontWeight: 700, marginBottom: 6 }}>
-                        LAYER 3 — On-Chain Mandate 约束引用
+                        {t("layer3Title")}
                       </div>
                       <div style={{ fontSize: 12, color: "#94A3B8", fontFamily: "monospace" }}>
                         {chainResult.layers.mandateRef}
@@ -299,7 +299,7 @@ export default function VerifyPage() {
 
                   {/* Raw memo */}
                   <details style={{ cursor: "pointer" }}>
-                    <summary style={{ fontSize: 11, color: "#334155" }}>查看原始 Memo 数据</summary>
+                    <summary style={{ fontSize: 11, color: "#334155" }}>{t("viewRawMemo")}</summary>
                     <div style={{
                       marginTop: 8, fontSize: 11, color: "#475569",
                       fontFamily: "monospace", wordBreak: "break-all",
@@ -311,7 +311,7 @@ export default function VerifyPage() {
                 </div>
               ) : (
                 <div style={{ fontSize: 12, color: "#475569" }}>
-                  ℹ️ 此交易不含 Memo 字段，或 Memo 为空
+                  {t("noMemoField")}
                 </div>
               )}
             </div>
@@ -324,7 +324,7 @@ export default function VerifyPage() {
           borderRadius: 16, padding: 24, marginBottom: 20,
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", marginBottom: 12 }}>
-            输入推理哈希或交易 Memo
+            {t("inputHashOrMemo")}
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <input
@@ -332,7 +332,7 @@ export default function VerifyPage() {
               value={input}
               onChange={e => { setInput(e.target.value); setResult(null); }}
               onKeyDown={e => e.key === "Enter" && handleVerify()}
-              placeholder="SHA-256 哈希 或 solis:xxxxxxxxxxxxxxxx"
+              placeholder={t("hashInputPlaceholder")}
               style={{
                 flex: 1, padding: "12px 16px",
                 background: "#0A0A0F", border: "1px solid #1E1E2E",
@@ -348,7 +348,7 @@ export default function VerifyPage() {
                 border: "none", borderRadius: 10,
                 fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer",
               }}
-            >验证 →</button>
+            >{t("verifyBtn")}</button>
           </div>
           <button
             onClick={loadRecent}
@@ -357,7 +357,7 @@ export default function VerifyPage() {
               fontSize: 12, color: "#475569", cursor: "pointer", padding: 0,
             }}
           >
-            📋 查看本机最近的分析记录
+            {t("viewRecentProofs")}
           </button>
         </div>
 
@@ -368,11 +368,11 @@ export default function VerifyPage() {
             borderRadius: 16, padding: 20, marginBottom: 20,
           }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", marginBottom: 12 }}>
-              最近分析记录（{recentProofs.length} 条）
+              {t("recentProofsCount", { n: recentProofs.length })}
             </div>
             {recentProofs.length === 0 ? (
               <div style={{ fontSize: 12, color: "#475569", textAlign: "center", padding: "16px 0" }}>
-                暂无记录，先在代币分析页进行分析
+                {t("noProofsYet")}
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -400,7 +400,7 @@ export default function VerifyPage() {
                       </div>
                     </div>
                     <div style={{ fontSize: 11, color: "#475569" }}>
-                      {new Date(p.timestamp).toLocaleDateString("zh-CN")}
+                      {new Date(p.timestamp).toLocaleDateString(lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : "zh-TW")}
                     </div>
                   </div>
                 ))}
@@ -416,9 +416,9 @@ export default function VerifyPage() {
             borderRadius: 16, padding: 24, textAlign: "center",
           }}>
             <div style={{ fontSize: 24, marginBottom: 12 }}>🔍</div>
-            <div style={{ fontSize: 15, color: "#EF4444", marginBottom: 8 }}>未找到匹配的推理记录</div>
+            <div style={{ fontSize: 15, color: "#EF4444", marginBottom: 8 }}>{t("proofNotFound")}</div>
             <div style={{ fontSize: 12, color: "#64748B" }}>
-              此哈希未在本机找到。Sakura 目前将证明存储在本地，请确保在生成分析的同一设备上验证。
+              {t("proofNotFoundDesc")}
             </div>
           </div>
         )}
@@ -442,10 +442,10 @@ export default function VerifyPage() {
                 fontSize: 16,
               }}>✅</div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#10B981" }}>哈希验证成功</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#10B981" }}>{t("hashVerifySuccess")}</div>
                 <div style={{ fontSize: 11, color: "#475569" }}>
-                  {new Date(result.timestamp).toLocaleString("zh-CN")} ·{" "}
-                  {result.aiAvailable ? "Claude AI 生成" : "规则引擎生成"}
+                  {new Date(result.timestamp).toLocaleString(lang === "ja" ? "ja-JP" : lang === "en" ? "en-US" : "zh-TW")} ·{" "}
+                  {result.aiAvailable ? t("generatedByAI") : t("generatedByRule")}
                 </div>
               </div>
             </div>
@@ -457,15 +457,15 @@ export default function VerifyPage() {
                 marginBottom: 20, padding: "16px", background: "#0A0A0F",
                 borderRadius: 12,
               }}>
-                <InfoCell label="代币" value={result.symbol} />
-                <InfoCell label="安全评分" value={`${result.securityScore}/100`}
+                <InfoCell label={t("tokenLabel")} value={result.symbol} />
+                <InfoCell label={t("securityScoreLabel")} value={`${result.securityScore}/100`}
                   valueColor={result.securityScore >= 70 ? "#10B981" : result.securityScore >= 45 ? "#F59E0B" : "#EF4444"} />
-                <InfoCell label="AI 决策" value={result.decision} valueColor={verdictColor(result.decision)} />
+                <InfoCell label={t("aiDecisionLabel")} value={result.decision} valueColor={verdictColor(result.decision)} />
               </div>
 
               {/* Reasoning */}
               <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 12, color: "#475569", marginBottom: 8 }}>AI 推理内容</div>
+                <div style={{ fontSize: 12, color: "#475569", marginBottom: 8 }}>{t("aiReasoningContent")}</div>
                 <div style={{
                   background: "#0A0A0F", border: "1px solid #1E1E2E",
                   borderRadius: 10, padding: "14px 16px",
@@ -477,7 +477,7 @@ export default function VerifyPage() {
 
               {/* Hash */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 12, color: "#475569", marginBottom: 8 }}>SHA-256 推理哈希</div>
+                <div style={{ fontSize: 12, color: "#475569", marginBottom: 8 }}>{t("sha256Hash")}</div>
                 <div style={{
                   background: "#0A0A0F", border: "1px solid #1E3A5F",
                   borderRadius: 10, padding: "12px 14px",
