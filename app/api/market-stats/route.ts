@@ -54,6 +54,7 @@ export async function GET() {
     llamaChains, llamaDexSolana, llamaFees,
     protocolTvls,
     tpsRaw, clusterNodesRaw,
+    epochInfoRaw, voteAccountsRaw, supplyRaw,
     lstYieldsRaw,
     kaminoLendRaw,
   ] = await Promise.all([
@@ -87,6 +88,15 @@ export async function GET() {
 
     // Cluster node count
     rpc("getClusterNodes"),
+
+    // Epoch info
+    rpc("getEpochInfo"),
+
+    // Vote accounts for staking ratio
+    rpc("getVoteAccounts", [{ commitment: "finalized", keepUnstakedDelinquents: false }], 15000),
+
+    // Total supply
+    rpc("getSupply", [{ commitment: "finalized" }]),
 
     // LST yields (DeFiLlama yields — filtered server-side)
     get("https://yields.llama.fi/pools"),
@@ -154,6 +164,38 @@ export async function GET() {
     clusterNodes = nodes?.length ?? null;
   } catch { /* ignore */ }
 
+  // ── Epoch info ────────────────────────────────────────────────────────────────
+  let epochInfo: { epoch: number; progress: number; slotsRemaining: number; hoursRemaining: number } | null = null;
+  try {
+    const ei = epochInfoRaw as { epoch: number; slotIndex: number; slotsInEpoch: number } | null;
+    if (ei && ei.slotsInEpoch > 0) {
+      const progress = Math.round((ei.slotIndex / ei.slotsInEpoch) * 100);
+      const slotsRemaining = ei.slotsInEpoch - ei.slotIndex;
+      const hoursRemaining = Math.round(slotsRemaining / 2 / 3600);
+      epochInfo = { epoch: ei.epoch, progress, slotsRemaining, hoursRemaining };
+    }
+  } catch { /* ignore */ }
+
+  // ── Staking ratio (getVoteAccounts + getSupply) ───────────────────────────────
+  let stakingRatio: string | null = null;
+  try {
+    type VoteAccount = { activatedStake: number };
+    type VoteAccountsResult = { current: VoteAccount[]; delinquent: VoteAccount[] };
+    type SupplyResult = { value: { total: number } };
+
+    const va = voteAccountsRaw as VoteAccountsResult | null;
+    const sup = supplyRaw as SupplyResult | null;
+
+    if (va && sup?.value?.total && sup.value.total > 0) {
+      const totalStake = [
+        ...(va.current ?? []),
+        ...(va.delinquent ?? []),
+      ].reduce((sum, v) => sum + (v.activatedStake ?? 0), 0);
+      const pct = (totalStake / sup.value.total) * 100;
+      if (pct > 30 && pct < 100) stakingRatio = `${pct.toFixed(1)}%`;
+    }
+  } catch { /* ignore */ }
+
   // ── LST yields (filter from yields pool data) ─────────────────────────────────
   type PoolRow = { project: string; symbol: string; tvlUsd: number; apy: number; chain: string };
   const lstMap: Record<string, { apy: string; tvl: string } | null> = {};
@@ -205,6 +247,8 @@ export async function GET() {
     tpsPeak:      tpsPeak      ? tpsPeak.toLocaleString()      : null,
     tpsUserPeak:  tpsUserPeak  ? tpsUserPeak.toLocaleString()  : null,
     clusterNodes: clusterNodes ? clusterNodes.toLocaleString() : null,
+    epochInfo,
+    stakingRatio,
 
     // Protocol TVLs
     protocols: {

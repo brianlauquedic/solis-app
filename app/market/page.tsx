@@ -417,18 +417,41 @@ export default function MarketPage() {
   );
 }
 
+type LiveStats = {
+  stakingRatio: string | null;
+  epochInfo: { epoch: number; progress: number; slotsRemaining: number; hoursRemaining: number } | null;
+};
+
 function MarketPageInner() {
   const { lang } = useLang();
   const L = lang as Lang;
   const [copied, setCopied] = useState(false);
   const [report, setReport] = useState<WeeklyReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [liveStats, setLiveStats] = useState<LiveStats>({ stakingRatio: null, epochInfo: null });
 
   useEffect(() => {
     fetch("/api/weekly-report")
       .then(r => r.json())
       .then((d: WeeklyReport) => { setReport(d); setLoading(false); })
       .catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    function fetchLive() {
+      fetch("/api/market-stats")
+        .then(r => r.json())
+        .then((d: Record<string, unknown>) => {
+          setLiveStats({
+            stakingRatio: (d.stakingRatio as string | null) ?? null,
+            epochInfo: (d.epochInfo as LiveStats["epochInfo"]) ?? null,
+          });
+        })
+        .catch(() => {});
+    }
+    fetchLive();
+    const id = setInterval(fetchLive, 5 * 60 * 1000); // refresh every 5 min
+    return () => clearInterval(id);
   }, []);
 
   function handleShare() {
@@ -462,21 +485,21 @@ function MarketPageInner() {
     { label: "Solana DeFi TVL",  value: report?.solanaTvl ?? "—",     sub: `DeFiLlama 實時${report?.tvlChange7d ? " · " + report.tvlChange7d : ""}`, highlight: true },
     { label: "SOL 現價",          value: report?.solPrice  ?? "—",     sub: report?.solChange ?? "DeFiLlama" },
     { label: "鏈上 DEX 7日量",    value: report?.dexVol7d  ?? "—",     sub: "Solana 全鏈" },
-    { label: "SOL 全網質押率",    value: report?.stakingRatio ?? "~65%", sub: "Solana RPC 實時" },
+    { label: "SOL 全網質押率",    value: liveStats.stakingRatio ?? report?.stakingRatio ?? "~65%", sub: "Solana RPC 實時" },
     { label: "集群節點數",         value: report?.clusterNodes ?? "—",  sub: "Solana RPC 實時" },
     { label: "協議費 7日",         value: report?.fees7d    ?? "—",     sub: "DeFiLlama 實時" },
   ] : L === "ja" ? [
     { label: "Solana DeFi TVL",      value: report?.solanaTvl ?? "—",    sub: `DeFiLlama リアルタイム${report?.tvlChange7d ? " · " + report.tvlChange7d : ""}`, highlight: true },
     { label: "SOL 現在価格",          value: report?.solPrice  ?? "—",    sub: report?.solChange ?? "DeFiLlama" },
     { label: "オンチェーンDEX 7日量", value: report?.dexVol7d  ?? "—",    sub: "Solana 全チェーン" },
-    { label: "SOL ステーキング率",    value: report?.stakingRatio ?? "~65%", sub: "Solana RPC リアルタイム" },
+    { label: "SOL ステーキング率",    value: liveStats.stakingRatio ?? report?.stakingRatio ?? "~65%", sub: "Solana RPC リアルタイム" },
     { label: "クラスターノード数",    value: report?.clusterNodes ?? "—",  sub: "Solana RPC リアルタイム" },
     { label: "プロトコル手数料 7日",  value: report?.fees7d    ?? "—",     sub: "DeFiLlama リアルタイム" },
   ] : [
     { label: "Solana DeFi TVL",    value: report?.solanaTvl ?? "—",    sub: `DeFiLlama live${report?.tvlChange7d ? " · " + report.tvlChange7d : ""}`, highlight: true },
     { label: "SOL Price",           value: report?.solPrice  ?? "—",    sub: report?.solChange ?? "DeFiLlama" },
     { label: "On-Chain DEX 7d Vol", value: report?.dexVol7d  ?? "—",    sub: "Solana-wide" },
-    { label: "SOL Staking Rate",    value: report?.stakingRatio ?? "~65%", sub: "Solana RPC live" },
+    { label: "SOL Staking Rate",    value: liveStats.stakingRatio ?? report?.stakingRatio ?? "~65%", sub: "Solana RPC live" },
     { label: "Cluster Nodes",       value: report?.clusterNodes ?? "—",  sub: "Solana RPC live" },
     { label: "Protocol Fees 7d",    value: report?.fees7d    ?? "—",     sub: "DeFiLlama live" },
   ];
@@ -484,8 +507,9 @@ function MarketPageInner() {
   // ── Network rows ───────────────────────────────────────────────
   const tpsLabel     = report?.tpsTotal ? `${report.tpsTotal} avg | ${report.tpsPeak ?? "—"} peak`         : "—";
   const tpsUserLabel = report?.tpsUser  ? `${report.tpsUser} avg | ${report.tpsUserPeak ?? "—"} peak`       : "—";
-  const epochLabel = report?.epochInfo
-    ? `Epoch ${report.epochInfo.epoch} · ${report.epochInfo.progress}% · ~${report.epochInfo.hoursRemaining}h left`
+  const activeEpoch = liveStats.epochInfo ?? report?.epochInfo ?? null;
+  const epochLabel = activeEpoch
+    ? `Epoch ${activeEpoch.epoch} · ${activeEpoch.progress}% · ~${activeEpoch.hoursRemaining}h left`
     : "—";
   const networkRows = [
     { label: { zh: "總 TPS 均值（含投票）",         en: "Total TPS avg (incl. votes)",      ja: "総TPS平均（投票含む）"      }, value: tpsLabel,                                                       status: "safe" as Status },
