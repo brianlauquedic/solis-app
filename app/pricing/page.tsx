@@ -210,7 +210,7 @@ function PricingInner() {
 
   const DEFAULT_PLANS = getDefaultPlans(lang);
   const CREDIT_COSTS = getCreditCosts(lang);
-  const plans = status?.plans ?? DEFAULT_PLANS;
+  const plans = DEFAULT_PLANS;
   const currentTier = status?.tier ?? "free";
 
   const tx = (zh: string, en: string, ja: string) =>
@@ -227,7 +227,7 @@ function PricingInner() {
   return (
     <>
       {/* ── Main Content ────────────────────────────────────────────── */}
-      <main style={{ maxWidth: 1080, margin: "0 auto", padding: "40px 24px 80px" }}>
+      <main style={{ maxWidth: 1080, margin: "0 auto", padding: "40px 24px 80px", minHeight: "100vh", background: "var(--bg-base)", color: "var(--text-primary)" }}>
 
         {/* Title */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
