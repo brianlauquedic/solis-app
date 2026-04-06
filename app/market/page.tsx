@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLang } from "@/contexts/LanguageContext";
 import ThemeWrapper from "@/components/ThemeWrapper";
@@ -144,7 +144,7 @@ function KpiGrid({ items }: { items: Array<{ label: string; value: string; sub?:
   );
 }
 
-function LSTTable({ lang }: { lang: Lang }) {
+function LSTTable({ lang, lstData }: { lang: Lang; lstData: Record<string, { apy: string; tvl: string } | null> }) {
   const headers = [
     { zh: "LST", en: "LST", ja: "LST" },
     { zh: "APY", en: "APY", ja: "APY" },
@@ -152,11 +152,11 @@ function LSTTable({ lang }: { lang: Lang }) {
     { zh: "收益機制", en: "Yield Mechanism", ja: "利回りメカニズム" },
   ];
   const rows = [
-    { name: "mSOL",    apy: "7.49%", tvl: "$0.54B", mech: { zh: "Marinade PoS",    en: "Marinade PoS",    ja: "Marinade PoS" },  best: true },
-    { name: "PSOL",    apy: "6.46%", tvl: "$0.12B", mech: { zh: "Phantom PoS",     en: "Phantom PoS",     ja: "Phantom PoS" },   best: false },
-    { name: "JUPSOL",  apy: "6.28%", tvl: "$0.36B", mech: { zh: "Jupiter PoS",     en: "Jupiter PoS",     ja: "Jupiter PoS" },   best: false },
-    { name: "jitoSOL", apy: "5.49%", tvl: "$0.93B", mech: { zh: "PoS + MEV 捕獲",  en: "PoS + MEV Capture", ja: "PoS + MEV獲得" }, best: false },
-    { name: "BNSOL",   apy: "5.37%", tvl: "$0.78B", mech: { zh: "Binance PoS",     en: "Binance PoS",     ja: "Binance PoS" },   best: false },
+    { name: "mSOL",    apy: lstData["mSOL"]?.apy    ?? "—", tvl: lstData["mSOL"]?.tvl    ?? "—", mech: { zh: "Marinade PoS",    en: "Marinade PoS",    ja: "Marinade PoS" },  best: true },
+    { name: "PSOL",    apy: lstData["PSOL"]?.apy    ?? "—", tvl: lstData["PSOL"]?.tvl    ?? "—", mech: { zh: "Phantom PoS",     en: "Phantom PoS",     ja: "Phantom PoS" },   best: false },
+    { name: "JUPSOL",  apy: lstData["JUPSOL"]?.apy  ?? "—", tvl: lstData["JUPSOL"]?.tvl  ?? "—", mech: { zh: "Jupiter PoS",     en: "Jupiter PoS",     ja: "Jupiter PoS" },   best: false },
+    { name: "jitoSOL", apy: lstData["jitoSOL"]?.apy ?? "—", tvl: lstData["jitoSOL"]?.tvl ?? "—", mech: { zh: "PoS + MEV 捕獲",  en: "PoS + MEV Capture", ja: "PoS + MEV獲得" }, best: false },
+    { name: "BNSOL",   apy: lstData["BNSOL"]?.apy   ?? "—", tvl: lstData["BNSOL"]?.tvl   ?? "—", mech: { zh: "Binance PoS",     en: "Binance PoS",     ja: "Binance PoS" },   best: false },
   ];
   return (
     <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 8 }}>
@@ -186,7 +186,7 @@ function LSTTable({ lang }: { lang: Lang }) {
   );
 }
 
-function LendingTable({ lang }: { lang: Lang }) {
+function LendingTable({ lang, lendData }: { lang: Lang; lendData: Record<string, string | null> }) {
   const headers = [
     { zh: "協議", en: "Protocol", ja: "プロトコル" },
     { zh: "資產", en: "Asset", ja: "資産" },
@@ -194,10 +194,10 @@ function LendingTable({ lang }: { lang: Lang }) {
     { zh: "借款 APY", en: "Borrow APY", ja: "借入APY" },
   ];
   const rows = [
-    { protocol: "Kamino",   asset: "SOL",  supplyApy: "3.95%", borrowApy: "—",   best: true },
-    { protocol: "Kamino",   asset: "USDC", supplyApy: "2.08%", borrowApy: "—",   best: false },
-    { protocol: "Drift",    asset: "DSOL", supplyApy: "6.22%", borrowApy: "—",   best: false },
-    { protocol: "Marginfi", asset: "USDC", supplyApy: "~2–4%", borrowApy: "—",   best: false },
+    { protocol: "Kamino",   asset: "SOL",  supplyApy: lendData["kamino_sol_supply"]  ?? "—", borrowApy: "—", best: true },
+    { protocol: "Kamino",   asset: "USDC", supplyApy: lendData["kamino_usdc_supply"] ?? "—", borrowApy: "—", best: false },
+    { protocol: "Kamino",   asset: "USDT", supplyApy: lendData["kamino_usdt_supply"] ?? "—", borrowApy: "—", best: false },
+    { protocol: "Drift",    asset: "DSOL", supplyApy: "—",                                   borrowApy: "—", best: false },
   ];
   return (
     <div style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", marginBottom: 8 }}>
@@ -291,10 +291,31 @@ export default function MarketPage() {
   );
 }
 
+interface MarketData {
+  solanaTvl: string | null; solPrice: string | null; solChange: string | null;
+  dexVol7d: string | null; fees7d: string | null;
+  tpsTotal: string | null; tpsUser: string | null; tpsPeak: string | null; tpsUserPeak: string | null;
+  clusterNodes: string | null;
+  protocols: Record<string, string | null>;
+  lst: Record<string, { apy: string; tvl: string } | null>;
+  lending: Record<string, string | null>;
+  updatedAt: string | null;
+}
+
 function MarketPageInner() {
   const { lang, setLang } = useLang();
   const L = lang as Lang;
   const [copied, setCopied] = useState(false);
+  const [live, setLive] = useState<MarketData | null>(null);
+
+  useEffect(() => {
+    fetch("/api/market-stats").then(r => r.json()).then(setLive).catch(() => {});
+  }, []);
+
+  // Shorthand helpers
+  const p = live?.protocols ?? {};
+  const lst = live?.lst ?? {};
+  const lend = live?.lending ?? {};
 
   function handleShare() {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -312,26 +333,26 @@ function MarketPageInner() {
   };
 
   const kpiItems = L === "zh" ? [
-    { label: "Solana DeFi TVL", value: "$5.55B",  sub: "DeFiLlama 實時",   highlight: true },
-    { label: "SOL 現價",         value: "$82.57",  sub: "+3.29% 24h" },
-    { label: "鏈上 DEX 7日量",   value: "$11.49B", sub: "Solana 全鏈" },
-    { label: "SOL 全網質押率",   value: "~65%",    sub: "vs ETH 28%" },
-    { label: "集群節點數",        value: "5,060",   sub: "Solana RPC 實時" },
-    { label: "協議費 7日",        value: "$43.9M",  sub: "DeFiLlama 實時" },
+    { label: "Solana DeFi TVL", value: live?.solanaTvl ?? "—",  sub: "DeFiLlama 實時",   highlight: true },
+    { label: "SOL 現價",         value: live?.solPrice  ?? "—",  sub: live?.solChange ?? "DeFiLlama" },
+    { label: "鏈上 DEX 7日量",   value: live?.dexVol7d  ?? "—",  sub: "Solana 全鏈" },
+    { label: "SOL 全網質押率",   value: "~65%",                   sub: "vs ETH ~28%" },
+    { label: "集群節點數",        value: live?.clusterNodes ?? "—", sub: "Solana RPC 實時" },
+    { label: "協議費 7日",        value: live?.fees7d    ?? "—",  sub: "DeFiLlama 實時" },
   ] : L === "ja" ? [
-    { label: "Solana DeFi TVL",      value: "$5.55B",  sub: "DeFiLlama リアルタイム", highlight: true },
-    { label: "SOL 現在価格",          value: "$82.57",  sub: "+3.29% 24h" },
-    { label: "オンチェーンDEX 7日量", value: "$11.49B", sub: "Solana 全チェーン" },
-    { label: "SOL ステーキング率",    value: "~65%",    sub: "vs ETH 28%" },
-    { label: "クラスターノード数",    value: "5,060",   sub: "Solana RPC リアルタイム" },
-    { label: "プロトコル手数料 7日",  value: "$43.9M",  sub: "DeFiLlama リアルタイム" },
+    { label: "Solana DeFi TVL",      value: live?.solanaTvl ?? "—",   sub: "DeFiLlama リアルタイム", highlight: true },
+    { label: "SOL 現在価格",          value: live?.solPrice  ?? "—",   sub: live?.solChange ?? "DeFiLlama" },
+    { label: "オンチェーンDEX 7日量", value: live?.dexVol7d  ?? "—",   sub: "Solana 全チェーン" },
+    { label: "SOL ステーキング率",    value: "~65%",                    sub: "vs ETH ~28%" },
+    { label: "クラスターノード数",    value: live?.clusterNodes ?? "—", sub: "Solana RPC リアルタイム" },
+    { label: "プロトコル手数料 7日",  value: live?.fees7d    ?? "—",   sub: "DeFiLlama リアルタイム" },
   ] : [
-    { label: "Solana DeFi TVL",    value: "$5.55B",  sub: "DeFiLlama live",   highlight: true },
-    { label: "SOL Price",           value: "$82.57",  sub: "+3.29% 24h" },
-    { label: "On-Chain DEX 7d Vol", value: "$11.49B", sub: "Solana-wide" },
-    { label: "SOL Staking Rate",    value: "~65%",    sub: "vs ETH 28%" },
-    { label: "Cluster Nodes",       value: "5,060",   sub: "Solana RPC live" },
-    { label: "Protocol Fees 7d",    value: "$43.9M",  sub: "DeFiLlama live" },
+    { label: "Solana DeFi TVL",    value: live?.solanaTvl ?? "—",   sub: "DeFiLlama live",   highlight: true },
+    { label: "SOL Price",           value: live?.solPrice  ?? "—",   sub: live?.solChange ?? "DeFiLlama" },
+    { label: "On-Chain DEX 7d Vol", value: live?.dexVol7d  ?? "—",   sub: "Solana-wide" },
+    { label: "SOL Staking Rate",    value: "~65%",                    sub: "vs ETH ~28%" },
+    { label: "Cluster Nodes",       value: live?.clusterNodes ?? "—", sub: "Solana RPC live" },
+    { label: "Protocol Fees 7d",    value: live?.fees7d    ?? "—",   sub: "DeFiLlama live" },
   ];
 
   const networkNarrative: T3 = {
@@ -339,23 +360,29 @@ function MarketPageInner() {
     en: "At $82, SOL is priced for disappointment. The on-chain data disagrees. Live readings this week: <b style='color:var(--gold);font-weight:700'>2,924</b> total TPS (including validator votes), with real user transactions averaging <b style='color:var(--gold);font-weight:700'>990</b> non-vote TPS, peaking at <b style='color:var(--gold);font-weight:700'>1,793</b>. Block confirmation holds at 0.4 seconds. The cluster has grown to <b style='color:var(--gold);font-weight:700'>5,060</b> nodes — infrastructure expanding, not contracting:",
     ja: "$82のSOLは失望を値付けされている。オンチェーンデータはそれに同意しない。今週の実測値：総TPS <b style='color:var(--gold);font-weight:700'>2,924</b>（バリデーター投票含む）、投票除く実ユーザー取引は平均 <b style='color:var(--gold);font-weight:700'>990</b> TPS、ピーク <b style='color:var(--gold);font-weight:700'>1,793</b>。ブロック確認0.4秒。クラスターノードは <b style='color:var(--gold);font-weight:700'>5,060</b>に拡大：",
   };
+  const tpsLabel = live?.tpsTotal
+    ? `${live.tpsTotal} | 峰值 ${live.tpsPeak ?? "—"}`
+    : "—";
+  const tpsUserLabel = live?.tpsUser
+    ? `${live.tpsUser} | 峰值 ${live.tpsUserPeak ?? "—"}`
+    : "—";
   const networkRows = [
-    { label: { zh: "總 TPS 均值（含投票）", en: "Total TPS avg (incl. votes)", ja: "総TPS平均（投票含む）" }, value: "2,924 | 峰值 3,732", status: "safe" as Status },
-    { label: { zh: "真實用戶 TPS（去除投票）", en: "User TPS avg (non-vote)", ja: "ユーザーTPS（投票除く）" }, value: "990 | 峰值 1,793", status: "safe" as Status },
-    { label: { zh: "集群節點總數", en: "Total Cluster Nodes", ja: "クラスターノード総数" }, value: L === "zh" ? "5,060（Solana RPC 實測）" : L === "ja" ? "5,060（Solana RPC 実測）" : "5,060 (Solana RPC live)", status: "safe" as Status },
+    { label: { zh: "總 TPS 均值（含投票）", en: "Total TPS avg (incl. votes)", ja: "総TPS平均（投票含む）" }, value: tpsLabel, status: "safe" as Status },
+    { label: { zh: "真實用戶 TPS（去除投票）", en: "User TPS avg (non-vote)", ja: "ユーザーTPS（投票除く）" }, value: tpsUserLabel, status: "safe" as Status },
+    { label: { zh: "集群節點總數", en: "Total Cluster Nodes", ja: "クラスターノード総数" }, value: live?.clusterNodes ? `${live.clusterNodes}（Solana RPC）` : "—", status: "safe" as Status },
     { label: { zh: "平均區塊確認時間", en: "Avg Block Confirmation", ja: "平均ブロック確認時間" }, value: "~0.4 秒", status: "safe" as Status },
-    { label: { zh: "協議費用 7 日（DeFiLlama）", en: "Protocol Fees 7d (DeFiLlama)", ja: "プロトコル手数料7日（DeFiLlama）" }, value: "$43.9M", status: "safe" as Status },
+    { label: { zh: "協議費用 7 日（DeFiLlama）", en: "Protocol Fees 7d (DeFiLlama)", ja: "プロトコル手数料7日（DeFiLlama）" }, value: live?.fees7d ?? "—", status: "safe" as Status },
   ];
 
   const protocolRows: ProtocolRow[] = [
-    { name: "Jupiter",  category: { zh: "聚合器 / 永續", en: "Aggregator / Perps", ja: "アグリゲーター/先物" }, tvl: "$1.76B", change: "DeFiLlama", atl: true },
-    { name: "Kamino",   category: { zh: "借貸 / LP",      en: "Lending / LP",       ja: "レンディング/LP" },    tvl: "$1.72B", change: "DeFiLlama" },
-    { name: "Jito",     category: { zh: "LST",             en: "LST",                ja: "LST" },               tvl: "$0.93B", change: "DeFiLlama" },
-    { name: "Raydium",  category: { zh: "DEX / AMM",       en: "DEX / AMM",          ja: "DEX / AMM" },         tvl: "$0.98B", change: "DeFiLlama" },
-    { name: "Marinade", category: { zh: "LST",             en: "LST",                ja: "LST" },               tvl: "$0.54B", change: "DeFiLlama" },
-    { name: "Meteora",  category: { zh: "AMM",             en: "AMM",                ja: "AMM" },               tvl: "$0.36B", change: "DeFiLlama" },
-    { name: "Orca",     category: { zh: "DEX / AMM",       en: "DEX / AMM",          ja: "DEX / AMM" },         tvl: "$0.24B", change: "DeFiLlama" },
-    { name: "Drift",    category: { zh: "衍生品",           en: "Derivatives",        ja: "デリバティブ" },      tvl: "$0.24B", change: "DeFiLlama" },
+    { name: "Jupiter",  category: { zh: "聚合器 / 永續", en: "Aggregator / Perps", ja: "アグリゲーター/先物" }, tvl: p.jupiter  ?? "—", change: "DeFiLlama", atl: true },
+    { name: "Kamino",   category: { zh: "借貸 / LP",      en: "Lending / LP",       ja: "レンディング/LP" },    tvl: p.kamino   ?? "—", change: "DeFiLlama" },
+    { name: "Raydium",  category: { zh: "DEX / AMM",       en: "DEX / AMM",          ja: "DEX / AMM" },         tvl: p.raydium  ?? "—", change: "DeFiLlama" },
+    { name: "Jito",     category: { zh: "LST",             en: "LST",                ja: "LST" },               tvl: p.jito     ?? "—", change: "DeFiLlama" },
+    { name: "Marinade", category: { zh: "LST",             en: "LST",                ja: "LST" },               tvl: p.marinade ?? "—", change: "DeFiLlama" },
+    { name: "Meteora",  category: { zh: "AMM",             en: "AMM",                ja: "AMM" },               tvl: p.meteora  ?? "—", change: "DeFiLlama" },
+    { name: "Orca",     category: { zh: "DEX / AMM",       en: "DEX / AMM",          ja: "DEX / AMM" },         tvl: p.orca     ?? "—", change: "DeFiLlama" },
+    { name: "Drift",    category: { zh: "衍生品",           en: "Derivatives",        ja: "デリバティブ" },      tvl: p.drift    ?? "—", change: "DeFiLlama" },
   ];
 
   const tvlNarrative: T3 = {
@@ -506,12 +533,12 @@ function MarketPageInner() {
           <ReportSection emoji="🏦" title={L === "zh" ? "借貸市場利率深度" : L === "ja" ? "貸出市場金利深度" : "Lending Market Rate Deep-Dive"} />
           <NarrativePara t3={lendingNarrative} />
           <TableCaption text={L === "zh" ? "Solana 主要借貸協議利率對比（本週）：" : L === "ja" ? "Solana主要貸出プロトコル金利比較（今週）：" : "Solana Major Lending Protocol Rates (this week):"} />
-          <LendingTable lang={L} />
+          <LendingTable lang={L} lendData={lend} />
 
           <ReportSection emoji="🪙" title={L === "zh" ? "LST 流動質押生態" : L === "ja" ? "LST流動性ステーキング生態系" : "LST Liquid Staking Ecosystem"} />
           <NarrativePara t3={lstNarrative} />
           <TableCaption text={L === "zh" ? "主要 LST 收益比較（本週）：" : L === "ja" ? "主要LST利回り比較（今週）：" : "Major LST Yield Comparison (this week):"} />
-          <LSTTable lang={L} />
+          <LSTTable lang={L} lstData={lst} />
 
           <ReportSection emoji="📈" title={L === "zh" ? "DEX 交易量深度分析" : L === "ja" ? "DEX取引量深度分析" : "DEX Volume Deep-Dive"} />
           <NarrativePara t3={dexNarrative} />
