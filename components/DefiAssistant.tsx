@@ -389,6 +389,21 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
   const bottomRef = useRef<HTMLDivElement>(null);
   const memorySavedRef = useRef(false);
 
+  // Re-translate welcome-back message when lang changes in-session
+  useEffect(() => {
+    setMessages(prev => prev.map(m => {
+      if (m.role === "assistant" && (
+        m.text.startsWith("歡迎回來！") ||
+        m.text.startsWith("Welcome back!") ||
+        m.text.startsWith("おかえりなさい！")
+      )) {
+        return { ...m, text: t("chatWelcomeBackGeneric") };
+      }
+      return m;
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang]);
+
   // Load chat history when wallet changes (or on first mount)
   useEffect(() => {
     if (!walletAddress) return;
