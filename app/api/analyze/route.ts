@@ -194,17 +194,29 @@ function ruleBasedAnalysis(req: AnalyzeRequest): string {
   return parts.join(" ");
 }
 
+// ── Sanitize a user-supplied string for safe prompt interpolation ─
+// Strips control chars and caps length to prevent prompt injection.
+function sanitizeField(s: string, maxLen = 100): string {
+  return s.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").slice(0, maxLen);
+}
+
 // ── Build Claude prompt ──────────────────────────────────────────
 function buildPrompt(req: AnalyzeRequest): string {
+  // Sanitize all user-controlled string fields before interpolation
+  const safeName    = sanitizeField(req.name, 80);
+  const safeSymbol  = sanitizeField(req.symbol, 20);
+  const safeRisks   = req.risks.map(r => sanitizeField(r, 80)).join("；") || "无";
+  const safePos     = req.positives.map(p => sanitizeField(p, 80)).join("；") || "无";
+
   return `你是 Sakura，一个 Solana 链上 AI 财务顾问。用简洁的中文给出代币分析建议，不超过150字。
 
 代币信息：
-- 名称：${req.name}（${req.symbol}）
+- 名称：${safeName}（${safeSymbol}）
 - 合约：${req.mint}
 - 当前价格：${req.price ? `$${req.price}` : "无数据"}
 - 安全评分：${req.securityScore}/100
-- 风险点：${req.risks.join("；") || "无"}
-- 优势：${req.positives.join("；") || "无"}
+- 风险点：${safeRisks}
+- 优势：${safePos}
 - 持有地址数：${req.holderCount ?? "未知"}
 - 前10地址占比：${req.top10HolderPct ? req.top10HolderPct + "%" : "未知"}
 - 增发权限：${req.mintable ? "有" : "无"}

@@ -132,7 +132,7 @@ export async function GET(req: NextRequest) {
 
     const amountLamports = Math.round(amount * 10 ** inputResolved.decimals);
     const rawSlippage = parseInt(searchParams.get("slippage") ?? "50");
-    const slippageBps = Math.min(Math.max(rawSlippage, 10), 300);
+    const slippageBps = Math.min(Math.max(rawSlippage, 10), 100);
 
     // Also fetch recommended slippage from GMGN if available
     let finalSlippage = slippageBps;
@@ -145,7 +145,7 @@ export async function GET(req: NextRequest) {
         const slipData = await slipRes.json() as { recommend_slippage?: string; has_tax?: boolean };
         if (slipData.recommend_slippage) {
           const gmgnSlip = parseFloat(slipData.recommend_slippage) * 100; // percent → bps
-          finalSlippage = Math.max(slippageBps, Math.min(gmgnSlip, 300));
+          finalSlippage = Math.max(slippageBps, Math.min(gmgnSlip, 100));
         }
       }
     } catch { /* use default */ }

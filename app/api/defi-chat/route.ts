@@ -324,6 +324,10 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: "empty message" }), { status: 400 });
   }
 
+  // Prompt injection guard: cap message length and strip control sequences
+  const MAX_MSG_LEN = 2000;
+  const sanitizedMessage = message.slice(0, MAX_MSG_LEN).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
@@ -363,7 +367,7 @@ export async function POST(req: NextRequest) {
             role: h.role as "user" | "assistant",
             content: h.content,
           }));
-          const allMessages = [...historyMessages, { role: "user" as const, content: message }];
+          const allMessages = [...historyMessages, { role: "user" as const, content: sanitizedMessage }];
 
           try {
             const controller2 = new AbortController();
@@ -426,7 +430,7 @@ export async function POST(req: NextRequest) {
 
         // ── Fallback: rule-based (emit as single token chunk) ────
         if (!aiAvailable) {
-          const intent = detectIntent(message);
+          const intent = detectIntent(sanitizedMessage);
           const result = ruleBasedResponse(intent, wallet, liveYield);
           fullText = result.text;
           actions = result.actions;
@@ -434,7 +438,7 @@ export async function POST(req: NextRequest) {
         }
 
         // ── Phase 3: Build hash and emit done ────────────────────
-        const reasoningHash = await buildReasoningHash(message, fullText, wallet, aiAvailable);
+        const reasoningHash = await buildReasoningHash(sanitizedMessage, fullText, wallet, aiAvailable);
         const memoPayload = `[Sakura] ${fullText}`.slice(0, 500);
 
         // Generate session summary if history is long enough

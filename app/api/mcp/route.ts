@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { isPaymentSigUsed, markPaymentSigUsed } from "@/lib/rate-limit";
+import { atomicClaimPaymentSig, releasePaymentSig } from "@/lib/rate-limit";
 
 // ── Payment config ───────────────────────────────────────────────
 const HELIUS_API_KEY  = process.env.HELIUS_API_KEY ?? "";
@@ -147,15 +147,16 @@ export async function POST(req: NextRequest) {
         }
       );
     }
-    // Replay protection
-    if (await isPaymentSigUsed(paymentSig)) {
+    // Atomic replay protection: claim sig slot first, then verify (prevents TOCTOU)
+    const alreadyClaimed = await atomicClaimPaymentSig(paymentSig);
+    if (alreadyClaimed) {
       return jsonrpcError(id, -32001, "Payment already used — send a new transaction");
     }
     const paymentValid = await verifyMCPPayment(paymentSig, MCP_CALL_FEE);
     if (!paymentValid) {
+      await releasePaymentSig(paymentSig); // release so user can retry with valid sig
       return jsonrpcError(id, -32001, "Payment verification failed. Send 0.01 USDC to Sakura fee wallet.");
     }
-    await markPaymentSigUsed(paymentSig);
 
     try {
       const result = await callTool(params.name, params.arguments ?? {});

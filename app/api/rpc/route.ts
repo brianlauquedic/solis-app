@@ -9,6 +9,9 @@ const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS
 const FALLBACK_RPC = "https://api.mainnet-beta.solana.com";
 
 // Allowed JSON-RPC methods (allowlist — block dangerous methods)
+// sendTransaction is intentionally excluded: clients must submit transactions
+// directly to Solana (or use a dedicated signing flow) to prevent abuse of
+// our Helius API key for arbitrary transaction broadcasting.
 const ALLOWED_METHODS = new Set([
   "getLatestBlockhash",
   "getBalance",
@@ -17,7 +20,6 @@ const ALLOWED_METHODS = new Set([
   "getTokenAccountsByOwner",
   "getParsedTransaction",
   "getParsedAccountInfo",
-  "sendTransaction",
   "simulateTransaction",
   "getMinimumBalanceForRentExemption",
   "getRecentBlockhash",

@@ -92,24 +92,40 @@ async function redisPipeline(
 // Txs confirmed on Solana are immutable. Store used sigs for 24h to prevent replay.
 const PAYMENT_SIG_TTL = 86_400; // 24 hours
 
-export async function isPaymentSigUsed(txSig: string): Promise<boolean> {
+/**
+ * Atomically claim a payment sig slot (SET NX).
+ * Returns true if the sig was already claimed (replay), false if this is the first claim.
+ * Use mark-then-verify pattern to avoid TOCTOU: claim first, then verify on-chain,
+ * release with releasePaymentSig() if verification fails.
+ */
+export async function atomicClaimPaymentSig(txSig: string): Promise<boolean> {
+  const key = `solis:used_sig:${txSig}`;
   if (redisAvailable) {
     try {
-      const results = await redisPipeline([["GET", `solis:used_sig:${txSig}`]]);
-      return results[0]?.result !== null && results[0]?.result !== undefined;
-    } catch { /* fallback */ }
+      // SET NX: returns "OK" if set (first claim), null if already exists (replay)
+      const results = await redisPipeline([
+        ["SET", key, "1", "EX", String(PAYMENT_SIG_TTL), "NX"],
+      ]);
+      const setResult = results[0]?.result;
+      // "OK" = newly set (not a replay); null = already existed (replay)
+      return setResult === null || setResult === undefined;
+    } catch { /* fallback to memory */ }
   }
-  return memStore.has(`used_sig:${txSig}`);
+  if (memStore.has(`used_sig:${txSig}`)) return true;
+  memStore.set(`used_sig:${txSig}`, 1);
+  return false;
 }
 
-export async function markPaymentSigUsed(txSig: string): Promise<void> {
+/** Release a previously claimed sig slot (called when on-chain verification fails). */
+export async function releasePaymentSig(txSig: string): Promise<void> {
+  const key = `solis:used_sig:${txSig}`;
   if (redisAvailable) {
     try {
-      await redisPipeline([["SET", `solis:used_sig:${txSig}`, "1", "EX", String(PAYMENT_SIG_TTL)]]);
+      await redisPipeline([["DEL", key]]);
       return;
     } catch { /* fallback */ }
   }
-  memStore.set(`used_sig:${txSig}`, 1);
+  memStore.delete(`used_sig:${txSig}`);
 }
 
 // ── In-memory fallback ────────────────────────────────────────────
@@ -359,8 +375,12 @@ export async function runQuotaGate(
     req.headers.get("x-payment") ?? req.headers.get("X-PAYMENT");
 
   if (paymentSig) {
-    // Replay protection: reject if this txSig was already used
-    if (await isPaymentSigUsed(paymentSig)) {
+    // Atomic mark-then-verify: claim the sig slot FIRST (SET NX), then verify on-chain.
+    // If verification fails, delete the slot so the user can retry with a valid sig.
+    // This prevents TOCTOU replay where two concurrent requests both pass the "used?" check
+    // before either one writes the "used" record.
+    const alreadyClaimed = await atomicClaimPaymentSig(paymentSig);
+    if (alreadyClaimed) {
       return {
         proceed: false,
         response: NextResponse.json(
@@ -371,6 +391,8 @@ export async function runQuotaGate(
     }
     const valid = await verifyQuotaPayment(paymentSig, FEATURE_FEE[feature]);
     if (!valid) {
+      // Release the slot so the user can retry (e.g., wrong amount or sig not yet confirmed)
+      await releasePaymentSig(paymentSig);
       return {
         proceed: false,
         response: NextResponse.json(
@@ -379,7 +401,6 @@ export async function runQuotaGate(
         ),
       };
     }
-    await markPaymentSigUsed(paymentSig);
     return { proceed: true, ids, paid: true };
   }
 
