@@ -1,8 +1,19 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import { useLang } from "@/contexts/LanguageContext";
 import WaBijinSVG from "@/components/WaBijinSVG";
+
+interface MarketStats {
+  solanaTvl:  string | null;
+  solPrice:   string | null;
+  solChange:  string | null;
+  jupVol7d:   string | null;
+  fees7d:     string | null;
+  validators: string | null;
+  updatedAt:  string | null;
+}
 
 const AGENT_KEYS = [
   { tag: "Security Agent",  titleKey: "agent1Title" as const, descKey: "agent1Desc" as const, icon: "護", color: "var(--green)" },
@@ -30,6 +41,14 @@ interface Props {
 
 export default function WalletConnect({ walletAddress, onEnterApp }: Props = {}) {
   const { t, lang } = useLang();
+  const [stats, setStats] = useState<MarketStats | null>(null);
+
+  useEffect(() => {
+    fetch("/api/market-stats")
+      .then(r => r.json())
+      .then(setStats)
+      .catch(() => {});
+  }, []);
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto" }}>
@@ -177,23 +196,39 @@ export default function WalletConnect({ walletAddress, onEnterApp }: Props = {})
             fontSize: 10, color: "var(--text-muted)",
             background: "var(--bg-base)", border: "1px solid var(--border)",
             borderRadius: 4, padding: "2px 8px", fontFamily: "var(--font-mono)", letterSpacing: "0.03em",
-          }}>W14 2026 · Helius · Jupiter · Kamino</span>
+          }}>
+            {stats?.updatedAt
+              ? `Live · ${new Date(stats.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+              : "CoinGecko · DeFiLlama · Solana RPC"}
+          </span>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
           {([
-            { labelZh: "DeFi TVL",    labelEn: "DeFi TVL",        labelJa: "DeFi TVL",
-              value: "$8.2B",  sub: "+4.8%",  gold: true },
-            { labelZh: "SOL 現價",    labelEn: "SOL Price",       labelJa: "SOL価格",
-              value: "$172.4", sub: "+6.2%",  gold: false },
-            { labelZh: "Jupiter 週量",labelEn: "Jupiter Volume",  labelJa: "Jupiter出来高",
-              value: "$7.9B",  sub: "3mo high", gold: false },
-            { labelZh: "SOL 質押率",  labelEn: "Staking Rate",    labelJa: "ステーク率",
-              value: "65.2%",  sub: "vs ETH 27%", gold: false },
-            { labelZh: "活躍驗證者",  labelEn: "Validators",      labelJa: "バリデーター",
-              value: "1,947",  sub: "decentralized", gold: false },
-            { labelZh: "週協議收入",  labelEn: "Protocol Revenue",labelJa: "プロトコル収益",
-              value: "$2.1M",  sub: "+18.3%",  gold: true },
-          ] as const).map((item, i) => (
+            {
+              labelZh: "DeFi TVL", labelEn: "DeFi TVL", labelJa: "DeFi TVL",
+              value: stats?.solanaTvl ?? "—", sub: lang === "en" ? "DeFiLlama" : "DeFiLlama", gold: true,
+            },
+            {
+              labelZh: "SOL 現價", labelEn: "SOL Price", labelJa: "SOL価格",
+              value: stats?.solPrice ?? "—", sub: stats?.solChange ?? "CoinGecko", gold: false,
+            },
+            {
+              labelZh: "Jupiter 7日量", labelEn: "Jupiter 7d Vol", labelJa: "Jupiter 7日出来高",
+              value: stats?.jupVol7d ?? "—", sub: "DeFiLlama DEX", gold: false,
+            },
+            {
+              labelZh: "活躍驗證者", labelEn: "Validators", labelJa: "バリデーター",
+              value: stats?.validators ?? "—", sub: "Solana RPC", gold: false,
+            },
+            {
+              labelZh: "Solana 協議費 7日", labelEn: "Protocol Fees 7d", labelJa: "プロトコル手数料 7日",
+              value: stats?.fees7d ?? "—", sub: "DeFiLlama", gold: true,
+            },
+            {
+              labelZh: "資料來源", labelEn: "Data Sources", labelJa: "データソース",
+              value: "Live", sub: "CoinGecko · DeFiLlama · RPC", gold: false,
+            },
+          ]).map((item, i) => (
             <div key={i} style={{
               background: "var(--bg-base)", border: `1px solid var(--border)`,
               borderLeft: item.gold ? "2px solid var(--gold, #C9A84C)" : "1px solid var(--border)",
@@ -203,7 +238,7 @@ export default function WalletConnect({ walletAddress, onEnterApp }: Props = {})
                 {lang === "en" ? item.labelEn : lang === "ja" ? item.labelJa : item.labelZh}
               </div>
               <div style={{
-                fontSize: 16, fontWeight: 700,
+                fontSize: i === 5 ? 13 : 16, fontWeight: 700,
                 color: item.gold ? "var(--gold, #C9A84C)" : "var(--text-primary)",
                 fontFamily: "var(--font-mono)", lineHeight: 1.1,
               }}>{item.value}</div>
