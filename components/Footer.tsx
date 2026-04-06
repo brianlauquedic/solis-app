@@ -7,12 +7,12 @@ export default function Footer() {
   const { t, lang } = useLang();
 
   const product = [
-    { label: t("footerPortfolioCheck"),   href: "/#portfolio"   },
-    { label: t("footerSecurityAnalysis"), href: "/#security"    },
-    { label: t("footerAIAdvisor"),        href: "/#advisor"     },
-    { label: t("footerRebalanceAgent"),   href: "/#agent"       },
-    { label: t("footerSmartMoney"),       href: "/#smart-money" },
-    { label: t("footerGuardian"),         href: "/#guardian"    },
+    { label: t("footerFeatureSecurity"),   href: "/#security"    },
+    { label: t("footerFeatureSmartMoney"), href: "/#smart-money" },
+    { label: t("footerFeatureGuardian"),   href: "/#guardian"    },
+    { label: t("footerFeatureCopyTrade"),  href: "/#copy-trade"  },
+    { label: t("footerFeatureKline"),      href: "/#kline"       },
+    { label: t("footerFeatureX402"),       href: "/#x402"        },
   ];
 
   const resources = [
@@ -22,8 +22,7 @@ export default function Footer() {
   ];
 
   const community = [
-    { label: "X (Twitter)", href: "https://x.com/", external: true },
-    { label: "Discord",     href: "https://discord.gg/", external: true },
+    { label: "X (Twitter)", href: "https://x.com/" },
   ];
 
   const policy = [
@@ -158,11 +157,6 @@ export default function Footer() {
             onMouseEnter={e => (e.currentTarget.style.color = "var(--text-primary)")}
             onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}
           >𝕏</a>
-          <a href="https://discord.gg/" target="_blank" rel="noopener noreferrer"
-            style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12 }}
-            onMouseEnter={e => (e.currentTarget.style.color = "var(--text-primary)")}
-            onMouseLeave={e => (e.currentTarget.style.color = "var(--text-muted)")}
-          >Discord</a>
           <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
             {lang === "zh" ? "非投資建議" : lang === "ja" ? "投資助言ではありません" : "Not financial advice"}
           </span>
