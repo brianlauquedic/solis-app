@@ -18,7 +18,7 @@ const LANG_OPTIONS: { code: Lang; flag: string; label: string }[] = [
 export default function AppNav() {
   const router = useRouter();
   const { lang, setLang, t } = useLang();
-  const { walletAddress, shortAddr, phantomLoading, phantomAvailable, connect, disconnect } = useWallet();
+  const { walletAddress, shortAddr, phantomLoading, phantomAvailable, connect, disconnect, setShowLanding } = useWallet();
   const { isDayMode, toggleDayMode, timeBg } = useTheme();
 
   return (
@@ -34,7 +34,7 @@ export default function AppNav() {
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <button
-          onClick={() => router.push("/")}
+          onClick={() => { setShowLanding(true); router.push("/"); }}
           style={{
             display: "flex", alignItems: "center", gap: 10,
             background: "none", border: "none", padding: 0, cursor: "pointer",

@@ -9,6 +9,8 @@ interface WalletCtx {
   phantomAvailable: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
+  showLanding: boolean;
+  setShowLanding: (v: boolean) => void;
 }
 
 const WalletContext = createContext<WalletCtx>({
@@ -18,12 +20,15 @@ const WalletContext = createContext<WalletCtx>({
   phantomAvailable: false,
   connect: async () => {},
   disconnect: () => {},
+  showLanding: false,
+  setShowLanding: () => {},
 });
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [phantomLoading, setPhantomLoading] = useState(false);
   const [phantomAvailable, setPhantomAvailable] = useState(false);
+  const [showLanding, setShowLanding] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("sakura_wallet");
@@ -59,7 +64,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     : null;
 
   return (
-    <WalletContext.Provider value={{ walletAddress, shortAddr, phantomLoading, phantomAvailable, connect, disconnect }}>
+    <WalletContext.Provider value={{ walletAddress, shortAddr, phantomLoading, phantomAvailable, connect, disconnect, showLanding, setShowLanding }}>
       {children}
     </WalletContext.Provider>
   );

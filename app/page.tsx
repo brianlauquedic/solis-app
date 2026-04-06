@@ -22,9 +22,8 @@ interface WalletSnapshot {
 
 function AppContent() {
   const { t } = useLang();
-  const { walletAddress, disconnect } = useWallet();
+  const { walletAddress, disconnect, showLanding, setShowLanding } = useWallet();
   const { isDayMode, timeBg } = useTheme();
-  const [showLanding, setShowLanding] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("health");
   const [walletSnapshot, setWalletSnapshot] = useState<WalletSnapshot | undefined>();
 

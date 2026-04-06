@@ -3,11 +3,13 @@
 import Link from "next/link";
 import WaBijinSVG from "@/components/WaBijinSVG";
 import { useLang } from "@/contexts/LanguageContext";
+import { useWallet } from "@/contexts/WalletContext";
 
 const X_URL = "https://x.com/sakuraaijp";
 
 export default function Footer() {
   const { t, lang } = useLang();
+  const { setShowLanding } = useWallet();
 
   const resources = [
     { label: t("footerDocs"),     href: "/docs"      },
@@ -47,7 +49,7 @@ export default function Footer() {
       }}>
         {/* Brand */}
         <div style={{ minWidth: 200, maxWidth: 260 }}>
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, textDecoration: "none" }}>
+          <Link href="/" onClick={() => setShowLanding(true)} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, textDecoration: "none" }}>
             <div style={{ width: 28, height: 28, borderRadius: 6, overflow: "hidden", flexShrink: 0 }}>
               <WaBijinSVG size={28} />
             </div>
