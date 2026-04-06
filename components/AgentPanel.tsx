@@ -955,15 +955,30 @@ const ACTION_LABEL: Record<string, string> = {
   prepare_swap:  "🔄 準備兌換",
 };
 
+// ── localStorage helpers (keyed per wallet) ─────────────────────
+function lsKey(wallet: string) { return `guardian_conditions_${wallet}`; }
+function lsSave(wallet: string, conds: GuardianCondition[]) {
+  try { localStorage.setItem(lsKey(wallet), JSON.stringify(conds)); } catch { /* ignore */ }
+}
+function lsLoad(wallet: string): GuardianCondition[] {
+  try { return JSON.parse(localStorage.getItem(lsKey(wallet)) ?? "[]") as GuardianCondition[]; }
+  catch { return []; }
+}
+
 function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
   const [open, setOpen]                   = useState(false);
-  const [conditions, setConditions]       = useState<GuardianCondition[]>([]);
-  const [loadingList, setLoadingList]     = useState(false);  // only the conditions list loading
+  const [conditions, setConditions]       = useState<GuardianCondition[]>(() => lsLoad(walletAddress));
+  const [loadingList, setLoadingList]     = useState(false);
   const [adding, setAdding]               = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(0);
   const [customThreshold, setCustomThreshold]   = useState<string>("");
-  // Status banner — outside loading conditional so it's ALWAYS visible
   const [status, setStatus] = useState<{ msg: string; type: "success" | "error" } | null>(null);
+
+  // Load from localStorage immediately on mount (no flicker)
+  useEffect(() => {
+    const saved = lsLoad(walletAddress);
+    if (saved.length > 0) setConditions(saved);
+  }, [walletAddress]);
 
   function showStatus(msg: string, type: "success" | "error") {
     setStatus({ msg, type });
@@ -973,18 +988,44 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
   async function loadConditions() {
     setLoadingList(true);
     try {
-      const res  = await fetch("/api/cron/guardian/conditions", {
+      const res = await fetch("/api/cron/guardian/conditions", {
         headers: { "X-Wallet-Address": walletAddress ?? "" },
       });
       if (!res.ok) return;
       const data = await res.json() as { conditions: GuardianCondition[] };
-      setConditions(data.conditions ?? []);
+      const serverConds = data.conditions ?? [];
+
+      if (serverConds.length > 0) {
+        // Server has data → use it and sync to localStorage
+        setConditions(serverConds);
+        lsSave(walletAddress, serverConds);
+      } else {
+        // Server cache empty (restarted) → restore from localStorage
+        const saved = lsLoad(walletAddress);
+        if (saved.length > 0) {
+          // Re-POST all saved conditions to rebuild server cache
+          for (const c of saved) {
+            await fetch("/api/cron/guardian/conditions", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Wallet-Address": walletAddress,
+                "X-Device-ID": localStorage.getItem("solis_device_id") ?? "",
+              },
+              body: JSON.stringify({
+                metric: c.metric, operator: c.operator,
+                threshold: c.threshold, action: c.action, label: c.label,
+              }),
+            }).catch(() => {/* silent */});
+          }
+          setConditions(saved);
+        }
+      }
     } catch { /* silent */ }
     finally { setLoadingList(false); }
   }
 
   async function addCondition() {
-    console.log("[Guardian] addCondition called, walletAddress=", walletAddress);
     if (!walletAddress) { showStatus("請先連接錢包", "error"); return; }
     const tpl       = CONDITION_TEMPLATES[selectedTemplate];
     const threshold = customThreshold ? parseFloat(customThreshold) : tpl.threshold;
@@ -996,24 +1037,24 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
       const res = await fetch("/api/cron/guardian/conditions", {
         method: "POST",
         headers: {
-          "Content-Type":   "application/json",
+          "Content-Type":     "application/json",
           "X-Wallet-Address": walletAddress,
-          "X-Device-ID":    typeof window !== "undefined"
-            ? (localStorage.getItem("solis_device_id") ?? "") : "",
+          "X-Device-ID":      localStorage.getItem("solis_device_id") ?? "",
         },
         body: JSON.stringify({
-          metric:    tpl.metric,
-          operator:  tpl.operator,
-          threshold,
-          action:    tpl.action,
-          label:     `${tpl.label} ${tpl.operator === "lt" ? "<" : ">"} ${threshold}`,
+          metric: tpl.metric, operator: tpl.operator, threshold, action: tpl.action,
+          label: `${tpl.label} ${tpl.operator === "lt" ? "<" : ">"} ${threshold}`,
         }),
       });
       if (res.ok) {
         setCustomThreshold("");
         showStatus(`✅ 條件已新增：${tpl.label} ${tpl.operator === "lt" ? "<" : ">"} ${threshold}`, "success");
-        // Load conditions AFTER setting status — avoid batching hiding the banner
-        setTimeout(() => loadConditions(), 0);
+        setTimeout(() => {
+          loadConditions().then(() => {
+            // Sync latest to localStorage after server confirms
+            setConditions(prev => { lsSave(walletAddress, prev); return prev; });
+          });
+        }, 0);
       } else {
         let errMsg = "新增失敗，請重試";
         try {
@@ -1029,6 +1070,7 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
   }
 
   async function deleteCondition(id: string) {
+    const deleted = conditions.find(c => c.id === id);
     try {
       const res = await fetch("/api/cron/guardian/conditions", {
         method: "DELETE",
@@ -1036,8 +1078,15 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
         body: JSON.stringify({ conditionId: id }),
       });
       if (res.ok) {
-        setConditions(prev => prev.filter(c => c.id !== id));
+        const updated = conditions.filter(c => c.id !== id);
+        setConditions(updated);
+        lsSave(walletAddress, updated);   // persist deletion
         showStatus("條件已刪除", "success");
+        // Notify AI advisor that condition was removed
+        if (deleted) {
+          const msg = `🗑️ Guardian 條件已移除：${deleted.label}。如需重新設置可返回 Agent Tab。`;
+          window.dispatchEvent(new CustomEvent("guardian-alert", { detail: { message: msg } }));
+        }
       }
     } catch { /* silent */ }
   }
