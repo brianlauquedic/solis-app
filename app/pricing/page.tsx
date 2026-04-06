@@ -225,9 +225,9 @@ function PricingInner() {
   const savingsPct = billing === "annual" ? 30 : 0;
 
   return (
-    <>
+    <div style={{ background: "var(--bg-base)", minHeight: "100vh", color: "var(--text-primary)" }}>
       {/* ── Main Content ────────────────────────────────────────────── */}
-      <main style={{ maxWidth: 1080, margin: "0 auto", padding: "40px 24px 80px", minHeight: "100vh", background: "var(--bg-base)", color: "var(--text-primary)" }}>
+      <main style={{ maxWidth: 1080, margin: "0 auto", padding: "40px 24px 80px" }}>
 
         {/* Title */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
@@ -575,6 +575,6 @@ function PricingInner() {
           </>
         )}
       </main>
-    </>
+    </div>
   );
 }
