@@ -415,22 +415,30 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
         !m.text.includes("暂时无法连线")
       );
       if (real.length > 0) {
-        const loaded: Message[] = real.map((m, i) => ({
-          id: i, role: m.role, text: m.text,
-        }));
-        setMessages(loaded);
+        // Detect language mismatch: if stored messages are predominantly CJK
+        // but current UI language is not Chinese, don't restore the message bodies
+        // (they'd show foreign-language bubbles). Show only a welcome-back instead.
+        const hasCJK = /[\u3000-\u9fff\uf900-\ufaff]/.test(
+          real.map(m => m.text).join(" ")
+        );
+        const langMismatch = hasCJK && lang !== "zh";
+
+        if (!langMismatch) {
+          const loaded: Message[] = real.map((m, i) => ({
+            id: i, role: m.role, text: m.text,
+          }));
+          setMessages(loaded);
+        }
         if (memory.sessionSummary) setSessionSummary(memory.sessionSummary);
 
-        // Welcome-back: use last USER message as preview (not AI response)
+        // Welcome-back message
         const lastUserMsg = real.filter(m => m.role === "user").slice(-1)[0];
         const preview = memory.sessionSummary
           ? memory.sessionSummary.slice(0, 60)
           : lastUserMsg?.text?.slice(0, 50) ?? "";
         if (preview) {
-          // If the stored topic contains CJK characters but the current UI lang is not Chinese,
-          // show a generic welcome to avoid displaying the wrong-language topic.
-          const hasCJK = /[\u3000-\u9fff\uf900-\ufaff]/.test(preview);
-          const topicMismatch = hasCJK && lang !== "zh";
+          const previewHasCJK = /[\u3000-\u9fff\uf900-\ufaff]/.test(preview);
+          const topicMismatch = previewHasCJK && lang !== "zh";
           setMessages(prev => [...prev, {
             id: Date.now(),
             role: "assistant",
