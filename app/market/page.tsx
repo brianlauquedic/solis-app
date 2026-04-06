@@ -462,21 +462,21 @@ function MarketPageInner() {
     { label: "Solana DeFi TVL",  value: report?.solanaTvl ?? "—",     sub: `DeFiLlama 實時${report?.tvlChange7d ? " · " + report.tvlChange7d : ""}`, highlight: true },
     { label: "SOL 現價",          value: report?.solPrice  ?? "—",     sub: report?.solChange ?? "DeFiLlama" },
     { label: "鏈上 DEX 7日量",    value: report?.dexVol7d  ?? "—",     sub: "Solana 全鏈" },
-    { label: "SOL 全網質押率",    value: "~65%",                        sub: "vs ETH ~28%" },
+    { label: "SOL 全網質押率",    value: report?.stakingRatio ?? "~65%", sub: "Solana RPC 實時" },
     { label: "集群節點數",         value: report?.clusterNodes ?? "—",  sub: "Solana RPC 實時" },
     { label: "協議費 7日",         value: report?.fees7d    ?? "—",     sub: "DeFiLlama 實時" },
   ] : L === "ja" ? [
     { label: "Solana DeFi TVL",      value: report?.solanaTvl ?? "—",    sub: `DeFiLlama リアルタイム${report?.tvlChange7d ? " · " + report.tvlChange7d : ""}`, highlight: true },
     { label: "SOL 現在価格",          value: report?.solPrice  ?? "—",    sub: report?.solChange ?? "DeFiLlama" },
     { label: "オンチェーンDEX 7日量", value: report?.dexVol7d  ?? "—",    sub: "Solana 全チェーン" },
-    { label: "SOL ステーキング率",    value: "~65%",                       sub: "vs ETH ~28%" },
+    { label: "SOL ステーキング率",    value: report?.stakingRatio ?? "~65%", sub: "Solana RPC リアルタイム" },
     { label: "クラスターノード数",    value: report?.clusterNodes ?? "—",  sub: "Solana RPC リアルタイム" },
     { label: "プロトコル手数料 7日",  value: report?.fees7d    ?? "—",     sub: "DeFiLlama リアルタイム" },
   ] : [
     { label: "Solana DeFi TVL",    value: report?.solanaTvl ?? "—",    sub: `DeFiLlama live${report?.tvlChange7d ? " · " + report.tvlChange7d : ""}`, highlight: true },
     { label: "SOL Price",           value: report?.solPrice  ?? "—",    sub: report?.solChange ?? "DeFiLlama" },
     { label: "On-Chain DEX 7d Vol", value: report?.dexVol7d  ?? "—",    sub: "Solana-wide" },
-    { label: "SOL Staking Rate",    value: "~65%",                       sub: "vs ETH ~28%" },
+    { label: "SOL Staking Rate",    value: report?.stakingRatio ?? "~65%", sub: "Solana RPC live" },
     { label: "Cluster Nodes",       value: report?.clusterNodes ?? "—",  sub: "Solana RPC live" },
     { label: "Protocol Fees 7d",    value: report?.fees7d    ?? "—",     sub: "DeFiLlama live" },
   ];
@@ -484,10 +484,14 @@ function MarketPageInner() {
   // ── Network rows ───────────────────────────────────────────────
   const tpsLabel     = report?.tpsTotal ? `${report.tpsTotal} avg | ${report.tpsPeak ?? "—"} peak`         : "—";
   const tpsUserLabel = report?.tpsUser  ? `${report.tpsUser} avg | ${report.tpsUserPeak ?? "—"} peak`       : "—";
+  const epochLabel = report?.epochInfo
+    ? `Epoch ${report.epochInfo.epoch} · ${report.epochInfo.progress}% · ~${report.epochInfo.hoursRemaining}h left`
+    : "—";
   const networkRows = [
     { label: { zh: "總 TPS 均值（含投票）",         en: "Total TPS avg (incl. votes)",      ja: "総TPS平均（投票含む）"      }, value: tpsLabel,                                                       status: "safe" as Status },
     { label: { zh: "真實用戶 TPS（去除投票）",       en: "User TPS avg (non-vote)",          ja: "ユーザーTPS（投票除く）"    }, value: tpsUserLabel,                                                   status: "safe" as Status },
     { label: { zh: "集群節點總數",                   en: "Total Cluster Nodes",              ja: "クラスターノード総数"        }, value: report?.clusterNodes ? `${report.clusterNodes} (Solana RPC)` : "—", status: "safe" as Status },
+    { label: { zh: "當前 Epoch 進度",                en: "Current Epoch Progress",           ja: "現在のEpoch進捗"            }, value: epochLabel,                                                     status: "info" as Status },
     { label: { zh: "平均區塊確認時間",               en: "Avg Block Confirmation",           ja: "平均ブロック確認時間"        }, value: "~0.4s",                                                        status: "safe" as Status },
     { label: { zh: "協議費用 7 日（DeFiLlama）",     en: "Protocol Fees 7d (DeFiLlama)",    ja: "プロトコル手数料7日"         }, value: report?.fees7d ?? "—",                                          status: "safe" as Status },
   ];

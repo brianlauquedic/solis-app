@@ -57,6 +57,8 @@ export interface WeeklyReport {
   tpsPeak: string | null;
   tpsUserPeak: string | null;
   clusterNodes: string | null;
+  stakingRatio: string | null;
+  epochInfo: { epoch: number; progress: number; slotsRemaining: number; hoursRemaining: number } | null;
   // macro
   ethTvl: string | null;
   solEthRatio: string | null;
@@ -594,6 +596,8 @@ export async function GET() {
   type PerformanceSample = { numTransactions: number; numNonVoteTransactions: number; samplePeriodSecs: number };
   type CoinGeckoGlobal = { data: { market_cap_percentage: { btc: number }; market_cap_change_percentage_24h_usd: number } };
   type AlternativeFng = { data: Array<{ value: string; value_classification: string }> };
+  type StakewizOverall = { total_active_stake_sol?: number; total_supply_sol?: number };
+  type EpochInfoResult = { epoch: number; slotIndex: number; slotsInEpoch: number };
 
   // ── Parallel fetches ──────────────────────────────────────────────────────
   const [
@@ -604,6 +608,7 @@ export async function GET() {
     yieldsRaw, individualTvls,
     coinGeckoGlobal, alternativeFng,
     newsItems,
+    epochInfoRaw, stakewizRaw,
   ] = await Promise.all([
     get<{ coins?: { "coingecko:solana"?: { price?: number } } }>(
       "https://coins.llama.fi/prices/current/coingecko:solana?searchWidth=4h"
@@ -636,6 +641,8 @@ export async function GET() {
     get<CoinGeckoGlobal>("https://api.coingecko.com/api/v3/global", 8000),
     get<AlternativeFng>("https://api.alternative.me/fng/?limit=1", 6000),
     fetchSolanaNews(),
+    rpc("getEpochInfo"),
+    get<StakewizOverall>("https://api.stakewiz.com/overall", 6000),
   ]);
 
   // ── SOL price ──────────────────────────────────────────────────────────────
@@ -777,6 +784,29 @@ export async function GET() {
   let clusterNodes: number | null = null;
   try { clusterNodes = (clusterNodesRaw as unknown[] | null)?.length ?? null; } catch { /* ignore */ }
 
+  // ── Epoch info ────────────────────────────────────────────────────────────
+  let epochInfo: WeeklyReport["epochInfo"] = null;
+  try {
+    const ei = epochInfoRaw as EpochInfoResult | null;
+    if (ei && ei.slotsInEpoch > 0) {
+      const progress = Math.round((ei.slotIndex / ei.slotsInEpoch) * 100);
+      const slotsRemaining = ei.slotsInEpoch - ei.slotIndex;
+      // Solana produces ~2 slots/sec on average
+      const hoursRemaining = Math.round(slotsRemaining / 2 / 3600);
+      epochInfo = { epoch: ei.epoch, progress, slotsRemaining, hoursRemaining };
+    }
+  } catch { /* ignore */ }
+
+  // ── Staking ratio ─────────────────────────────────────────────────────────
+  let stakingRatio: string | null = null;
+  try {
+    const sw = stakewizRaw as StakewizOverall | null;
+    if (sw?.total_active_stake_sol && sw?.total_supply_sol && sw.total_supply_sol > 0) {
+      const pct = (sw.total_active_stake_sol / sw.total_supply_sol) * 100;
+      stakingRatio = `${pct.toFixed(1)}%`;
+    }
+  } catch { /* ignore */ }
+
   // ── LST yields ────────────────────────────────────────────────────────────
   const lstMap: Record<string, { apy: string; tvl: string } | null> = {};
   try {
@@ -868,6 +898,8 @@ export async function GET() {
     tpsPeak:      tpsPeak     !== null ? tpsPeak.toLocaleString()       : null,
     tpsUserPeak:  tpsUserPeak !== null ? tpsUserPeak.toLocaleString()   : null,
     clusterNodes: clusterNodes !== null ? clusterNodes.toLocaleString() : null,
+    stakingRatio,
+    epochInfo,
     ethTvl:       ethTvlRaw   !== null ? fmtUsd(ethTvlRaw)             : null,
     solEthRatio,
     btcDominance:    btcDominanceRaw   !== null ? `${btcDominanceRaw.toFixed(1)}%`   : null,
