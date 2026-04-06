@@ -421,7 +421,7 @@ export default function HealthReport({ walletAddress, onDisconnect, onDataLoaded
                   fontSize: 18, fontWeight: 700,
                   color: data.riskyTokenCount > 0 ? "#EF4444" : "#10B981",
                 }}>
-                  {data.riskyTokenCount} 個
+                  {data.riskyTokenCount}{t("countUnit")}
                 </div>
                 <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{t("highRiskTokens")}</div>
               </div>
@@ -661,7 +661,7 @@ export default function HealthReport({ walletAddress, onDisconnect, onDataLoaded
                     background: "var(--border)", borderRadius: 4,
                     padding: "2px 6px",
                   }}>
-                    健康 {snap.healthScore}
+                    {t("healthLabel")} {snap.healthScore}
                   </div>
                 </div>
               );
@@ -746,6 +746,7 @@ function HRStars({ n }: { n: number }) {
 }
 
 function SmartMoneySection() {
+  const { t } = useLang();
   const [open, setOpen]         = useState(false);
   const [tab, setTab]           = useState<"consensus" | "wallets">("consensus");
   const [data, setData]         = useState<HRSmartMoneyData | null>(null);
@@ -790,7 +791,7 @@ function SmartMoneySection() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 15 }}>🐋</span>
           <span style={{ fontFamily: "var(--font-heading, serif)", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "0.03em" }}>
-            聰明錢追蹤
+            {t("smartMoneySection")}
           </span>
           {data?.dataSource === "helius_realtime" && (
             <span style={{ fontSize: 9, color: "#10B981", background: "#10B98115", border: "1px solid #10B98130", borderRadius: 4, padding: "2px 6px" }}>● 真實鏈上</span>
@@ -799,7 +800,7 @@ function SmartMoneySection() {
             <span style={{ fontSize: 9, color: "#F59E0B", background: "#F59E0B15", border: "1px solid #F59E0B30", borderRadius: 4, padding: "2px 6px" }}>演示數據</span>
           )}
         </div>
-        <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{open ? "收起 ▲" : "展開 ▼"}</span>
+        <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{open ? t("collapseSection") : t("expandSection")}</span>
       </button>
 
       {open && (
@@ -809,19 +810,19 @@ function SmartMoneySection() {
             {([
               { key: "consensus", label: "🎯 共識信號" },
               { key: "wallets",   label: "🌸 地址追蹤" },
-            ] as const).map(t => (
+            ] as const).map(tab_ => (
               <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
+                key={tab_.key}
+                onClick={() => setTab(tab_.key)}
                 style={{
                   flex: 1, padding: "9px 0",
                   background: "none", border: "none",
-                  borderBottom: tab === t.key ? "2px solid var(--accent)" : "2px solid transparent",
-                  color: tab === t.key ? "var(--accent)" : "var(--text-secondary)",
-                  fontSize: 12, fontWeight: tab === t.key ? 700 : 400,
+                  borderBottom: tab === tab_.key ? "2px solid var(--accent)" : "2px solid transparent",
+                  color: tab === tab_.key ? "var(--accent)" : "var(--text-secondary)",
+                  fontSize: 12, fontWeight: tab === tab_.key ? 700 : 400,
                   cursor: "pointer",
                 }}
-              >{t.label}</button>
+              >{tab_.label}</button>
             ))}
           </div>
 
@@ -882,7 +883,7 @@ function SmartMoneySection() {
                       </div>
                       <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
                         買入地址&nbsp;
-                        <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{token.buyerCount} 個</span>
+                        <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{token.buyerCount}{t("countUnit")}</span>
                         <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: 4 }}>({token.buyerLabels})</span>
                       </div>
                       <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
@@ -969,7 +970,7 @@ function SmartMoneySection() {
                   </div>
                   <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{w.name ?? <span style={{ color: "var(--text-muted)" }}>—</span>}</div>
                   <div style={{ fontSize: 11, color: w.activityCount > 0 ? "#10B981" : "var(--text-muted)", fontWeight: w.activityCount > 0 ? 600 : 400 }}>
-                    {w.activityCount > 0 ? `${w.activityCount}個代幣` : "—"}
+                    {w.activityCount > 0 ? `${w.activityCount}${t("countUnit")}` : "—"}
                   </div>
                 </div>
               ))}
@@ -1101,6 +1102,7 @@ function SkeletonReport() {
 // ── Score Breakdown ──────────────────────────────────────────────
 function ScoreBreakdown({ data }: { data: WalletData }) {
   const [open, setOpen] = useState(false);
+  const { t } = useLang();
 
   const factors = [
     {
@@ -1163,9 +1165,9 @@ function ScoreBreakdown({ data }: { data: WalletData }) {
         }}
       >
         <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
-          🌸 健康分數是怎麼算的？
+          {t("howScoreCalc")}
         </div>
-        <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{open ? "收起 ▲" : "查看详情 ▼"}</span>
+        <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>{open ? t("collapseDetails") : t("viewDetails")}</span>
       </button>
 
       {open && (

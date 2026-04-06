@@ -5,6 +5,7 @@ import { addToWatchlist, getWatchlist, removeFromWatchlist, saveLastPrice, Watch
 import { saveProof } from "@/lib/proof-store";
 import { payWithPhantom } from "@/lib/x402";
 import { useLang } from "@/contexts/LanguageContext";
+import { TranslationKey } from "@/lib/i18n";
 import { getDeviceId } from "@/lib/device-id";
 
 // ── Types ────────────────────────────────────────────────────────
@@ -398,6 +399,32 @@ function ProofPanel({ ai }: { ai: AIAnalysis }) {
       )}
     </div>
   );
+}
+
+// ── API string localisation helpers ─────────────────────────────
+function localizeCheckText(text: string, t: (key: TranslationKey) => string): string {
+  const checkMap: Record<string, string> = {
+    "无增发权限，供应量固定": t("checkNoMint"),
+    "無增發權限，供應量固定": t("checkNoMint"),
+    "无冻结权限": t("checkNoFreeze"),
+    "無凍結權限": t("checkNoFreeze"),
+    "创建者持仓比例低": t("checkLowDev"),
+    "創建者持倉比例低": t("checkLowDev"),
+  };
+  return checkMap[text] ?? text;
+}
+
+function localizeVerdict(verdict: string, t: (key: TranslationKey) => string): string {
+  const verdictMap: Record<string, string> = {
+    "可以買入": t("verdictBuy"),
+    "可以考虑": t("verdictConsider"),
+    "可以考慮": t("verdictConsider"),
+    "謹慎考慮": t("verdictCaution"),
+    "谨慎考虑": t("verdictCaution"),
+    "建議迴避": t("verdictAvoid"),
+    "建议回避": t("verdictAvoid"),
+  };
+  return verdictMap[verdict] ?? verdict;
 }
 
 // ── Main Component ───────────────────────────────────────────────
@@ -843,7 +870,7 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
               }}>
                 <span style={{ fontSize: 28 }}>{vc.icon}</span>
                 <span style={{ fontSize: 22, fontWeight: 800, color: vc.color }}>
-                  {tokenData.decision.label}
+                  {localizeVerdict(tokenData.decision.label, t)}
                 </span>
               </div>
 
@@ -964,14 +991,14 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
                     background: "rgba(168,41,58,0.10)", border: "1px solid rgba(168,41,58,0.30)",
                     borderRadius: 8, padding: "10px 14px",
                     fontSize: 13, color: "var(--red)",
-                  }}>{r}</div>
+                  }}>{localizeCheckText(r, t)}</div>
                 ))}
                 {tokenData.positives.map((p, i) => (
                   <div key={i} style={{
                     background: "rgba(61,122,92,0.10)", border: "1px solid rgba(61,122,92,0.30)",
                     borderRadius: 8, padding: "10px 14px",
                     fontSize: 13, color: "var(--green)",
-                  }}>{p}</div>
+                  }}>{localizeCheckText(p, t)}</div>
                 ))}
               </div>
             </div>

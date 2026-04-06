@@ -8,6 +8,7 @@ interface RebalanceRequest {
   solBalance: number;
   totalUSD: number;
   idleUSDC: number;
+  lang?: "zh" | "en" | "ja";
   liveYield?: {
     opportunities: Array<{
       protocol: string;
@@ -117,9 +118,21 @@ function deterministicPlan(req: RebalanceRequest): RebalancePlan {
     projectedAnnualYield: projectedYield,
     currentAnnualYield: 0,
     confidenceScore: 87,
-    summary: actions.length > 0
-      ? `发现 ${actions.length} 个优化机会，可将年化收益从 $0 提升至 $${projectedYield.toFixed(0)}`
-      : "当前钱包余额较少，建议先积累更多 SOL/USDC",
+    summary: (() => {
+      const l = req.lang ?? "en";
+      if (actions.length > 0) {
+        const n = actions.length;
+        const y = projectedYield.toFixed(0);
+        if (l === "zh") return `發現 ${n} 個優化機會，可將年化收益提升至 +$${y}`;
+        if (l === "ja") return `${n}件の最適化機会を発見 — 年間収益予測 +$${y}`;
+        const op = n === 1 ? "opportunity" : "opportunities";
+        return `Found ${n} optimization ${op} — projected annual yield +$${y}`;
+      } else {
+        if (l === "zh") return "當前餘額較少，建議先積累更多 SOL/USDC";
+        if (l === "ja") return "残高が少ないです。まずSOL/USDCを積み立てることをお勧めします";
+        return "Low balance — consider building up more SOL/USDC first";
+      }
+    })(),
   };
 }
 
@@ -141,39 +154,45 @@ async function callClaudeForPlan(
   const kaminoAPY = getAPY("Kamino Finance", 8.2);
   const solPrice = req.solBalance > 0 && req.totalUSD > 0 ? req.totalUSD / req.solBalance : 180;
 
-  const systemPrompt = `你是 Sakura AI Agent。根据用户钱包，生成一个最优再平衡方案，输出严格的 JSON。
+  const lang = req.lang ?? "en";
+  const isZh = lang === "zh";
+  const isJa = lang === "ja";
 
-用户钱包：
+  const systemPrompt = isZh
+    ? `你是 Sakura AI Agent。根據用戶錢包，生成最優再平衡方案，輸出嚴格的 JSON。
+
+用戶錢包：
 - SOL: ${req.solBalance.toFixed(3)} (≈$${(req.solBalance * solPrice).toFixed(0)})
-- 闲置 USDC: $${req.idleUSDC.toFixed(0)}
-- 总资产: $${req.totalUSD.toFixed(0)}
-- 当前年化收益: $0（全部闲置）
+- 閒置 USDC: $${req.idleUSDC.toFixed(0)}
+- 總資產: $${req.totalUSD.toFixed(0)}
 
-实时 APY 数据：${yieldCtx}
+實時 APY 數據：${yieldCtx}
 
-输出 JSON 格式（不要有任何其他文字）：
-{
-  "currentAllocation": {"sol": 数字, "usdc": 数字, "staked": 0, "lent": 0},
-  "recommendedAllocation": {"sol": 数字, "usdc": 数字, "staked": 数字, "lent": 数字},
-  "actions": [
-    {
-      "type": "stake"|"lend"|"swap"|"lp",
-      "protocol": "协议名称",
-      "icon": "emoji",
-      "amount": 数字,
-      "amountDisplay": "显示文字",
-      "expectedAPY": 数字,
-      "riskLevel": "低"|"中"|"高",
-      "reasoning": "一句话说明理由和预计收益",
-      "url": "https://...",
-      "color": "#hex"
-    }
-  ],
-  "projectedAnnualYield": 数字,
-  "currentAnnualYield": 0,
-  "confidenceScore": 数字(70-95),
-  "summary": "一句话总结"
-}`;
+輸出 JSON（不要有其他文字）：
+{"currentAllocation":{"sol":數字,"usdc":數字,"staked":0,"lent":0},"recommendedAllocation":{"sol":數字,"usdc":數字,"staked":數字,"lent":數字},"actions":[{"type":"stake"|"lend"|"swap"|"lp","protocol":"協議名","icon":"emoji","amount":數字,"amountDisplay":"顯示文字","expectedAPY":數字,"riskLevel":"低"|"中"|"高","reasoning":"一句話理由","url":"https://...","color":"#hex"}],"projectedAnnualYield":數字,"currentAnnualYield":0,"confidenceScore":數字,"summary":"一句話總結"}`
+    : isJa
+    ? `あなたはSakura AI Agentです。ユーザーのウォレットに基づいて最適なリバランス計画を生成し、厳密なJSONを出力してください。
+
+ウォレット情報：
+- SOL: ${req.solBalance.toFixed(3)} (≈$${(req.solBalance * solPrice).toFixed(0)})
+- 遊休 USDC: $${req.idleUSDC.toFixed(0)}
+- 総資産: $${req.totalUSD.toFixed(0)}
+
+リアルタイムAPYデータ：${yieldCtx}
+
+JSON形式で出力（他のテキスト不要）：
+{"currentAllocation":{"sol":number,"usdc":number,"staked":0,"lent":0},"recommendedAllocation":{"sol":number,"usdc":number,"staked":number,"lent":number},"actions":[{"type":"stake"|"lend"|"swap"|"lp","protocol":"protocol name","icon":"emoji","amount":number,"amountDisplay":"display text","expectedAPY":number,"riskLevel":"低"|"中"|"高","reasoning":"one sentence reason","url":"https://...","color":"#hex"}],"projectedAnnualYield":number,"currentAnnualYield":0,"confidenceScore":number,"summary":"one sentence summary"}`
+    : `You are Sakura AI Agent. Based on the user's wallet, generate an optimal rebalance plan as strict JSON.
+
+Wallet:
+- SOL: ${req.solBalance.toFixed(3)} (≈$${(req.solBalance * solPrice).toFixed(0)})
+- Idle USDC: $${req.idleUSDC.toFixed(0)}
+- Total: $${req.totalUSD.toFixed(0)}
+
+Live APY data: ${yieldCtx}
+
+Output JSON only (no other text):
+{"currentAllocation":{"sol":number,"usdc":number,"staked":0,"lent":0},"recommendedAllocation":{"sol":number,"usdc":number,"staked":number,"lent":number},"actions":[{"type":"stake"|"lend"|"swap"|"lp","protocol":"protocol name","icon":"emoji","amount":number,"amountDisplay":"display text","expectedAPY":number,"riskLevel":"low"|"medium"|"high","reasoning":"one sentence reason","url":"https://...","color":"#hex"}],"projectedAnnualYield":number,"currentAnnualYield":0,"confidenceScore":number,"summary":"one sentence summary"}`;
 
   try {
     const controller = new AbortController();
@@ -192,7 +211,11 @@ async function callClaudeForPlan(
         system: systemPrompt,
         messages: [{
           role: "user",
-          content: `请生成再平衡方案。重点优先质押 SOL (Marinade ${marinadeAPY.toFixed(1)}% APY) 和存入 USDC (Kamino ${kaminoAPY.toFixed(1)}% APY)。`,
+          content: isZh
+            ? `請生成再平衡方案。優先質押 SOL (Marinade ${marinadeAPY.toFixed(1)}% APY) 和存入 USDC (Kamino ${kaminoAPY.toFixed(1)}% APY)。`
+            : isJa
+            ? `リバランス計画を生成してください。SOLのステーキング (Marinade ${marinadeAPY.toFixed(1)}% APY) とUSDCの預け入れ (Kamino ${kaminoAPY.toFixed(1)}% APY) を優先してください。`
+            : `Generate a rebalance plan. Prioritize staking SOL (Marinade ${marinadeAPY.toFixed(1)}% APY) and depositing USDC (Kamino ${kaminoAPY.toFixed(1)}% APY).`,
         }],
       }),
       signal: controller.signal,

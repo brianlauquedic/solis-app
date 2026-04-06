@@ -400,11 +400,15 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
       // Filter: skip welcome-back, Guardian alerts, error messages
       const real = memory.messages.filter(m =>
         !m.text.startsWith("歡迎回來！") &&
+        !m.text.startsWith("Welcome back!") &&
+        !m.text.startsWith("おかえりなさい！") &&
         !m.text.startsWith("🗑️ Guardian") &&
         !m.text.startsWith("⚠️ Guardian Alert") &&
         !m.text.startsWith("🚨 Guardian Alert") &&
         !m.text.startsWith("🪭 Guardian Alert") &&
         !m.text.includes("暫時無法回答") &&
+        !m.text.includes("unable to answer right now") &&
+        !m.text.includes("現在お答えできません") &&
         !m.text.includes("暫時無法連線")
       );
       if (real.length > 0) {
@@ -423,7 +427,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
           setMessages(prev => [...prev, {
             id: Date.now(),
             role: "assistant",
-            text: `歡迎回來！上次我們討論了「${preview}${preview.length >= 50 ? "…" : ""}」，繼續嗎？`,
+            text: t("chatWelcomeBack", { topic: `${preview}${preview.length >= 50 ? "…" : ""}` }),
           }]);
         }
       }
@@ -438,11 +442,15 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
     const real = messages.filter(m =>
       !m.isTyping &&
       !m.text.startsWith("歡迎回來！") &&
+      !m.text.startsWith("Welcome back!") &&
+      !m.text.startsWith("おかえりなさい！") &&
       !m.text.startsWith("🗑️ Guardian") &&
       !m.text.startsWith("⚠️ Guardian Alert") &&
       !m.text.startsWith("🚨 Guardian Alert") &&
       !m.text.startsWith("🪭 Guardian Alert") &&
       !m.text.includes("暫時無法回答") &&
+      !m.text.includes("unable to answer right now") &&
+      !m.text.includes("現在お答えできません") &&
       !m.text.includes("暫時無法連線")
     );
     if (real.length === 0) return;
@@ -844,7 +852,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                         isTyping: false,
                         isStreaming: false,
                         thinkingStep: undefined,
-                        text: accText || "抱歉，暂時無法回答，請稍后重試。",
+                        text: accText || t("chatErrorRetry"),
                         actions: newActions,
                         strategyCards: newStrategyCards.length > 0 ? newStrategyCards : undefined,
                         reasoningHash: parsed.reasoningHash,
@@ -856,7 +864,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
               } else if (event === "error") {
                 setMessages(prev => prev.map(m =>
                   m.id === assistantId
-                    ? { ...m, isTyping: false, isStreaming: false, text: parsed.message ?? "發生错誤，請重試。" }
+                    ? { ...m, isTyping: false, isStreaming: false, text: parsed.message ?? t("chatErrorNetwork") }
                     : m
                 ));
               }
@@ -867,7 +875,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
     } catch {
       setMessages(prev => prev.map(m =>
         m.id === assistantId
-          ? { ...m, isTyping: false, isStreaming: false, text: "网絡错誤，請稍后重試。" }
+          ? { ...m, isTyping: false, isStreaming: false, text: t("chatErrorNetworkRetry") }
           : m
       ));
     } finally {

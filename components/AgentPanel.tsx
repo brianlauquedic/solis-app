@@ -21,7 +21,7 @@ interface RebalanceAction {
   amount: number;
   amountDisplay: string;
   expectedAPY: number;
-  riskLevel: "低" | "中" | "高";
+  riskLevel: "低" | "中" | "高" | "low" | "medium" | "high";
   reasoning: string;
   url: string;
   color: string;
@@ -204,8 +204,15 @@ function genBacktestSeries(mode: StrategyMode): { time: number; value: number }[
   });
 }
 
+function localizeRiskLevel(level: string, tFn: (k: string) => string): string {
+  if (level === "低" || level === "low")    return tFn("riskLow");
+  if (level === "中" || level === "medium") return tFn("riskMedium");
+  if (level === "高" || level === "high")   return tFn("riskHigh");
+  return level;
+}
+
 export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = false }: Props) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [agentState, setAgentState] = useState<AgentState>("idle");
   const [stepLabel, setStepLabel] = useState("");
   const [plan, setPlan] = useState<RebalancePlan | null>(null);
@@ -343,6 +350,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = 
         solBalance: wallet.solBalance,
         totalUSD: wallet.totalUSD,
         idleUSDC: wallet.idleUSDC,
+        lang,
         liveYield,
       });
 
@@ -782,9 +790,11 @@ export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = 
                     </span>
                     <span style={{
                       fontSize: 10,
-                      color: action.riskLevel === "低" ? "#10B981" : action.riskLevel === "中" ? "#F59E0B" : "#EF4444",
+                      color: (action.riskLevel === "低" || action.riskLevel === "low") ? "#10B981"
+                           : (action.riskLevel === "中" || action.riskLevel === "medium") ? "#F59E0B"
+                           : "#EF4444",
                     }}>
-                      {action.riskLevel} {t("risk")}
+                      {localizeRiskLevel(action.riskLevel, t as (k: string) => string)} {t("risk")}
                     </span>
                   </div>
                   <div style={{ fontSize: 12, color: "var(--text-primary)", marginBottom: 6 }}>
@@ -943,6 +953,18 @@ function lsLoad(wallet: string): GuardianCondition[] {
 
 function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
   const { t } = useLang();
+
+  // Derive display label from stored metric+operator+threshold (language-independent)
+  function conditionDisplayLabel(c: GuardianCondition): string {
+    const tpl = CONDITION_TEMPLATES.find(
+      tmpl => tmpl.metric === c.metric && tmpl.operator === c.operator
+    );
+    if (tpl) {
+      return `${t(tpl.labelKey as Parameters<typeof t>[0])} ${c.operator === "lt" ? "<" : ">"} ${c.threshold}`;
+    }
+    return c.label; // fallback for custom/unknown conditions
+  }
+
   const [open, setOpen]                   = useState(false);
   const [conditions, setConditions]       = useState<GuardianCondition[]>(() => lsLoad(walletAddress));
   const [loadingList, setLoadingList]     = useState(false);
@@ -1062,7 +1084,7 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
         showStatus(t("guardianDeleted"), "success");
         // Notify AI advisor that condition was removed
         if (deleted) {
-          const msg = t("guardianConditionRemoved", { label: deleted.label });
+          const msg = t("guardianConditionRemoved", { label: conditionDisplayLabel(deleted) });
           window.dispatchEvent(new CustomEvent("guardian-alert", { detail: { message: msg } }));
         }
       }
@@ -1142,7 +1164,7 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
                   borderRadius: 8,
                 }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10B981", flexShrink: 0 }} />
-                  <span style={{ flex: 1, fontSize: 12, color: "var(--text-primary)" }}>{c.label}</span>
+                  <span style={{ flex: 1, fontSize: 12, color: "var(--text-primary)" }}>{conditionDisplayLabel(c)}</span>
                   <span style={{
                     fontSize: 10, color: "#8B5CF6",
                     background: "rgba(139,92,246,0.1)", borderRadius: 4, padding: "1px 5px",
@@ -1151,7 +1173,7 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
                     type="button"
                     title={t("guardianNotifyTitle")}
                     onClick={() => {
-                      const msg = t("guardianAlertMsg", { label: c.label });
+                      const msg = t("guardianAlertMsg", { label: conditionDisplayLabel(c) });
                       // Store in localStorage so DefiAssistant picks it up instantly
                       try {
                         const pending = JSON.parse(localStorage.getItem("guardian_pending_alerts") ?? "[]") as string[];
@@ -1160,7 +1182,7 @@ function GuardianConditionsPanel({ walletAddress }: { walletAddress: string }) {
                       } catch { /* ignore */ }
                       // Dispatch window event for immediate cross-component delivery
                       window.dispatchEvent(new CustomEvent("guardian-alert", { detail: { message: msg } }));
-                      showStatus(t("guardianSentToAI", { label: c.label }), "success");
+                      showStatus(t("guardianSentToAI", { label: conditionDisplayLabel(c) }), "success");
                     }}
                     style={{
                       background: "none", border: "1px solid var(--border)", cursor: "pointer",

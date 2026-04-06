@@ -599,6 +599,35 @@ export const translations = {
   planProFeature2:     { zh: "~75次 AI 顧問 / ~600次安全分析", en: "~75 AI analyses / ~600 security scans", ja: "~75 AI分析 / ~600セキュリティスキャン" },
   planProFeature3:     { zh: "MCP API 無限存取", en: "Unlimited MCP API access", ja: "MCP API無制限アクセス" },
   planProFeature4:     { zh: "最高優先級回應", en: "Highest priority responses", ja: "最優先レスポンス" },
+  // ── HealthReport extras ──────────────────────────────────────────
+  howScoreCalc:        { zh: "🌸 健康分數是怎麼算的？", en: "🌸 How is the health score calculated?", ja: "🌸 健康スコアの算出方法は？" },
+  viewDetails:         { zh: "查看詳情 ▼", en: "View Details ▼", ja: "詳細を見る ▼" },
+  collapseDetails:     { zh: "收起 ▲", en: "Collapse ▲", ja: "閉じる ▲" },
+  expandSection:       { zh: "展開 ▼", en: "Expand ▼", ja: "展開 ▼" },
+  collapseSection:     { zh: "收起 ▲", en: "Collapse ▲", ja: "閉じる ▲" },
+  healthLabel:         { zh: "健康", en: "Health", ja: "健全" },
+  smartMoneySection:   { zh: "聰明錢追蹤", en: "Smart Money Tracker", ja: "スマートマネー追跡" },
+  countUnit:           { zh: "個", en: "", ja: "件" },
+  // ── TokenAnalysis — API data mapping ────────────────────────────
+  checkNoMint:         { zh: "無增發權限，供應量固定", en: "No mint authority — fixed supply", ja: "発行権限なし、供給量固定" },
+  checkNoFreeze:       { zh: "無凍結權限", en: "No freeze authority", ja: "凍結権限なし" },
+  checkLowDev:         { zh: "創建者持倉比例低", en: "Low developer holdings", ja: "開発者保有率が低い" },
+  verdictBuy:          { zh: "可以買入", en: "Consider Buying", ja: "購入を検討" },
+  verdictConsider:     { zh: "可以考慮", en: "Worth Considering", ja: "検討の余地あり" },
+  verdictCaution:      { zh: "謹慎考慮", en: "Proceed with Caution", ja: "慎重に検討" },
+  verdictAvoid:        { zh: "建議迴避", en: "Avoid", ja: "回避推奨" },
+  // ── DefiAssistant — chat messages ───────────────────────────────
+  chatErrorRetry:      { zh: "抱歉，暫時無法回答，請稍後重試。", en: "Sorry, I'm unable to answer right now. Please try again later.", ja: "申し訳ありませんが、現在お答えできません。後ほど再試行してください。" },
+  chatErrorNetwork:    { zh: "發生錯誤，請重試。", en: "An error occurred. Please try again.", ja: "エラーが発生しました。再試行してください。" },
+  chatErrorNetworkRetry: { zh: "網絡錯誤，請稍後重試。", en: "Network error. Please try again later.", ja: "ネットワークエラーです。後ほど再試行してください。" },
+  chatWelcomeBack:     { zh: "歡迎回來！上次我們討論了「{topic}」，繼續嗎？", en: "Welcome back! Last time we discussed \"{topic}\" — shall we continue?", ja: "おかえりなさい！前回は「{topic}」について話しました。続けますか？" },
+  // ── Risk levels ──────────────────────────────────────────────────
+  riskLow:    { zh: "低",  en: "Low",    ja: "低" },
+  riskMedium: { zh: "中",  en: "Medium", ja: "中" },
+  riskHigh:   { zh: "高",  en: "High",   ja: "高" },
+  // ── Plan summary (from rebalance API) ────────────────────────────
+  summaryOpportunities: { zh: "發現 {n} 個優化機會，可將年化收益提升至 +${yield}", en: "Found {n} optimization {op} — projected annual yield +${yield}", ja: "{n}件の最適化機会を発見 — 年間収益予測 +${yield}" },
+  summaryLowBalance:    { zh: "當前餘額較少，建議先積累更多 SOL/USDC", en: "Low balance — consider building up more SOL/USDC first", ja: "残高が少ないです。まずSOL/USDCを積み立てることをお勧めします" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;
