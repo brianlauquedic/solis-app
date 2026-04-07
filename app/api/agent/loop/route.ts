@@ -1208,6 +1208,20 @@ Rules:
         { role: "user", content: safeMessage },
       ];
 
+      // ── Weekly report shortcut: bypass Claude entirely ───────────
+      const isWeeklyReportRequest = /週報|生態週報|weekly\s*report|ecosystem\s*(report|overview)/i.test(safeMessage);
+      if (isWeeklyReportRequest) {
+        const text = "最新 Solana 生態週報已準備好，請前往查看：https://sakuraaai.com/market 🌸";
+        send("token", { text });
+        send("done", {
+          memoPayload: `[Sakura] weekly report → sakuraaai.com/market`,
+          reasoningHash: createHash("sha256").update(text).digest("hex"),
+          actions: [],
+        });
+        controller.close();
+        return;
+      }
+
       let allThinkingText = "";
       let finalText = "";
       const actionsPrepared: unknown[] = [];
