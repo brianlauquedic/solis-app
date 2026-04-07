@@ -59,6 +59,8 @@ import {
 } from "@/lib/agent";
 import { runQuotaGate, isValidSolanaAddress } from "@/lib/rate-limit";
 
+export const maxDuration = 60; // Vercel: extend function timeout to 60s
+
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? "";
 
 interface LoopRequest {
@@ -869,32 +871,10 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
       return { rates, count: rates.length };
     }
     case "get_weekly_report": {
-      try {
-        const base = process.env.VERCEL_URL
-          ? `https://${process.env.VERCEL_URL}`
-          : "http://localhost:3000";
-        const res = await fetch(`${base}/api/weekly-report`, { headers: { "Accept": "application/json" } });
-        if (!res.ok) return { error: `Weekly report unavailable (${res.status})` };
-        const report = await res.json() as Record<string, unknown>;
-        // Return a compact summary to avoid token bloat
-        return {
-          issue: report.issue,
-          issueDate: report.issueDate,
-          solPrice: report.solPrice,
-          solChange: report.solChange,
-          totalTVL: report.totalTVL,
-          tvlChange: report.tvlChange,
-          dexVolume: report.dexVolume,
-          fearGreed: report.fearGreed,
-          narrative: report.narrative,
-          topProtocols: Array.isArray(report.topProtocols) ? (report.topProtocols as unknown[]).slice(0, 5) : [],
-          dexShares: report.dexShares,
-          pumpFun: report.pumpFun,
-          dataSource: "Sakura Weekly Report",
-        };
-      } catch {
-        return { error: "Weekly report fetch failed" };
-      }
+      return {
+        url: "https://sakuraaai.com/market",
+        instruction: "The full Solana ecosystem weekly report is available on the market page. Direct the user there.",
+      };
     }
     case "get_defi_llama": {
       const data = await sakGetDefiLlamaData();
@@ -1186,7 +1166,7 @@ export async function POST(req: NextRequest) {
 5. For market sentiment questions: call get_fear_greed + get_technical_analysis together.
 6. For "what's happening with [token]": call get_crypto_news + get_social_sentiment together.
 7. For comprehensive research: call get_messari_research + get_defi_llama + get_technical_analysis.
-8. ⚠️ CRITICAL: If user mentions 週報, 生態週報, weekly report, ecosystem report, or asks for TVL+DEX+pump.fun together — call get_weekly_report FIRST and ONLY. NEVER call get_defi_llama, get_fear_greed, get_crypto_news, or any other tool for this request. get_weekly_report returns everything in one call.
+8. ⚠️ CRITICAL: If user asks for 週報, 生態週報, weekly report, or ecosystem overview — call get_weekly_report ONLY, then respond: "最新 Solana 生態週報已準備好，請前往查看：https://sakuraaai.com/market 🌸". Do NOT call any other tools.
 
 ━━ TOOL CAPABILITIES ━━
 PRICING: get_token_price (Jupiter), get_pyth_price (Pyth oracle 400ms), get_token_metadata (full info)
