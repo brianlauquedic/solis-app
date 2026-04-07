@@ -7,6 +7,7 @@ import LendModal from "./LendModal";
 import { loadChatMemory, saveChatMemory, clearChatMemory } from "@/lib/chat-memory";
 import { getWatchlist, saveLastPrice } from "@/lib/watchlist";
 import { useLang } from "@/contexts/LanguageContext";
+import { translations, tpl } from "@/lib/i18n";
 import { payWithPhantom } from "@/lib/x402";
 import { getDeviceId } from "@/lib/device-id";
 import CopyTradeModal from "./CopyTradeModal";
@@ -1221,7 +1222,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
       )}
 
       {/* ── Smart Money Panel ── */}
-      {messages.length === 0 && showSmartMoney && <SmartMoneyPanel walletAddress={walletAddress} />}
+      {messages.length === 0 && showSmartMoney && <SmartMoneyPanel walletAddress={walletAddress} lang={lang} />}
 
       {/* ── Agent Workshop Panel ── */}
       {messages.length === 0 && showAgentFactory && <AgentFactory />}
@@ -1672,7 +1673,11 @@ function SummaryPill({ label, value, color }: { label: string; value: string; co
 }
 
 // ── Smart Money Panel ────────────────────────────────────────────
-function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
+function SmartMoneyPanel({ walletAddress, lang }: { walletAddress: string | null; lang: "zh" | "en" | "ja" }) {
+  const sm = (key: keyof typeof translations, vars?: Record<string, string | number>) => {
+    const raw = (translations[key] as Record<string, string>)[lang] ?? (translations[key] as Record<string, string>).zh;
+    return vars ? tpl(raw, vars) : raw;
+  };
   const [tab, setTab]             = useState<"consensus" | "wallets">("consensus");
   const [data, setData]           = useState<SmartMoneyData | null>(null);
   const [loading, setLoading]     = useState(true);
@@ -1743,31 +1748,31 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 15 }}>🐋</span>
           <span style={{ fontFamily: "var(--font-heading, serif)", fontSize: 13, fontWeight: 600, color: "var(--text-primary)", letterSpacing: "0.03em" }}>
-            聰明錢地址追蹤
+            {sm("smTitle")}
           </span>
           {discoveredCount > 0 && (
             <span style={{
               fontSize: 10, background: "rgba(192,57,43,0.15)", color: "#C0392B",
               borderRadius: 10, padding: "2px 8px", marginLeft: 8, fontWeight: 700,
-            }}>🔍 +{discoveredCount} 新發現</span>
+            }}>🔍 {sm("smNewFound", { n: discoveredCount })}</span>
           )}
           {data?.dataSource === "demo" && (
-            <span style={{ fontSize: 9, color: "#F59E0B", background: "#F59E0B15", border: "1px solid #F59E0B30", borderRadius: 4, padding: "2px 6px" }}>演示數據</span>
+            <span style={{ fontSize: 9, color: "#F59E0B", background: "#F59E0B15", border: "1px solid #F59E0B30", borderRadius: 4, padding: "2px 6px" }}>{sm("smDemoData")}</span>
           )}
           {data?.dataSource === "helius_realtime" && (
-            <span style={{ fontSize: 9, color: "#10B981", background: "#10B98115", border: "1px solid #10B98130", borderRadius: 4, padding: "2px 6px" }}>● 真實鏈上</span>
+            <span style={{ fontSize: 9, color: "#10B981", background: "#10B98115", border: "1px solid #10B98130", borderRadius: 4, padding: "2px 6px" }}>{sm("smRealtime")}</span>
           )}
         </div>
         <span style={{ fontSize: 10, color: "var(--text-muted)" }}>
-          追蹤 {data?.trackedWallets ?? "—"} 個地址
+          {data?.trackedWallets ? sm("smTracking", { n: data.trackedWallets }) : "—"}
         </span>
       </div>
 
       {/* Tabs */}
       <div style={{ display: "flex", borderBottom: "1px solid var(--border)" }}>
         {([
-          { key: "consensus", label: "🎯 共識信號" },
-          { key: "wallets",   label: "🌸 地址追蹤" },
+          { key: "consensus", label: sm("smTabConsensus") },
+          { key: "wallets",   label: sm("smTabWallets") },
         ] as const).map(t => (
           <button
             key={t.key}
@@ -1792,18 +1797,18 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
               <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", animation: `bounce 1s ease-in-out ${i * 0.15}s infinite` }} />
             ))}
           </div>
-          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>正在分析 24h 鏈上數據…</div>
+          <div style={{ fontSize: 11, color: "var(--text-muted)" }}>{sm("analyzing24h")}</div>
         </div>
       ) : tab === "consensus" ? (
         // ── Consensus signals tab ──
         <div>
           <div style={{ padding: "8px 16px 4px", fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
             <span>🎯</span>
-            <span style={{ fontFamily: "var(--font-heading, serif)", letterSpacing: "0.02em" }}>聰明錢最新關注的代幣</span>
+            <span style={{ fontFamily: "var(--font-heading, serif)", letterSpacing: "0.02em" }}>{sm("smartMoneyLatestTokens")}</span>
           </div>
           {!data?.consensusTokens?.length ? (
             <div style={{ padding: "24px 16px", textAlign: "center", fontSize: 12, color: "var(--text-muted)" }}>
-              過去 24h 暫無共識信號
+              {sm("noConsensus24h")}
             </div>
           ) : data.consensusTokens.map((token, idx) => (
             <div key={token.mint}>
@@ -1843,13 +1848,13 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
                 {/* Stats grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 20px" }}>
                   <div style={{ fontSize: 11, color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
-                    共識強度 <span style={{ marginLeft: 2 }}><Stars n={token.starRating} /></span>
+                    {sm("smConsensusStrength")} <span style={{ marginLeft: 2 }}><Stars n={token.starRating} /></span>
                     <span style={{ color: token.starRating >= 5 ? "#10B981" : token.starRating >= 4 ? "#F59E0B" : "var(--text-muted)", fontWeight: 700 }}>
-                      {token.starRating >= 5 ? " 高" : token.starRating >= 4 ? " 中高" : " 中"}
+                      {token.starRating >= 5 ? ` ${sm("smStrengthHigh")}` : token.starRating >= 4 ? ` ${sm("smStrengthMedHigh")}` : ` ${sm("smStrengthMed")}`}
                     </span>
                   </div>
                   <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                    24h淨買入&nbsp;
+                    {sm("smNetBuy24h")}&nbsp;
                     <span style={{
                       color: "#10B981", fontWeight: 700,
                       fontFamily: "var(--font-mono, monospace)",
@@ -1858,15 +1863,15 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
                     </span>
                   </div>
                   <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                    買入地址&nbsp;
-                    <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{token.buyerCount} 個</span>
+                    {sm("smBuyerAddr")}&nbsp;
+                    <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{token.buyerCount}{lang === "zh" ? " 個" : lang === "ja" ? " 件" : ""}</span>
                     <span style={{ fontSize: 10, color: "var(--text-muted)", marginLeft: 4 }}>
                       ({token.buyerLabels})
                     </span>
                   </div>
                   <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>
-                    首次發現&nbsp;
-                    <span style={{ color: "var(--text-muted)" }}>{smFormatTimeAgo(token.firstSeenAt)}</span>
+                    {sm("smFirstSeen")}&nbsp;
+                    <span style={{ color: "var(--text-muted)" }}>{smFormatTimeAgo(token.firstSeenAt, lang)}</span>
                   </div>
                 </div>
                 {/* Copy trade button */}
@@ -1880,7 +1885,7 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
                       display: "flex", alignItems: "center", gap: 4,
                     }}
                   >
-                    🛡 跟單
+                    {sm("smCopyTrade")}
                   </button>
                 </div>
               </div>
@@ -1892,7 +1897,7 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
                   borderBottom: "1px solid var(--border)",
                   padding: "12px 16px",
                 }}>
-                  <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>主要買家</div>
+                  <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{sm("smTopBuyers")}</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {token.buyers.map((b, i) => (
                       <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
@@ -1901,7 +1906,7 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
                           <a href={`https://twitter.com/${b.twitter.replace("@", "")}`} target="_blank" rel="noopener noreferrer"
                             style={{ color: "#0EA5E9", textDecoration: "none", fontWeight: 600 }}>{b.twitter}</a>
                         ) : (
-                          <span style={{ color: "var(--text-muted)", fontSize: 10 }}>匿名地址</span>
+                          <span style={{ color: "var(--text-muted)", fontSize: 10 }}>{sm("smAnonymous")}</span>
                         )}
                         {b.name && <span style={{ color: "var(--text-secondary)" }}>({b.name})</span>}
                         <div style={{ display: "flex", gap: 3, marginLeft: "auto", flexWrap: "wrap" }}>
@@ -1927,7 +1932,7 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
         <div>
           <div style={{ padding: "8px 16px 4px", fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
             <span>🌸</span>
-            <span style={{ fontFamily: "var(--font-heading, serif)", letterSpacing: "0.02em" }}>核心聰明錢地址（按活躍度排序）</span>
+            <span style={{ fontFamily: "var(--font-heading, serif)", letterSpacing: "0.02em" }}>{sm("smCoreAddresses")}</span>
           </div>
 
           {/* Column header */}
@@ -1938,7 +1943,7 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
             borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)",
             background: "var(--bg-base)",
           }}>
-            {["地址", "链", "标签", "Twitter", "名称", "24h活动"].map(h => (
+            {[sm("smColAddr"), sm("smColChain"), sm("smColLabels"), "Twitter", sm("smColName"), sm("smColActivity")].map(h => (
               <div key={h} style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 0.5 }}>{h}</div>
             ))}
           </div>
@@ -1982,7 +1987,7 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
               </div>
               {/* Activity */}
               <div style={{ fontSize: 11, color: w.activityCount > 0 ? "#10B981" : "var(--text-muted)", fontWeight: w.activityCount > 0 ? 600 : 400 }}>
-                {w.activityCount > 0 ? `${w.activityCount}個代幣` : "—"}
+                {w.activityCount > 0 ? sm("smTokenCount", { n: w.activityCount }) : "—"}
               </div>
             </div>
           ))}
@@ -1995,7 +2000,7 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
             {totalBatches > 1 && (
               <>
                 <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                  第 {walletPage + 1} 批 / 共 {totalBatches} 批
+                  {sm("smPageOf", { cur: walletPage + 1, total: totalBatches })}
                 </span>
                 <button
                   onClick={() => setWalletPage(p => (p + 1) % totalBatches)}
@@ -2006,12 +2011,12 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
                     display: "flex", alignItems: "center", gap: 4,
                   }}
                 >
-                  換一批 ↓
+                  {sm("smNextBatch")}
                 </button>
               </>
             )}
             {!data?.trackedWallets && (
-              <span style={{ fontSize: 10, color: "var(--text-muted)" }}>暫無活躍地址</span>
+              <span style={{ fontSize: 10, color: "var(--text-muted)" }}>{sm("smNoActive")}</span>
             )}
           </div>
         </div>
@@ -2029,11 +2034,15 @@ function SmartMoneyPanel({ walletAddress }: { walletAddress: string | null }) {
   );
 }
 
-function smFormatTimeAgo(ts: number): string {
+function smFormatTimeAgo(ts: number, lang: "zh" | "en" | "ja" = "zh"): string {
   const diff = Date.now() - ts;
-  if (diff < 3600000)  return `${Math.floor(diff / 60000)}m 前`;
-  if (diff < 86400000) return `${Math.floor(diff / 3600000)}h 前`;
-  return `${Math.floor(diff / 86400000)}d 前`;
+  const sm = (key: keyof typeof translations, vars?: Record<string, string | number>) => {
+    const raw = (translations[key] as Record<string, string>)[lang] ?? (translations[key] as Record<string, string>).zh;
+    return vars ? tpl(raw, vars) : raw;
+  };
+  if (diff < 3600000)  return sm("smTimeAgoMin",  { n: Math.floor(diff / 60000) });
+  if (diff < 86400000) return sm("smTimeAgoHour", { n: Math.floor(diff / 3600000) });
+  return sm("smTimeAgoDay", { n: Math.floor(diff / 86400000) });
 }
 
 // ── Simple Markdown ──────────────────────────────────────────────
