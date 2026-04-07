@@ -151,8 +151,9 @@ export async function DELETE(req: NextRequest) {
   if (body.conditionId) {
     const cond = conditionsCache.get(body.conditionId);
     if (!cond) return NextResponse.json({ error: "condition not found" }, { status: 404 });
-    if (walletAddress && cond.walletAddress !== walletAddress) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 403 });
+    // Always require wallet ownership — walletAddress must be present and match
+    if (!walletAddress || cond.walletAddress !== walletAddress) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
     conditionsCache.delete(body.conditionId);
     return NextResponse.json({ ok: true, deleted: body.conditionId });

@@ -247,13 +247,12 @@ export type { GuardianAlert };
 // ── Main cron handler ─────────────────────────────────────────────
 
 export async function GET(req: Request) {
-  // Verify Vercel Cron secret (or allow dev bypass)
+  // Fail-secure: require CRON_SECRET in all environments
+  // (previously fail-open when env var was not set)
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret) {
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    }
+  const authHeader = req.headers.get("Authorization");
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const [marinadeAPY, jitoAPY, kaminoAPY, solPrice] = await Promise.all([

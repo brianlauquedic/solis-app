@@ -332,7 +332,11 @@ export async function POST(req: NextRequest) {
   const aiAvailable = !!claudePlan;
 
   // [SECURITY FIX] Server-side mandate validation after plan is generated
-  const mandateHeader = req.headers.get("x-mandate");
+  const rawMandate = req.headers.get("x-mandate") ?? "";
+  if (rawMandate.length > 4096) {
+    return NextResponse.json({ error: "x-mandate header too large" }, { status: 400 });
+  }
+  const mandateHeader = rawMandate || null;
   const mandateCheck = validateMandateServerSide(plan, body.walletAddress, mandateHeader);
   if (!mandateCheck.valid) {
     return NextResponse.json({

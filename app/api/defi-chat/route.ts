@@ -248,7 +248,9 @@ async function generateSessionSummary(
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
-    const transcript = history.slice(-10).map(h => `${h.role}: ${h.content}`).join("\n");
+    const transcript = history.slice(-10).map(h =>
+      `${h.role}: ${h.content.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").slice(0, 500)}`
+    ).join("\n");
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {

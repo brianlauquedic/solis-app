@@ -21,8 +21,10 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const sig = searchParams.get("sig");
 
-  if (!sig || sig.length < 20) {
-    return NextResponse.json({ error: "Invalid transaction signature" }, { status: 400 });
+  // Solana tx signatures are base58-encoded 64-byte values → 87-88 chars
+  const SIG_RE = /^[1-9A-HJ-NP-Za-km-z]{87,88}$/;
+  if (!sig || !SIG_RE.test(sig)) {
+    return NextResponse.json({ error: "Invalid transaction signature format" }, { status: 400 });
   }
 
   try {

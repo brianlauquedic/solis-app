@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const mint       = searchParams.get("mint");
   const resolution = searchParams.get("resolution") ?? "1h";
-  const limit      = Math.min(parseInt(searchParams.get("limit") ?? "150"), 500);
+  const limit      = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "150") || 150, 1), 500);
 
   if (!mint) {
     return NextResponse.json({ error: "mint is required" }, { status: 400 });

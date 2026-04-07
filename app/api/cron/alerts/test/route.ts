@@ -8,6 +8,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { guardianCache } from "@/lib/guardian-state";
 
 export async function POST(req: NextRequest) {
+  // Require same CRON_SECRET as the Guardian cron job
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = req.headers.get("Authorization");
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json() as {
     label?: string;
     metric?: string;

@@ -211,7 +211,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       currentPrice = ohlcv[ohlcv.length - 1]?.close ?? 0;
 
     // ── Path 2: Unknown Solana SPL token (by mint) ──────────────────
-    } else if (mint.length >= 32) {
+    } else if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint)) {
       const [candles, info] = await Promise.all([
         fetchBirdeyeOHLCV(mint),
         fetchBirdeyeTokenInfo(mint),

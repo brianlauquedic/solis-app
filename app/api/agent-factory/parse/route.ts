@@ -52,10 +52,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const description = body.description?.trim();
-  if (!description || description.length < 3) {
+  const rawDesc = body.description?.trim() ?? "";
+  if (!rawDesc || rawDesc.length < 3) {
     return NextResponse.json({ error: "Description too short" }, { status: 400 });
   }
+  // Prompt injection guard: strip control chars and cap length
+  const description = rawDesc.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").slice(0, 500);
 
   if (!process.env.ANTHROPIC_API_KEY) {
     // Fallback: simple rule-based parsing
