@@ -1209,6 +1209,9 @@ Rules:
           });
 
           // Process content blocks (thinking + text + tool_use interleaved)
+          // Collect all tool results first, then append once (prevents duplicate assistant messages)
+          const toolResults: Array<{ type: "tool_result"; tool_use_id: string; content: string }> = [];
+
           for (const block of response.content) {
             if (block.type === "thinking") {
               allThinkingText += block.thinking + "\n";
@@ -1228,19 +1231,11 @@ Rules:
                 const card = captureStrategyCard(block.input as Record<string, unknown>);
                 strategyCards.push(card);
                 send("strategy_card", card);
-                // Return acknowledgment to Claude so it can continue
-                loopMessages = [
-                  ...loopMessages,
-                  { role: "assistant", content: response.content },
-                  {
-                    role: "user",
-                    content: [{
-                      type: "tool_result",
-                      tool_use_id: block.id,
-                      content: JSON.stringify({ captured: true, asset: card.asset }),
-                    }],
-                  },
-                ];
+                toolResults.push({
+                  type: "tool_result",
+                  tool_use_id: block.id,
+                  content: JSON.stringify({ captured: true, asset: card.asset }),
+                });
                 continue;
               }
 
@@ -1260,22 +1255,21 @@ Rules:
                 actionsPrepared.push((toolResult as { action: unknown }).action);
               }
 
-              // Append assistant's message + tool result and continue loop
-              loopMessages = [
-                ...loopMessages,
-                { role: "assistant", content: response.content },
-                {
-                  role: "user",
-                  content: [
-                    {
-                      type: "tool_result",
-                      tool_use_id: block.id,
-                      content: JSON.stringify(toolResult),
-                    },
-                  ],
-                },
-              ];
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: JSON.stringify(toolResult),
+              });
             }
+          }
+
+          // Append assistant message + ALL tool results once (correct multi-tool format)
+          if (toolResults.length > 0) {
+            loopMessages = [
+              ...loopMessages,
+              { role: "assistant", content: response.content },
+              { role: "user", content: toolResults },
+            ];
           }
 
           // Stop if Claude didn't use any tools (or hit end_turn)
