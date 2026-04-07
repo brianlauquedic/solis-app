@@ -454,7 +454,7 @@ export const translations = {
   qaWorkshopSub:   { zh: "自然語言創建 Agent", en: "Create Agent with natural language", ja: "自然言語でエージェント作成" },
   qaWeeklyReport:  { zh: "Solana 週報", en: "Weekly Report", ja: "週次レポート" },
   qaWeeklyReportSub: { zh: "生態全景 · 9 個維度", en: "Ecosystem · 9 Dimensions", ja: "エコシステム全景 · 9次元" },
-  suggWeeklyReport: { zh: "幫我出一份完整的 Solana 生態週報——DeFi 協議 TVL、DEX 交易量、pump.fun 數據、聰明錢資金流向，全部給我", en: "Give me a complete Solana ecosystem weekly report — DeFi TVL, DEX volume, pump.fun data, smart money flows, all of it", ja: "Solanaエコシステムの完全な週次レポートを作成してください——DeFiプロトコルTVL、DEX取引量、pump.funデータ、スマートマネーの資金フロー、すべて教えてください" },
+  suggWeeklyReport: { zh: "幫我出一份完整的 Solana 生態週報", en: "Give me the Solana ecosystem weekly report", ja: "Solana生態系の週次レポートを出してください" },
   suggStakeSOL:    { zh: "幫我質押 SOL 獲取最高收益", en: "Stake my SOL for maximum yield", ja: "SOLを最高利回りでステーキングしたい" },
   suggUSDCYield:   { zh: "我的 USDC 存哪裡利息最高？", en: "Where can I earn the highest interest on my USDC?", ja: "USDCの利息が一番高いのはどこ？" },
   suggSwapSOL:     { zh: "把 1 SOL 換成 USDC", en: "Swap 1 SOL for USDC", ja: "1 SOLをUSDCに交換したい" },
