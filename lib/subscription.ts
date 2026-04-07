@@ -135,12 +135,18 @@ const USDC_MINT   = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const FEE_WALLET  = process.env.SOLIS_FEE_WALLET ?? "";
 const HELIUS_RPC  = `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY ?? ""}`;
 
-const FEE_ATA = FEE_WALLET
-  ? getAssociatedTokenAddressSync(
+let _feeAtaSub = "";
+function getFeeAta(): string {
+  if (_feeAtaSub) return _feeAtaSub;
+  if (!FEE_WALLET) return "";
+  try {
+    _feeAtaSub = getAssociatedTokenAddressSync(
       new PublicKey(USDC_MINT),
       new PublicKey(FEE_WALLET)
-    ).toString()
-  : "";
+    ).toString();
+  } catch { /* env var missing or invalid at build time */ }
+  return _feeAtaSub;
+}
 
 // ── Upstash Redis ─────────────────────────────────────────────────
 
@@ -408,7 +414,7 @@ async function verifySubscriptionPayment(
         const info = ix.parsed.info;
         if (
           info?.mint === USDC_MINT &&
-          info?.destination === FEE_ATA &&
+          info?.destination === getFeeAta() &&
           Number(info?.tokenAmount?.amount ?? 0) >= requiredAmount
         ) {
           return true;
