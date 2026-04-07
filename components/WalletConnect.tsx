@@ -151,15 +151,15 @@ export default function WalletConnect({ walletAddress, onEnterApp }: Props = {})
                 {t("ctaFreeDesc")}
               </div>
               <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap", marginBottom: 18 }}>
-                {["3× 安全分析", "3× AI 顧問", "3× Agent 再平衡"].map(label => (
-                  <span key={label} style={{
+                {(["ctaFreeBadge1", "ctaFreeBadge2", "ctaFreeBadge3"] as const).map(key => (
+                  <span key={key} style={{
                     fontSize: 11, fontWeight: 400,
                     color: "var(--text-secondary)",
                     background: "transparent",
                     border: "1px solid var(--border-light)",
                     borderRadius: 4, padding: "4px 10px",
                     letterSpacing: "0.04em",
-                  }}>✓ {label}</span>
+                  }}>✓ {t(key)}</span>
                 ))}
               </div>
               <div style={{

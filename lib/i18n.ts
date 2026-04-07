@@ -95,6 +95,9 @@ export const translations = {
     en: "Connect Phantom and get 3 free security analyses + AI advisor sessions instantly",
     ja: "Phantomを接続して、無料でセキュリティ分析3回＋AIアドバイザーを即時利用",
   },
+  ctaFreeBadge1: { zh: "3× 安全分析", en: "3× Security Analysis", ja: "3× セキュリティ分析" },
+  ctaFreeBadge2: { zh: "3× AI 顧問", en: "3× AI Advisor", ja: "3× AIアドバイザー" },
+  ctaFreeBadge3: { zh: "3× Agent 再平衡", en: "3× Agent Rebalancing", ja: "3× エージェント再平衡" },
   ctaFreeBtn: {
     zh: "👻 連接 Phantom — 免費",
     en: "👻 Connect Phantom — Free",
