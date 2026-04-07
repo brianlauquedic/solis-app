@@ -99,7 +99,7 @@ AI裁决: ${(basicData.decision as { verdict?: string; label?: string })?.label 
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5",
+        model: "claude-sonnet-4-6",
         max_tokens: 400,
         system: systemPrompt,
         messages: [{ role: "user", content: userContent }],

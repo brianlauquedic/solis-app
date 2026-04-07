@@ -259,7 +259,7 @@ async function generateSessionSummary(
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5",
+        model: "claude-sonnet-4-6",
         max_tokens: 80,
         system: "根据对话记录，用一句话（不超过40字）总结用户的投资偏好和关注点，只输出总结内容。",
         messages: [{
@@ -289,7 +289,7 @@ async function buildReasoningHash(
     input: message,
     output: responseText.slice(0, 200),
     wallet: wallet.totalUSD.toFixed(0),
-    engine: aiAvailable ? "claude-haiku-4-5" : "rule-based",
+    engine: aiAvailable ? "claude-sonnet-4-6" : "rule-based",
     ts: Math.floor(Date.now() / 1000),
   });
   const msgBuf = new TextEncoder().encode(payload);
@@ -383,7 +383,7 @@ export async function POST(req: NextRequest) {
                 "content-type": "application/json",
               },
               body: JSON.stringify({
-                model: "claude-haiku-4-5",
+                model: "claude-sonnet-4-6",
                 max_tokens: 300,
                 stream: true,
                 system: systemPrompt,

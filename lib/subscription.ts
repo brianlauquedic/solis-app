@@ -52,10 +52,10 @@ export type Feature = "analyze" | "advisor" | "advisor_deep" | "agent" | "verify
 
 export const FEATURE_CREDIT_COST: Record<Feature, number> = {
   verify:       1,   // RPC only                            → ~$0.0001/次
-  analyze:      10,  // claude-haiku-4-5                   → ~$0.003/次
-  portfolio:    15,  // claude-haiku-4-5                   → ~$0.005/次
-  agent:        15,  // claude-haiku-4-5 rebalance         → ~$0.005/次
-  advisor:      30,  // claude-haiku-4-5 简单对话           → ~$0.01/次
+  analyze:      10,  // claude-sonnet-4-6                   → ~$0.003/次
+  portfolio:    15,  // claude-sonnet-4-6                   → ~$0.005/次
+  agent:        15,  // claude-sonnet-4-6 rebalance         → ~$0.005/次
+  advisor:      30,  // claude-sonnet-4-6 简单对话           → ~$0.01/次
   advisor_deep: 80,  // claude-sonnet-4-6 + thinking       → ~$0.05–0.15/次
 };
 
