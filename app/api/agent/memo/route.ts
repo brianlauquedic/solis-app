@@ -6,8 +6,6 @@ import {
   TransactionInstruction,
   PublicKey,
 } from "@solana/web3.js";
-import { runQuotaGate } from "@/lib/rate-limit";
-
 const MEMO_PROGRAM_ID = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
 const RPC_URL =
   process.env.HELIUS_RPC_URL ??
@@ -28,11 +26,6 @@ function getPlatformKeypair(): Keypair | null {
 }
 
 export async function POST(req: NextRequest) {
-  // [SECURITY FIX] Gate: costs 1 verify credit (5¢) per memo write.
-  // Prevents spam abuse of platform keypair and SOL fee drain.
-  const gate = await runQuotaGate(req, "verify");
-  if (!gate.proceed) return gate.response;
-
   let memoPayload: string;
   try {
     const body = await req.json();

@@ -1,20 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import { useLang } from "@/contexts/LanguageContext";
 import WaBijinSVG from "@/components/WaBijinSVG";
 import { useWallet } from "@/contexts/WalletContext";
-
-interface MarketStats {
-  solanaTvl:  string | null;
-  solPrice:   string | null;
-  solChange:  string | null;
-  dexVol7d:   string | null;
-  fees7d:     string | null;
-  validators: string | null;
-  updatedAt:  string | null;
-}
 
 const AGENT_KEYS = [
   { tag: "Security Agent",  titleKey: "agent1Title" as const, descKey: "agent1Desc" as const, icon: "護", color: "var(--green)" },
@@ -42,15 +31,7 @@ interface Props {
 
 export default function WalletConnect({ walletAddress, onEnterApp }: Props = {}) {
   const { t, lang } = useLang();
-  const { connect, phantomAvailable, phantomLoading } = useWallet();
-  const [stats, setStats] = useState<MarketStats | null>(null);
-
-  useEffect(() => {
-    fetch("/api/market-stats")
-      .then(r => r.json())
-      .then(setStats)
-      .catch(() => {});
-  }, []);
+  const { connect, phantomAvailable, okxAvailable, walletLoading } = useWallet();
 
   return (
     <div style={{ maxWidth: 760, margin: "0 auto" }}>
@@ -164,22 +145,44 @@ export default function WalletConnect({ walletAddress, onEnterApp }: Props = {})
                   }}>✓ {t(key)}</span>
                 ))}
               </div>
+              {/* Phantom connect button */}
               <button
-                onClick={connect}
-                disabled={phantomLoading || !phantomAvailable}
+                onClick={() => connect("phantom")}
+                disabled={walletLoading}
                 style={{
                   width: "100%",
-                  background: phantomAvailable ? "var(--accent)" : "var(--text-muted)",
+                  background: phantomAvailable ? "var(--accent)" : "var(--border)",
                   borderRadius: 8, padding: "11px 24px", border: "none",
                   fontSize: 13, fontWeight: 500, color: "#fff",
-                  cursor: phantomAvailable ? "pointer" : "not-allowed",
+                  cursor: walletLoading ? "not-allowed" : "pointer",
                   letterSpacing: "0.06em",
                   fontFamily: "var(--font-body)",
-                  opacity: phantomLoading ? 0.7 : 1,
+                  opacity: walletLoading ? 0.7 : 1,
+                  marginBottom: 8,
                 }}
               >
-                {phantomLoading ? "…" : !phantomAvailable ? "Install Phantom" : t("ctaFreeBtn")}
+                {walletLoading ? "…" : !phantomAvailable ? "Install Phantom →" : "🔮 " + t("ctaFreeBtn")}
               </button>
+
+              {/* OKX connect button */}
+              <button
+                onClick={() => connect("okx")}
+                disabled={walletLoading}
+                style={{
+                  width: "100%",
+                  background: okxAvailable ? "#1a1a2e" : "var(--border)",
+                  border: "1px solid " + (okxAvailable ? "#4a4aff" : "var(--border)"),
+                  borderRadius: 8, padding: "10px 24px",
+                  fontSize: 13, fontWeight: 500, color: okxAvailable ? "#fff" : "var(--text-muted)",
+                  cursor: walletLoading ? "not-allowed" : "pointer",
+                  letterSpacing: "0.06em",
+                  fontFamily: "var(--font-body)",
+                  opacity: walletLoading ? 0.7 : 1,
+                }}
+              >
+                {!okxAvailable ? "Install OKX Wallet →" : "◈ Connect OKX Wallet"}
+              </button>
+
               <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 10, letterSpacing: "0.03em" }}>
                 {t("ctaSubNote")}
               </div>
@@ -188,74 +191,6 @@ export default function WalletConnect({ walletAddress, onEnterApp }: Props = {})
         </div>
       </div>
 
-      {/* ── Solana 生態概覽 Market Widget ── */}
-      <div style={{
-        background: "var(--bg-card)", border: "1px solid var(--border)",
-        borderTop: "2px solid var(--gold, #C9A84C)",
-        borderRadius: 10, padding: "18px 20px", marginBottom: 24,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-          <div style={{
-            fontSize: 11, fontWeight: 700, color: "var(--text-primary)",
-            fontFamily: "var(--font-heading)", letterSpacing: "0.04em",
-          }}>
-            📊 {lang === "en" ? "Solana Ecosystem Overview" : lang === "ja" ? "Solanaエコシステム概覧" : "Solana 生態實時概覽"}
-          </div>
-          <span style={{
-            fontSize: 10, color: "var(--text-muted)",
-            background: "var(--bg-base)", border: "1px solid var(--border)",
-            borderRadius: 4, padding: "2px 8px", fontFamily: "var(--font-mono)", letterSpacing: "0.03em",
-          }}>
-            {stats?.updatedAt
-              ? `Live · ${new Date(stats.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
-              : "CoinGecko · DeFiLlama · Solana RPC"}
-          </span>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-          {([
-            {
-              labelZh: "DeFi TVL", labelEn: "DeFi TVL", labelJa: "DeFi TVL",
-              value: stats?.solanaTvl ?? "—", sub: lang === "en" ? "DeFiLlama" : "DeFiLlama", gold: true,
-            },
-            {
-              labelZh: "SOL 現價", labelEn: "SOL Price", labelJa: "SOL価格",
-              value: stats?.solPrice ?? "—", sub: stats?.solChange ?? "DeFiLlama", gold: false,
-            },
-            {
-              labelZh: "SOL DEX 7日量", labelEn: "DEX Vol 7d", labelJa: "DEX出来高 7日",
-              value: stats?.dexVol7d ?? "—", sub: "DeFiLlama · Solana", gold: false,
-            },
-            {
-              labelZh: "活躍驗證者", labelEn: "Validators", labelJa: "バリデーター",
-              value: stats?.validators ?? "—", sub: "Solana RPC", gold: false,
-            },
-            {
-              labelZh: "Solana 協議費 7日", labelEn: "Protocol Fees 7d", labelJa: "プロトコル手数料 7日",
-              value: stats?.fees7d ?? "—", sub: "DeFiLlama", gold: true,
-            },
-            {
-              labelZh: "資料來源", labelEn: "Data Sources", labelJa: "データソース",
-              value: "Live", sub: "DeFiLlama · Solana RPC", gold: false,
-            },
-          ]).map((item, i) => (
-            <div key={i} style={{
-              background: "var(--bg-base)", border: `1px solid var(--border)`,
-              borderLeft: item.gold ? "2px solid var(--gold, #C9A84C)" : "1px solid var(--border)",
-              borderRadius: 6, padding: "10px 12px",
-            }}>
-              <div style={{ fontSize: 9, color: "var(--text-muted)", marginBottom: 4, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                {lang === "en" ? item.labelEn : lang === "ja" ? item.labelJa : item.labelZh}
-              </div>
-              <div style={{
-                fontSize: i === 5 ? 13 : 16, fontWeight: 700,
-                color: item.gold ? "var(--gold, #C9A84C)" : "var(--text-primary)",
-                fontFamily: "var(--font-mono)", lineHeight: 1.1,
-              }}>{item.value}</div>
-              <div style={{ fontSize: 9, color: "#3D7A5C", marginTop: 3, fontWeight: 600 }}>{item.sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* ── 四大守護 4 Agent Cards ── */}
       <div style={{ marginBottom: 12 }}>

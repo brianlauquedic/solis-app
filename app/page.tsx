@@ -2,38 +2,33 @@
 
 import { useState } from "react";
 import WalletConnect from "@/components/WalletConnect";
-import HealthReport from "@/components/HealthReport";
-import TokenAnalysis from "@/components/TokenAnalysis";
-import DefiAssistant from "@/components/DefiAssistant";
-import AgentPanel from "@/components/AgentPanel";
+import NonceGuardian from "@/components/NonceGuardian";
+import StrategyCompiler from "@/components/StrategyCompiler";
+import SafetyRules from "@/components/SafetyRules";
 import ErrorBoundary from "@/components/ErrorBoundary";
-import { useLang } from "@/contexts/LanguageContext";
 import { useWallet } from "@/contexts/WalletContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import Footer from "@/components/Footer";
 
-type Tab = "health" | "token" | "defi" | "agent";
+type Tab = "nonce" | "strategy" | "safety";
 
-interface WalletSnapshot {
-  solBalance: number;
-  totalUSD: number;
-  idleUSDC: number;
-}
+const TABS: { id: Tab; icon: string; label: string }[] = [
+  { id: "nonce",    icon: "🛡️", label: "Nonce Guardian" },
+  { id: "strategy", icon: "⚙️", label: "策略編譯器" },
+  { id: "safety",   icon: "🔒", label: "安全規則" },
+];
 
 function AppContent() {
-  const { t } = useLang();
-  const { walletAddress, disconnect, showLanding, setShowLanding } = useWallet();
+  const { walletAddress, shortAddr, disconnect, showLanding, setShowLanding, activeProvider } = useWallet();
   const { isDayMode, timeBg } = useTheme();
-  const [activeTab, setActiveTab] = useState<Tab>("health");
-  const [walletSnapshot, setWalletSnapshot] = useState<WalletSnapshot | undefined>();
+  const [activeTab, setActiveTab] = useState<Tab>("nonce");
 
   return (
     <main className="min-h-screen" style={{
       background: isDayMode ? "var(--bg-base)" : timeBg.bg,
       transition: "background 1.5s ease, color 1.5s ease",
     }}>
-      {/* Main Content */}
-      <div style={{ maxWidth: 900, margin: "0 auto", padding: "40px 24px" }}>
+      <div style={{ maxWidth: 860, margin: "0 auto", padding: "40px 24px" }}>
         {!walletAddress || showLanding ? (
           <WalletConnect
             walletAddress={walletAddress}
@@ -41,47 +36,100 @@ function AppContent() {
           />
         ) : (
           <>
-            {/* ── 索引 Tab Navigation (日系底線スタイル) ── */}
+            {/* ── Header bar ── */}
             <div style={{
-              display: "flex", gap: 0, marginBottom: 32,
-              borderBottom: "1px solid var(--border)",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: 28,
             }}>
-              <TabButton label={t("tabHealth")} active={activeTab === "health"} onClick={() => setActiveTab("health")} />
-              <TabButton label={t("tabToken")} active={activeTab === "token"} onClick={() => setActiveTab("token")} />
-              <TabButton label={t("tabDefi")} active={activeTab === "defi"} onClick={() => setActiveTab("defi")} />
-              <TabButton label={t("tabAgent")} active={activeTab === "agent"} onClick={() => setActiveTab("agent")} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{
+                  fontSize: 18, fontWeight: 300, letterSpacing: "0.1em",
+                  fontFamily: "var(--font-heading)", color: "var(--text-primary)",
+                }}>
+                  Sakura
+                </span>
+                <span style={{
+                  fontSize: 10, color: "var(--accent)", letterSpacing: "0.15em",
+                  fontFamily: "var(--font-mono)", background: "var(--accent-soft)",
+                  border: "1px solid var(--accent-mid)", borderRadius: 10,
+                  padding: "2px 8px",
+                }}>
+                  v2
+                </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  background: "var(--bg-card)", border: "1px solid var(--border)",
+                  borderRadius: 8, padding: "6px 12px",
+                }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)", display: "inline-block" }} />
+                  <span style={{ fontSize: 12, color: "var(--text-primary)", fontFamily: "var(--font-mono)", letterSpacing: "0.04em" }}>
+                    {shortAddr}
+                  </span>
+                  {activeProvider && (
+                    <span style={{
+                      fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.06em",
+                    }}>
+                      {activeProvider === "phantom" ? "Phantom" : "OKX"}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => disconnect()}
+                  style={{
+                    fontSize: 12, color: "var(--text-muted)",
+                    background: "var(--bg-card)", border: "1px solid var(--border)",
+                    borderRadius: 6, padding: "6px 12px", cursor: "pointer",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  退出
+                </button>
+                <button
+                  onClick={() => setShowLanding(true)}
+                  style={{
+                    fontSize: 12, color: "var(--text-muted)",
+                    background: "none", border: "none",
+                    cursor: "pointer", padding: "6px 4px",
+                    letterSpacing: "0.04em",
+                  }}
+                >
+                  ← 首頁
+                </button>
+              </div>
             </div>
 
-            {/* Tab Content — always mounted, hidden when inactive to preserve state */}
-            <div style={{ display: activeTab === "health" ? "block" : "none" }}>
-              <ErrorBoundary fallbackLabel={t("tabHealth")}>
-                <HealthReport
-                  walletAddress={walletAddress}
-                  onDisconnect={() => { disconnect(); setWalletSnapshot(undefined); }}
-                  onDataLoaded={setWalletSnapshot}
+            {/* ── 3-Tab Navigation ── */}
+            <div style={{
+              display: "flex", gap: 0, marginBottom: 28,
+              borderBottom: "1px solid var(--border)",
+            }}>
+              {TABS.map(tab => (
+                <TabButton
+                  key={tab.id}
+                  icon={tab.icon}
+                  label={tab.label}
+                  active={activeTab === tab.id}
+                  onClick={() => setActiveTab(tab.id)}
                 />
+              ))}
+            </div>
+
+            {/* ── Tab Content ── */}
+            <div style={{ display: activeTab === "nonce" ? "block" : "none" }}>
+              <ErrorBoundary fallbackLabel="Nonce Guardian">
+                <NonceGuardian />
               </ErrorBoundary>
             </div>
-            <div style={{ display: activeTab === "token" ? "block" : "none" }}>
-              <ErrorBoundary fallbackLabel={t("tabToken")}>
-                <TokenAnalysis walletAddress={walletAddress} isDayMode={isDayMode} />
+            <div style={{ display: activeTab === "strategy" ? "block" : "none" }}>
+              <ErrorBoundary fallbackLabel="策略編譯器">
+                <StrategyCompiler />
               </ErrorBoundary>
             </div>
-            <div style={{ display: activeTab === "defi" ? "block" : "none" }}>
-              <ErrorBoundary fallbackLabel={t("tabDefi")}>
-                <DefiAssistant
-                  walletAddress={walletAddress}
-                  walletSnapshot={walletSnapshot}
-                />
-              </ErrorBoundary>
-            </div>
-            <div style={{ display: activeTab === "agent" ? "block" : "none" }}>
-              <ErrorBoundary fallbackLabel={t("tabAgent")}>
-                <AgentPanel
-                  walletAddress={walletAddress}
-                  walletSnapshot={walletSnapshot}
-                  isDayMode={isDayMode}
-                />
+            <div style={{ display: activeTab === "safety" ? "block" : "none" }}>
+              <ErrorBoundary fallbackLabel="安全規則">
+                <SafetyRules />
               </ErrorBoundary>
             </div>
           </>
@@ -96,11 +144,11 @@ export default function Home() {
   return <AppContent />;
 }
 
-function TabButton({ label, active, onClick }: {
-  label: string; active: boolean; onClick: () => void;
+function TabButton({ icon, label, active, onClick }: {
+  icon: string; label: string; active: boolean; onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} className="tab-btn" style={{
+    <button onClick={onClick} style={{
       flex: 1, padding: "10px 16px", border: "none",
       fontSize: 13, fontWeight: active ? 500 : 400,
       cursor: "pointer",
@@ -111,8 +159,10 @@ function TabButton({ label, active, onClick }: {
       fontFamily: "var(--font-body)",
       letterSpacing: "0.04em",
       marginBottom: -1,
+      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
     }}>
-      {label}
+      <span>{icon}</span>
+      <span>{label}</span>
     </button>
   );
 }
