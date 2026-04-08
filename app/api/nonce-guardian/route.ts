@@ -16,8 +16,9 @@ export async function GET(req: NextRequest) {
     const result = await scanNonceAccounts(wallet, HELIUS_RPC);
     return NextResponse.json(result);
   } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
     console.error("[nonce-guardian] scan error:", err);
-    return NextResponse.json({ error: "Scan failed" }, { status: 500 });
+    return NextResponse.json({ error: `Scan failed: ${msg}` }, { status: 500 });
   }
 }
 
@@ -35,7 +36,9 @@ export async function POST(req: NextRequest) {
   try {
     scanResult = await scanNonceAccounts(wallet, HELIUS_RPC);
   } catch (err) {
-    return NextResponse.json({ error: "Scan failed" }, { status: 500 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[nonce-guardian] scan error:", err);
+    return NextResponse.json({ error: `Scan failed: ${msg}` }, { status: 500 });
   }
 
   const { accounts, riskSignals } = scanResult;

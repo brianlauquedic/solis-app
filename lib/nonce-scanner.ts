@@ -47,6 +47,57 @@ function parseNonceData(data: Buffer, address: string, lamports: number, walletA
   }
 }
 
+/**
+ * Use Helius getProgramAccountsV2 (paginated) instead of getProgramAccounts.
+ * Helius rejects getProgramAccounts on System Program even with filters.
+ */
+async function getProgramAccountsV2(
+  rpcUrl: string,
+  programId: string,
+  filters: unknown[]
+): Promise<Array<{ pubkey: string; account: { data: string[]; lamports: number } }>> {
+  const results: Array<{ pubkey: string; account: { data: string[]; lamports: number } }> = [];
+  let cursor: string | undefined;
+
+  for (let page = 0; page < 5; page++) {
+    const body: Record<string, unknown> = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "getProgramAccountsV2",
+      params: [
+        programId,
+        {
+          filters,
+          encoding: "base64",
+          limit: 100,
+          ...(cursor ? { cursor } : {}),
+        },
+      ],
+    };
+
+    const res = await fetch(rpcUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) break;
+    const json = await res.json() as {
+      result?: { accounts: Array<{ pubkey: string; account: { data: string[]; lamports: number } }>; paginationKey?: string; count: number };
+      error?: { message: string };
+    };
+
+    if (json.error) break;
+    const { accounts: batch, paginationKey, count } = json.result!;
+    results.push(...batch);
+
+    if (!paginationKey || count < 100) break;
+    cursor = paginationKey;
+  }
+
+  return results;
+}
+
 /** Scan all nonce accounts associated with a wallet address */
 export async function scanNonceAccounts(
   walletAddress: string,
@@ -55,20 +106,24 @@ export async function scanNonceAccounts(
   const conn = new Connection(rpcUrl, "confirmed");
   const walletPubkey = new PublicKey(walletAddress);
 
-  // Strategy 1: getProgramAccounts filtering by authority (offset 8)
-  const owned = await conn.getProgramAccounts(SystemProgram.programId, {
-    filters: [
+  // Strategy 1: getProgramAccountsV2 filtering by authority (offset 8)
+  // Helius requires V2 (paginated) even for filtered System Program queries
+  const rawAccounts = await getProgramAccountsV2(
+    rpcUrl,
+    SystemProgram.programId.toString(),
+    [
       { dataSize: 80 },
       { memcmp: { offset: 8, bytes: walletAddress } },
-    ],
-  });
+    ]
+  );
 
   const accounts: NonceAccount[] = [];
 
-  for (const { pubkey, account } of owned) {
+  for (const { pubkey, account } of rawAccounts) {
+    const data = Buffer.from(account.data[0], "base64");
     const parsed = parseNonceData(
-      Buffer.from(account.data),
-      pubkey.toString(),
+      data,
+      pubkey,
       account.lamports,
       walletAddress
     );
