@@ -321,79 +321,12 @@ export async function runQuotaGate(
     return { proceed: true, ids, paid: false };
   }
 
-  // ── Unified wallet credit gate (free 100pt/month + Basic/Pro subscriptions) ──
-  // Uses atomicDeductCredits — single Redis Lua operation, no TOCTOU race
-  if (wallet && wallet.length >= 32) {
-    await getOrCreateFreeRecord(wallet); // ensure record exists before atomic op
-    const result = await atomicDeductCredits(wallet, feature as SubFeature);
-
-    if (result.success) {
-      console.log(
-        `[SOLIS_${result.tier.toUpperCase()}] tier=${result.tier} wallet=${wallet.slice(0, 8)}… ` +
-        `feature=${feature} remaining=${result.newBalance}`
-      );
-      return { proceed: true, ids, paid: false };
-    }
-
-    // Credits/quota exhausted — differentiate free vs paid messaging
-    const now = Date.now();
-    const { balance, cost, tier } = result;
-
-    if (tier === "free") {
-      const record = await getOrCreateFreeRecord(wallet);
-      const nextResetDays = Math.max(1, Math.ceil((record.expiresAt - now) / (1000 * 60 * 60 * 24)));
-      // feature_limit: free tier per-feature 3-use limit hit (still has credits, but quota exhausted)
-      const isFeatureLimit = result.reason === "feature_limit";
-      return {
-        proceed: false,
-        response: NextResponse.json(
-          {
-            error: isFeatureLimit ? "free_quota_exhausted" : "free_credits_exhausted",
-            tier: "free",
-            feature,
-            creditBalance: balance,
-            creditCost: cost,
-            message: isFeatureLimit
-              ? `免費體驗次數已用完（此功能限 3 次）。約 ${nextResetDays} 天後重置，或立即升級訂閱。`
-              : `免費額度不足（需 ${cost} 點，餘 ${balance} 點）。約 ${nextResetDays} 天後自動重置 100 點，或立即升級訂閱獲得更多點數。`,
-            upgradeUrl: "/api/subscription",
-            nextResetDays,
-          },
-          { status: 402 }
-        ),
-      };
-    }
-    // Paid subscription exhausted
-    const record = await getOrCreateFreeRecord(wallet);
-    return {
-      proceed: false,
-      response: NextResponse.json(
-        {
-          error: "subscription_credits_exhausted",
-          tier,
-          feature,
-          creditBalance: balance,
-          creditCost: cost,
-          message: tier === "basic"
-            ? `Basic 點數不足（需 ${cost} 點，餘 ${balance} 點）。升級 Pro 獲得 6,000 點/月 + 2,000 結轉。`
-            : `Pro 本月點數已用完（需 ${cost} 點，餘 ${balance} 點）。點數將在下月自動續充。`,
-          upgradeUrl: "/api/subscription",
-          daysUntilReset: Math.ceil((record.expiresAt - now) / (1000 * 60 * 60 * 24)),
-        },
-        { status: 402 }
-      ),
-    };
-  }
-
-  // Paid path (one-time payment for non-wallet users)
+  // ── Per-use payment path (checked BEFORE credits so wallet + X-PAYMENT = payment path) ──
   const paymentSig =
     req.headers.get("x-payment") ?? req.headers.get("X-PAYMENT");
 
   if (paymentSig) {
     // Atomic mark-then-verify: claim the sig slot FIRST (SET NX), then verify on-chain.
-    // If verification fails, delete the slot so the user can retry with a valid sig.
-    // This prevents TOCTOU replay where two concurrent requests both pass the "used?" check
-    // before either one writes the "used" record.
     const alreadyClaimed = await atomicClaimPaymentSig(paymentSig);
     if (alreadyClaimed) {
       return {
@@ -406,7 +339,6 @@ export async function runQuotaGate(
     }
     const valid = await verifyQuotaPayment(paymentSig, FEATURE_FEE[feature]);
     if (!valid) {
-      // Release the slot so the user can retry (e.g., wrong amount or sig not yet confirmed)
       await releasePaymentSig(paymentSig);
       return {
         proceed: false,
@@ -419,12 +351,55 @@ export async function runQuotaGate(
     return { proceed: true, ids, paid: true };
   }
 
-  // Free quota path (3 uses per wallet/device/IP)
-  const { allowed, used } = await checkQuota(feature, ids);
-  if (!allowed) {
-    return { proceed: false, response: quotaExhaustedResponse(feature, used) };
+  // ── All features require a connected wallet ───────────────────────
+  if (!wallet || wallet.length < 32) {
+    return {
+      proceed: false,
+      response: NextResponse.json(
+        { error: "wallet_required", message: "請先連接錢包才能使用此功能" },
+        { status: 401 }
+      ),
+    };
   }
 
-  await consumeQuota(feature, ids);
-  return { proceed: true, ids, paid: false };
+  // ── Wallet credit gate (free 100pt/month + Basic/Pro subscriptions) ──
+  await getOrCreateFreeRecord(wallet); // ensure record exists before atomic op
+  const result = await atomicDeductCredits(wallet, feature as SubFeature);
+
+  if (result.success) {
+    console.log(
+      `[SOLIS_${result.tier.toUpperCase()}] tier=${result.tier} wallet=${wallet.slice(0, 8)}… ` +
+      `feature=${feature} remaining=${result.newBalance}`
+    );
+    return { proceed: true, ids, paid: false };
+  }
+
+  const { balance, cost, tier } = result;
+
+  // Free tier exhausted → x402 per-use payment ($0.10 USDC)
+  if (tier === "free") {
+    return { proceed: false, response: quotaExhaustedResponse(feature, 3) };
+  }
+
+  // Paid subscription (Basic/Pro) exhausted → upgrade/reset prompt
+  const now = Date.now();
+  const record = await getOrCreateFreeRecord(wallet);
+  return {
+    proceed: false,
+    response: NextResponse.json(
+      {
+        error: "subscription_credits_exhausted",
+        tier,
+        feature,
+        creditBalance: balance,
+        creditCost: cost,
+        message: tier === "basic"
+          ? `Basic 點數不足（需 ${cost} 點，餘 ${balance} 點）。升級 Pro 獲得更多點數。`
+          : `Pro 本月點數已用完（需 ${cost} 點，餘 ${balance} 點）。點數將在下月自動續充。`,
+        upgradeUrl: "/api/subscription",
+        daysUntilReset: Math.ceil((record.expiresAt - now) / (1000 * 60 * 60 * 24)),
+      },
+      { status: 402 }
+    ),
+  };
 }

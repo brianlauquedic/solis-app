@@ -489,6 +489,7 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
 
   async function handleAnalyze() {
     const mint = mintInput.trim();
+    if (!walletAddress) { setError("請先連接錢包才能使用安全分析功能"); return; }
     if (!mint) { setError(t("enterAddressError")); return; }
     if (!isValidMint(mint)) { setError(t("invalidAddress")); return; }
 
@@ -546,18 +547,18 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
 
       let res = await fetch("/api/analyze", { method: "POST", headers, body: analyzeBody });
 
-      // 402: subscription limit OR x402 device payment
+      // 402: subscription exhausted (Basic/Pro with tier field) OR x402 per-use payment
       if (res.status === 402 && !analyzePaymentSig) {
         const challenge = await res.json();
         if (challenge.tier) {
-          // Subscription user hit quota/credit limit → show upgrade prompt, do NOT pay
+          // Basic/Pro subscription credits exhausted → show upgrade prompt, do NOT pay
           setError(challenge.message || t("agentFreeExhausted"));
           setAnalyzeQuota(q => q ? { ...q, remaining: 0 } : null);
           setLoadingToken(false);
           return;
         }
-        // No-wallet x402 device quota → trigger $0.10 USDC payment then retry
-        if (challenge.error === "free_quota_exhausted" && challenge.recipient) {
+        // Free tier quota hit OR no credits → trigger $0.10 USDC per-use payment
+        if (challenge.recipient) {
           const payResult = await payWithPhantom({
             recipient: challenge.recipient,
             amount: challenge.amount,

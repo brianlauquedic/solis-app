@@ -293,6 +293,7 @@ export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = 
   }
 
   async function runAgent() {
+    if (!walletAddress) { setError("請先連接錢包才能使用智能投顧功能"); return; }
     setAgentState("scanning");
     setError("");
     setPlan(null);
@@ -360,17 +361,17 @@ export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = 
         body: reqBody,
       });
 
-      // 402: subscription limit OR x402 device payment
+      // 402: Basic/Pro subscription exhausted (tier field) OR x402 per-use payment
       if (res.status === 402) {
         const body402 = await res.json() as {
           tier?: string; message?: string;
           recipient?: string; amount?: number; description?: string;
         };
         if (body402.tier) {
-          // Subscription user hit quota/credit limit → show upgrade prompt, do NOT pay
-          throw new Error(body402.message || "免費次數已用完，請升級訂閱方案");
+          // Basic/Pro subscription credits exhausted → show upgrade prompt, do NOT pay
+          throw new Error(body402.message || "訂閱點數已用完，請升級方案");
         }
-        // No-wallet x402 device quota → trigger $0.10 USDC payment then retry
+        // Free tier quota hit → trigger $0.10 USDC per-use payment
         if (!body402.recipient) throw new Error("quota exhausted");
         const payResult = await payWithPhantom({
           recipient: body402.recipient,

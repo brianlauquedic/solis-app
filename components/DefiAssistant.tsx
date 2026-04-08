@@ -724,6 +724,10 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
 
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
+    if (!walletAddress) {
+      setMessages(prev => [...prev, { id: Date.now(), role: "assistant" as const, text: "🔒 請先連接錢包才能使用 AI 顧問功能", isTyping: false }]);
+      return;
+    }
 
     // ── Execute intent: user replied "執行" / "好" after AI gave action cards ──
     if (isExecuteIntent(text) && lastActions && lastActions.length > 0) {
@@ -788,17 +792,17 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
       if (res.status === 402 && !advisorPaymentSig) {
         const challenge = await res.json();
         if (challenge.tier) {
-          // Subscription user hit quota/credit limit → show upgrade prompt, do NOT pay
+          // Basic/Pro subscription credits exhausted → show upgrade prompt, do NOT pay
           setMessages(prev => prev.map(m =>
             m.id === assistantId
-              ? { ...m, text: `🔒 ${challenge.message || "免費次數已用完，請升級訂閱方案"}`, isTyping: false }
+              ? { ...m, text: `🔒 ${challenge.message || "訂閱點數已用完，請升級方案"}`, isTyping: false }
               : m
           ));
           setAdvisorQuota(q => q ? { ...q, remaining: 0 } : null);
           setLoading(false);
           return;
         }
-        // No-wallet x402 device quota → trigger $0.50 USDC payment then retry
+        // Free tier quota hit → trigger $0.50 USDC per-use payment then retry
         if (challenge.recipient) {
           const payResult = await payWithPhantom({
             recipient: challenge.recipient,
