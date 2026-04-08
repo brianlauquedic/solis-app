@@ -43,6 +43,7 @@ export interface SubscriptionRecord {
   creditBalance: number;     // Current credit balance
   creditGrantedAt: number;   // Last monthly grant timestamp
   rolloverCredits: number;   // Carried over from previous month (Pro only)
+  featureUsage?: Partial<Record<Feature, number>>;  // Per-feature use count (free tier display)
 }
 
 // ── Credit costs per feature ──────────────────────────────────────
@@ -203,7 +204,8 @@ async function redisEval(script: string, keys: string[], args: string[]): Promis
   return data.result;
 }
 
-// Lua script: atomically check balance and deduct if sufficient.
+// Lua script: atomically check balance, deduct credits, and track per-feature usage.
+// ARGV[1] = cost, ARGV[2] = feature name (for featureUsage counter)
 // Returns: new balance (≥0) on success, -1 if no record, -2 if insufficient credits.
 const DEDUCT_LUA = `
 local raw = redis.call("GET", KEYS[1])
@@ -211,8 +213,13 @@ if not raw then return -1 end
 local ok, rec = pcall(cjson.decode, raw)
 if not ok then return -1 end
 local cost = tonumber(ARGV[1])
+local feature = ARGV[2]
 if rec["creditBalance"] < cost then return -2 end
 rec["creditBalance"] = rec["creditBalance"] - cost
+if feature and feature ~= "" then
+  if not rec["featureUsage"] then rec["featureUsage"] = {} end
+  rec["featureUsage"][feature] = (rec["featureUsage"][feature] or 0) + 1
+end
 local ttl = redis.call("TTL", KEYS[1])
 redis.call("SET", KEYS[1], cjson.encode(rec), "EX", tostring(math.max(ttl, 1)))
 return rec["creditBalance"]
@@ -277,6 +284,7 @@ function maybeTopUpCredits(record: SubscriptionRecord): SubscriptionRecord {
     creditBalance:   freshCredits + rollover,
     rolloverCredits: rollover,
     creditGrantedAt: now,
+    featureUsage:    {},  // Reset per-feature counters on monthly renewal
   };
 }
 
@@ -348,7 +356,7 @@ export async function atomicDeductCredits(
   // ── Redis path: atomic Lua ───────────────────────────────────────
   if (redisAvailable) {
     try {
-      const result = await redisEval(DEDUCT_LUA, [key], [String(cost)]);
+      const result = await redisEval(DEDUCT_LUA, [key], [String(cost), feature]);
       const num = Number(result);
       if (num >= 0) {
         // Success — read tier from cached record (non-blocking best-effort)
@@ -375,7 +383,12 @@ export async function atomicDeductCredits(
       return { success: false, reason: "insufficient", balance: record.creditBalance, cost, tier: record.tier };
     }
     const newBalance = record.creditBalance - cost;
-    memSubs.set(walletAddress, { ...record, creditBalance: newBalance });
+    const prevUsage = record.featureUsage ?? {};
+    memSubs.set(walletAddress, {
+      ...record,
+      creditBalance: newBalance,
+      featureUsage: { ...prevUsage, [feature]: (prevUsage[feature] ?? 0) + 1 },
+    });
     return { success: true, newBalance, tier: record.tier };
   };
 

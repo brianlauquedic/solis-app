@@ -39,11 +39,25 @@ export async function GET(req: NextRequest) {
       // Wallet connected (non-admin) → show subscription credit-based quota
       const record = await getOrCreateFreeRecord(wallet);
       const cost = FEATURE_CREDIT_COST[feature as SubFeature] ?? 10;
-      const monthlyMax = TIER_MONTHLY_CREDITS[record.tier];
-      const remaining = Math.floor(record.creditBalance / cost);
-      const freeQuota = Math.floor(monthlyMax / cost);
+
+      let remaining: number;
+      let freeQuota: number;
+
+      if (record.tier === "free") {
+        // Free tier: show per-feature use counter (3 per feature, consistent with pricing page)
+        const FREE_PER_FEATURE = 3;
+        const usedCount = record.featureUsage?.[feature as SubFeature] ?? 0;
+        remaining = Math.max(0, FREE_PER_FEATURE - usedCount);
+        freeQuota = FREE_PER_FEATURE;
+      } else {
+        // Paid tier: show actual credit balance ÷ cost
+        const monthlyMax = TIER_MONTHLY_CREDITS[record.tier];
+        remaining = Math.floor(record.creditBalance / cost);
+        freeQuota = Math.floor(monthlyMax / cost);
+      }
+
       result[feature] = {
-        used: Math.max(0, freeQuota - remaining),
+        used: freeQuota - remaining,
         remaining,
         freeQuota,
         feePriceDollars: 0,
