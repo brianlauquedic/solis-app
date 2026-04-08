@@ -1358,11 +1358,13 @@ Rules:
           thinkingLength: allThinkingText.length,
         });
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Loop error";
+        const msg = err instanceof Error ? `${err.message} | ${err.stack?.split("\n")[1]?.trim() ?? ""}` : String(err);
+        console.error("[agent/loop] error:", msg);
         send("error", { message: msg });
         send("done", {
           memoPayload: `[Sakura error] ${body.walletAddress.slice(0, 8)}`,
           actions: [],
+          errorMessage: msg,
           reasoningHash: createHash("sha256").update("error").digest("hex"),
         });
       }

@@ -913,7 +913,7 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
                         isTyping: false,
                         isStreaming: false,
                         thinkingStep: undefined,
-                        text: accText || t("chatErrorRetry"),
+                        text: accText || parsed.errorMessage || t("chatErrorRetry"),
                         actions: newActions,
                         strategyCards: newStrategyCards.length > 0 ? newStrategyCards : undefined,
                         reasoningHash: parsed.reasoningHash,
