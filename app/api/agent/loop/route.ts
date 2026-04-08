@@ -1119,8 +1119,8 @@ function sseEvent(type: string, data: unknown): string {
 // ── Main route ───────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // Anti-Sybil quota gate: uses "advisor_deep" (80pts) — Sonnet 4.6 + extended thinking
-  const gate = await runQuotaGate(req, "advisor_deep");
+  // Anti-Sybil quota gate: uses "advisor" (9pts) — Sonnet 4.6 streaming
+  const gate = await runQuotaGate(req, "advisor");
   if (!gate.proceed) return gate.response;
 
   let body: LoopRequest;
@@ -1251,15 +1251,25 @@ Rules:
         let loopMessages = [...messages];
 
         while (continueLoop) {
-          const response = await client.messages.create({
+          // Use streaming API so tokens appear in real-time (no waiting for full response)
+          const streamInstance = client.messages.stream({
             model: "claude-sonnet-4-6",
-            max_tokens: 16000,
+            max_tokens: 4096,
             tools: TOOLS,
             messages: loopMessages,
             system: systemPrompt,
           });
 
-          // Process content blocks (thinking + text + tool_use interleaved)
+          // Stream text tokens to client in real-time as they're generated
+          streamInstance.on("text", (textDelta: string) => {
+            finalText += textDelta;
+            send("token", { text: textDelta });
+          });
+
+          // Wait for full response (needed for tool call handling)
+          const response = await streamInstance.finalMessage();
+
+          // Process content blocks (thinking + tool_use only — text already streamed above)
           // Collect all tool results first, then append once (prevents duplicate assistant messages)
           const toolResults: Array<{ type: "tool_result"; tool_use_id: string; content: string }> = [];
 
@@ -1268,12 +1278,7 @@ Rules:
               allThinkingText += block.thinking + "\n";
               send("thinking_delta", { text: block.thinking });
             } else if (block.type === "text") {
-              finalText += block.text;
-              // Stream text token by token simulation (send in chunks)
-              const words = block.text.split(" ");
-              for (const word of words) {
-                send("token", { text: word + " " });
-              }
+              // Already streamed via streamInstance.on("text") — skip to avoid duplicates
             } else if (block.type === "tool_use") {
               send("tool_call", { name: block.name, args: block.input });
 
