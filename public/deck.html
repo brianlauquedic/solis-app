@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sakura AI — Solana DeFi Advisor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+
+  :root {
+    --cream: #F4EDE4;
+    --cream-dark: #EDE3D8;
+    --ink: #1C1410;
+    --ink-light: #5C4A3A;
+    --rose: #C0392B;
+    --rose-soft: #E8B4A0;
+    --gold: #B8860B;
+    --moss: #5C7A4E;
+    --border: #D4C4B4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', 'Helvetica Neue', sans-serif;
+    background: #1C1410;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .deck {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    display: none;
+    width: 100%;
+    height: 100vh;
+    background: var(--cream);
+    position: absolute;
+    top: 0; left: 0;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    overflow: hidden;
+  }
+
+  .slide.active { display: flex; }
+
+  /* Decorative elements */
+  .slide::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--rose), var(--rose-soft), var(--rose));
+  }
+
+  .slide-number {
+    position: absolute;
+    bottom: 32px;
+    right: 48px;
+    font-size: 12px;
+    color: var(--ink-light);
+    letter-spacing: 2px;
+    font-family: 'Noto Serif JP', serif;
+  }
+
+  .watermark {
+    position: absolute;
+    bottom: 28px;
+    left: 48px;
+    font-size: 13px;
+    color: var(--border);
+    letter-spacing: 1px;
+    font-family: 'Noto Serif JP', serif;
+  }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    z-index: 100;
+  }
+
+  .nav button {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--cream);
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--ink);
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .nav button:hover { background: var(--ink); color: var(--cream); }
+
+  /* Progress dots */
+  .dots {
+    position: fixed;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .dot.active { background: var(--rose); height: 18px; border-radius: 3px; }
+
+  /* ── SLIDE STYLES ── */
+
+  /* Cover */
+  .cover {
+    background: var(--ink);
+    align-items: flex-start;
+    padding: 80px 100px;
+  }
+  .cover::before { background: linear-gradient(90deg, var(--rose), #8B1A10); }
+  .cover::after {
+    content: '桜';
+    position: absolute;
+    right: -20px; bottom: -60px;
+    font-size: 400px;
+    color: rgba(255,255,255,0.03);
+    font-family: 'Noto Serif JP', serif;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .cover .logo {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 14px;
+    color: var(--rose-soft);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  .cover h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 64px;
+    font-weight: 300;
+    color: #F4EDE4;
+    line-height: 1.1;
+    margin-bottom: 24px;
+    letter-spacing: -1px;
+  }
+
+  .cover h1 span { color: var(--rose-soft); font-weight: 600; }
+
+  .cover .tagline {
+    font-size: 18px;
+    color: rgba(244, 237, 228, 0.6);
+    font-weight: 300;
+    letter-spacing: 1px;
+    margin-bottom: 60px;
+    max-width: 600px;
+    line-height: 1.7;
+  }
+
+  .cover .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border: 1px solid rgba(244,237,228,0.2);
+    border-radius: 100px;
+    color: rgba(244,237,228,0.5);
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+
+  /* Section label */
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--rose);
+    margin-bottom: 20px;
+    font-family: 'Noto Serif JP', serif;
+  }
+
+  /* Headings */
+  h2 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 42px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: var(--ink-light);
+    line-height: 1.8;
+    max-width: 640px;
+  }
+
+  /* Cards grid */
+  .cards {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    margin-top: 32px;
+  }
+
+  .cards.col-2 { grid-template-columns: 1fr 1fr; }
+  .cards.col-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cards.col-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 14px;
+    display: block;
+  }
+
+  .card h3 {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .card p {
+    font-size: 13px;
+    color: var(--ink-light);
+    line-height: 1.7;
+  }
+
+  .card .stat {
+    font-size: 32px;
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 700;
+    color: var(--rose);
+    margin-top: 12px;
+  }
+
+  .card .stat-label {
+    font-size: 12px;
+    color: var(--ink-light);
+    letter-spacing: 1px;
+  }
+
+  /* Two column layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    width: 100%;
+    align-items: start;
+    margin-top: 16px;
+  }
+
+  /* Feature list */
+  .feature-list {
+    list-style: none;
+    margin-top: 24px;
+  }
+
+  .feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  .feature-list li:last-child { border-bottom: none; }
+
+  .feature-list .icon {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  .tag-rose { background: #FDE8E4; color: var(--rose); }
+  .tag-moss { background: #E4EDE1; color: var(--moss); }
+  .tag-gold { background: #FDF4DC; color: var(--gold); }
+  .tag-ink { background: #E8E2DC; color: var(--ink); }
+
+  /* Divider line */
+  .divider {
+    width: 48px;
+    height: 2px;
+    background: var(--rose);
+    margin: 20px 0;
+  }
+
+  /* Problem slide */
+  .problem-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 28px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+
+  .problem-num {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--border);
+    flex-shrink: 0;
+    width: 48px;
+  }
+
+  /* Tech stack */
+  .tech-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+  }
+
+  .tech-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Pricing */
+  .pricing-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px 28px;
+    text-align: center;
+    position: relative;
+  }
+
+  .pricing-card.featured {
+    border-color: var(--rose);
+    background: var(--ink);
+    color: #F4EDE4;
+  }
+
+  .pricing-card.featured h3 { color: #F4EDE4; }
+  .pricing-card.featured p { color: rgba(244,237,228,0.6); }
+
+  .pricing-badge {
+    position: absolute;
+    top: -12px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--rose);
+    color: white;
+    padding: 4px 16px;
+    border-radius: 100px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .price {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--rose);
+    margin: 16px 0 4px;
+  }
+
+  .pricing-card.featured .price { color: var(--rose-soft); }
+
+  /* CTA */
+  .cta-slide {
+    background: var(--ink);
+    text-align: center;
+  }
+
+  .cta-slide h2 { color: #F4EDE4; font-size: 48px; }
+  .cta-slide .subtitle { color: rgba(244,237,228,0.6); max-width: 500px; margin: 0 auto; }
+
+  .cta-links {
+    display: flex;
+    gap: 16px;
+    margin-top: 40px;
+    justify-content: center;
+  }
+
+  .cta-link {
+    padding: 14px 32px;
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+  }
+
+  .cta-link.primary { background: var(--rose); color: white; }
+  .cta-link.secondary { border: 1px solid rgba(244,237,228,0.3); color: rgba(244,237,228,0.8); }
+
+  /* Ecosystem logos */
+  .eco-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+    margin-top: 28px;
+  }
+
+  .eco-item {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+
+  .eco-icon { font-size: 28px; margin-bottom: 8px; display: block; }
+  .eco-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .eco-desc { font-size: 11px; color: var(--ink-light); margin-top: 4px; }
+
+  /* Keyboard hint */
+  .keyboard-hint {
+    position: fixed;
+    bottom: 16px;
+    right: 50%;
+    transform: translateX(50%);
+    font-size: 11px;
+    color: rgba(100,80,60,0.4);
+    letter-spacing: 1px;
+  }
+
+  /* Sakura decoration */
+  .sakura-bg {
+    position: absolute;
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 320px;
+    color: rgba(192,57,43,0.04);
+    font-family: 'Noto Serif JP', serif;
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  .slide-inner {
+    width: 100%;
+    max-width: 1100px;
+    position: relative;
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+
+  <!-- SLIDE 1: Cover -->
+  <div class="slide cover active" id="slide-1">
+    <div style="position:relative;z-index:1;width:100%;">
+      <div class="logo">🌸 Sakura AI &nbsp;·&nbsp; sakuraaai.com</div>
+      <h1>Solana の<br><span>AI 財務顧問</span></h1>
+      <p class="tagline">讓每個人都能像機構一樣操作 DeFi。<br>由 Claude AI 驅動，可驗證推理，鏈上透明。</p>
+      <div class="badge">⛩ Built on Solana &nbsp;·&nbsp; Colosseum Frontier Hackathon 2026</div>
+    </div>
+    <div class="watermark">sakuraaai.com</div>
+    <div class="slide-number">01 / 09</div>
+  </div>
+
+  <!-- SLIDE 2: Problem -->
+  <div class="slide" id="slide-2">
+    <div class="slide-inner">
+      <div class="section-label">問題</div>
+      <h2>DeFi 的高牆</h2>
+      <p class="subtitle">對大多數用戶而言，Solana DeFi 複雜、危險、門檻極高。</p>
+      <div class="divider"></div>
+      <div style="margin-top:8px;">
+        <div class="problem-item">
+          <div class="problem-num">01</div>
+          <div>
+            <strong style="font-size:15px;color:var(--ink);">看不懂數據</strong>
+            <p style="font-size:13px;color:var(--ink-light);margin-top:4px;">APY、清算率、utilization rate——普通用戶無從判斷何時進、何時出</p>
+          </div>
+        </div>
+        <div class="problem-item">
+          <div class="problem-num">02</div>
+          <div>
+            <strong style="font-size:15px;color:var(--ink);">看不出風險</strong>
+            <p style="font-size:13px;color:var(--ink-light);margin-top:4px;">Rug pull、合約漏洞、惡意鑄幣權——每個月都有用戶因此損失資金</p>
+          </div>
+        </div>
+        <div class="problem-item">
+          <div class="problem-num">03</div>
+          <div>
+            <strong style="font-size:15px;color:var(--ink);">決策沒有依據</strong>
+            <p style="font-size:13px;color:var(--ink-light);margin-top:4px;">缺乏即時數據整合與個人化建議，每個人都在憑感覺做決策</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sakura-bg">問</div>
+    <div class="watermark">sakuraaai.com</div>
+    <div class="slide-number">02 / 09</div>
+  </div>
+
+  <!-- SLIDE 3: Solution -->
+  <div class="slide" id="slide-3">
+    <div class="slide-inner">
+      <div class="section-label">解決方案</div>
+      <h2>你的個人<br>Solana DeFi 顧問</h2>
+      <div class="divider"></div>
+      <div class="two-col">
+        <div>
+          <p class="subtitle">Sakura 將 Claude Sonnet 4.6 AI 與即時鏈上數據結合，為每個用戶提供個人化、可信任的 DeFi 建議。</p>
+          <ul class="feature-list" style="margin-top:28px;">
+            <li><span class="icon">🌿</span><div><strong>即時數據驅動</strong><br><span style="font-size:12px;color:var(--ink-light);">整合 Solana 鏈上數據、APY、價格、安全評分</span></div></li>
+            <li><span class="icon">⛩️</span><div><strong>可驗證 AI 推理</strong><br><span style="font-size:12px;color:var(--ink-light);">每次建議的推理過程雜湊值寫入 Solana 鏈上，永久可驗證</span></div></li>
+            <li><span class="icon">🌸</span><div><strong>自主執行</strong><br><span style="font-size:12px;color:var(--ink-light);">AI Agent 自動生成再平衡方案，一鍵執行</span></div></li>
+          </ul>
+        </div>
+        <div>
+          <div class="card" style="background:var(--ink);border-color:transparent;color:#F4EDE4;margin-bottom:12px;">
+            <span class="card-icon">💬</span>
+            <h3 style="color:#F4EDE4;">用戶問</h3>
+            <p style="color:rgba(244,237,228,0.7);">「我的 SOL 現在應該質押還是放著？」</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">🌸</span>
+            <h3>Sakura 回答</h3>
+            <p>基於當前 8.2% APY、你的倉位比例、市場情緒，建議將 60% SOL 質押至 Marinade，預期年收益 $XXX</p>
+            <span class="tag tag-moss" style="margin-top:12px;">可驗證推理 #a3f2...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">sakuraaai.com</div>
+    <div class="slide-number">03 / 09</div>
+  </div>
+
+  <!-- SLIDE 4: Core Features -->
+  <div class="slide" id="slide-4">
+    <div class="slide-inner">
+      <div class="section-label">核心功能</div>
+      <h2>四大核心模組</h2>
+      <div class="cards col-2" style="margin-top:28px;">
+        <div class="card">
+          <span class="card-icon">🌸</span>
+          <h3>AI 顧問</h3>
+          <p>Claude Sonnet 4.6 即時回答 DeFi 問題。整合錢包餘額、SOL 價格、APY 數據，給出個人化建議。</p>
+          <span class="tag tag-rose">40+ 即時工具</span>
+        </div>
+        <div class="card">
+          <span class="card-icon">🛡️</span>
+          <h3>安全分析</h3>
+          <p>輸入任何 token 地址，AI 自動掃描合約風險：鑄幣權、流動性、持倉集中度、Rug pull 指標。</p>
+          <span class="tag tag-moss">5 秒完成掃描</span>
+        </div>
+        <div class="card">
+          <span class="card-icon">📊</span>
+          <h3>持倉體檢</h3>
+          <p>連接錢包即獲得完整持倉報告：資產分配、風險評分、優化建議，並可匯出 CSV。</p>
+          <span class="tag tag-gold">全自動分析</span>
+        </div>
+        <div class="card">
+          <span class="card-icon">⚙️</span>
+          <h3>自主 Agent</h3>
+          <p>三種策略模式（收益最大化 / 防禦 / 聰明錢），AI 生成再平衡方案，用戶一鍵確認執行。</p>
+          <span class="tag tag-ink">Forbes 級分析</span>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">sakuraaai.com</div>
+    <div class="slide-number">04 / 09</div>
+  </div>
+
+  <!-- SLIDE 5: Verifiable AI -->
+  <div class="slide" id="slide-5">
+    <div class="slide-inner">
+      <div class="section-label">技術創新</div>
+      <h2>業界首創：<br>可驗證 AI 推理</h2>
+      <div class="divider"></div>
+      <div class="two-col">
+        <div>
+          <p class="subtitle" style="margin-bottom:24px;">傳統 AI 建議是「黑盒子」——用戶無從驗證 AI 是否真的在做決策前進行了推理。</p>
+          <p class="subtitle">Sakura 在每次 AI 建議前，將推理過程雜湊寫入 Solana 鏈上。這意味著：</p>
+          <ul class="feature-list">
+            <li><span class="icon">✅</span><div>推理在建議之前就完成了，不是事後捏造</div></li>
+            <li><span class="icon">✅</span><div>任何人可以在鏈上驗證 AI 推理的完整性</div></li>
+            <li><span class="icon">✅</span><div>建立 AI 決策的信任基礎</div></li>
+          </ul>
+        </div>
+        <div>
+          <div class="card" style="border-left: 3px solid var(--rose);margin-bottom:12px;">
+            <div style="font-size:11px;letter-spacing:2px;color:var(--rose);margin-bottom:8px;">STEP 01</div>
+            <strong style="font-size:14px;">Claude AI 推理</strong>
+            <p style="margin-top:6px;">AI 分析用戶倉位、市場數據，生成完整推理鏈</p>
+          </div>
+          <div class="card" style="border-left: 3px solid var(--gold);margin-bottom:12px;">
+            <div style="font-size:11px;letter-spacing:2px;color:var(--gold);margin-bottom:8px;">STEP 02</div>
+            <strong style="font-size:14px;">雜湊值計算</strong>
+            <p style="margin-top:6px;">SHA-256 對推理文本計算雜湊，生成唯一指紋</p>
+          </div>
+          <div class="card" style="border-left: 3px solid var(--moss);">
+            <div style="font-size:11px;letter-spacing:2px;color:var(--moss);margin-bottom:8px;">STEP 03</div>
+            <strong style="font-size:14px;">寫入 Solana 鏈</strong>
+            <p style="margin-top:6px;">Memo instruction 將雜湊永久記錄，任何人可驗證</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">sakuraaai.com</div>
+    <div class="slide-number">05 / 09</div>
+  </div>
+
+  <!-- SLIDE 6: Ecosystem -->
+  <div class="slide" id="slide-6">
+    <div class="slide-inner">
+      <div class="section-label">生態整合</div>
+      <h2>深度整合 Solana 生態</h2>
+      <p class="subtitle">Sakura 不只是聊天機器人——直接整合主流協議，AI 建議可以一鍵執行。</p>
+      <div class="eco-grid">
+        <div class="eco-item">
+          <span class="eco-icon">🌿</span>
+          <div class="eco-name">Kamino Finance</div>
+          <div class="eco-desc">USDC 借貸 / 8% APY</div>
+        </div>
+        <div class="eco-item">
+          <span class="eco-icon">🫧</span>
+          <div class="eco-name">Marinade</div>
+          <div class="eco-desc">SOL 流動性質押</div>
+        </div>
+        <div class="eco-item">
+          <span class="eco-icon">⚡</span>
+          <div class="eco-name">Jupiter</div>
+          <div class="eco-desc">最優路徑代幣兌換</div>
+        </div>
+        <div class="eco-item">
+          <span class="eco-icon">🔮</span>
+          <div class="eco-name">Allora AI</div>
+          <div class="eco-desc">鏈上 ML 價格預測</div>
+        </div>
+        <div class="eco-item">
+          <span class="eco-icon">📡</span>
+          <div class="eco-name">Helius RPC</div>
+          <div class="eco-desc">高速 Solana 節點</div>
+        </div>
+        <div class="eco-item">
+          <span class="eco-icon">🤖</span>
+          <div class="eco-name">Claude Sonnet 4.6</div>
+          <div class="eco-desc">Anthropic 最新 AI</div>
+        </div>
+        <div class="eco-item">
+          <span class="eco-icon">💳</span>
+          <div class="eco-name">x402 Protocol</div>
+          <div class="eco-desc">鏈上微支付解鎖</div>
+        </div>
+        <div class="eco-item">
+          <span class="eco-icon">🌐</span>
+          <div class="eco-name">CoinGecko / Pyth</div>
+          <div class="eco-desc">即時市場數據</div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">sakuraaai.com</div>
+    <div class="slide-number">06 / 09</div>
+  </div>
+
+  <!-- SLIDE 7: Business Model -->
+  <div class="slide" id="slide-7">
+    <div class="slide-inner">
+      <div class="section-label">商業模式</div>
+      <h2>雙軌收益模型</h2>
+      <p class="subtitle" style="margin-bottom:28px;">訂閱制 + x402 鏈上微支付，兩條收益流互補。</p>
+      <div class="cards col-3">
+        <div class="pricing-card">
+          <h3 style="font-family:'Noto Serif JP',serif;font-size:18px;color:var(--ink);">Free</h3>
+          <div class="price" style="font-size:28px;color:var(--ink-light);">$0</div>
+          <p style="font-size:12px;color:var(--ink-light);margin-bottom:16px;">永久免費</p>
+          <div style="font-size:12px;color:var(--ink-light);line-height:2;">
+            每功能 3 次試用<br>
+            安全分析基礎版<br>
+            持倉概覽
+          </div>
+        </div>
+        <div class="pricing-card featured">
+          <div class="pricing-badge">Most Popular</div>
+          <h3>Basic</h3>
+          <div class="price">$15</div>
+          <p style="font-size:12px;margin-bottom:16px;">/ 月</p>
+          <div style="font-size:12px;color:rgba(244,237,228,0.7);line-height:2;">
+            1,350 點 / 月<br>
+            ~150 次 AI 顧問<br>
+            ~168 次安全分析
+          </div>
+        </div>
+        <div class="pricing-card">
+          <h3 style="font-family:'Noto Serif JP',serif;font-size:18px;color:var(--ink);">Pro</h3>
+          <div class="price">$30</div>
+          <p style="font-size:12px;color:var(--ink-light);margin-bottom:16px;">/ 月</p>
+          <div style="font-size:12px;color:var(--ink-light);line-height:2;">
+            3,500 點 / 月<br>
+            ~388 次 AI 顧問<br>
+            ~437 次安全分析
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:20px;padding:16px 24px;background:white;border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;gap:16px;">
+        <span style="font-size:20px;">💳</span>
+        <div>
+          <strong style="font-size:14px;color:var(--ink);">x402 鏈上微支付</strong>
+          <p style="font-size:12px;color:var(--ink-light);margin-top:2px;">免訂閱用戶可按次付費（如 $0.10 USDC 解鎖深度分析），業界首創的 HTTP 402 + Solana 支付流</p>
+        </div>
+        <span class="tag tag-gold" style="white-space:nowrap;margin-left:auto;">業界首創</span>
+      </div>
+    </div>
+    <div class="watermark">sakuraaai.com</div>
+    <div class="slide-number">07 / 09</div>
+  </div>
+
+  <!-- SLIDE 8: Traction & Vision -->
+  <div class="slide" id="slide-8">
+    <div class="slide-inner">
+      <div class="section-label">願景</div>
+      <h2>Solana 上的<br>Bloomberg Terminal</h2>
+      <div class="divider"></div>
+      <div class="two-col">
+        <div>
+          <p class="subtitle" style="margin-bottom:24px;">我們相信 AI × DeFi 的結合將重新定義散戶投資體驗。Sakura 的目標是成為每個 Solana 用戶的預設財務顧問。</p>
+          <div class="cards col-1" style="gap:10px;">
+            <div class="card" style="padding:18px 24px;display:flex;align-items:center;gap:20px;">
+              <div>
+                <div class="stat" style="font-size:28px;">2026 Q2</div>
+                <div class="stat-label">Mobile App（iOS / Android）</div>
+              </div>
+            </div>
+            <div class="card" style="padding:18px 24px;display:flex;align-items:center;gap:20px;">
+              <div>
+                <div class="stat" style="font-size:28px;">2026 Q3</div>
+                <div class="stat-label">Guardian 警報系統 + 自動執行</div>
+              </div>
+            </div>
+            <div class="card" style="padding:18px 24px;display:flex;align-items:center;gap:20px;">
+              <div>
+                <div class="stat" style="font-size:28px;">2026 Q4</div>
+                <div class="stat-label">機構版 API + 多鏈擴展</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="padding:32px;height:100%;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <div class="section-label" style="margin-bottom:12px;">為什麼是 Solana？</div>
+              <ul class="feature-list">
+                <li><span class="icon">⚡</span><div>400ms 確認速度，微支付成本極低</div></li>
+                <li><span class="icon">🌊</span><div>最活躍的 DeFi 生態，協議最多</div></li>
+                <li><span class="icon">👥</span><div>Solana 用戶對 DeFi 參與度最高</div></li>
+                <li><span class="icon">🤖</span><div>x402 微支付在 Solana 上才有可能</div></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="watermark">sakuraaai.com</div>
+    <div class="slide-number">08 / 09</div>
+  </div>
+
+  <!-- SLIDE 9: CTA -->
+  <div class="slide cta-slide" id="slide-9">
+    <div style="position:relative;z-index:1;text-align:center;">
+      <div class="section-label" style="color:var(--rose-soft);text-align:center;justify-content:center;">聯絡</div>
+      <h2 style="margin-bottom:16px;">一起把 Sakura<br>帶給更多 Solana 用戶</h2>
+      <div class="divider" style="margin:20px auto;"></div>
+      <p class="subtitle" style="color:rgba(244,237,228,0.6);margin-bottom:0;">
+        我們正在尋找 Solana 生態的支持與合作——<br>
+        不管是技術整合、資源對接，或是一起把 AI × DeFi 做到極致。
+      </p>
+      <div class="cta-links">
+        <a href="https://sakuraaai.com" class="cta-link primary">🌸 試用 Sakura</a>
+        <a href="mailto:contact@sakuraaai.com" class="cta-link secondary">✉ 聯絡我們</a>
+      </div>
+      <div style="margin-top:48px;display:flex;gap:40px;justify-content:center;opacity:0.5;">
+        <div style="text-align:center;">
+          <div style="font-size:11px;letter-spacing:2px;color:rgba(244,237,228,0.5);margin-bottom:4px;">WEBSITE</div>
+          <div style="font-size:14px;color:rgba(244,237,228,0.8);">sakuraaai.com</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:11px;letter-spacing:2px;color:rgba(244,237,228,0.5);margin-bottom:4px;">TWITTER</div>
+          <div style="font-size:14px;color:rgba(244,237,228,0.8);">@sakuraaijp</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:11px;letter-spacing:2px;color:rgba(244,237,228,0.5);margin-bottom:4px;">BUILT FOR</div>
+          <div style="font-size:14px;color:rgba(244,237,228,0.8);">Colosseum Frontier 2026</div>
+        </div>
+      </div>
+    </div>
+    <div style="position:absolute;font-size:300px;opacity:0.03;font-family:'Noto Serif JP',serif;bottom:-60px;right:-20px;line-height:1;color:white;">桜</div>
+    <div class="watermark" style="color:rgba(244,237,228,0.2);">sakuraaai.com</div>
+    <div class="slide-number" style="color:rgba(244,237,228,0.3);">09 / 09</div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button onclick="prevSlide()">←</button>
+  <button onclick="nextSlide()">→</button>
+</div>
+
+<!-- Progress dots -->
+<div class="dots" id="dots"></div>
+
+<div class="keyboard-hint">← → 鍵盤切換</div>
+
+<script>
+  const totalSlides = 9;
+  let current = 1;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  for (let i = 1; i <= totalSlides; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    document.getElementById('slide-' + current)?.classList.remove('active');
+    dotsEl.children[current - 1]?.classList.remove('active');
+    current = Math.max(1, Math.min(totalSlides, n));
+    document.getElementById('slide-' + current)?.classList.add('active');
+    dotsEl.children[current - 1]?.classList.add('active');
+  }
+
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prevSlide(); }
+  });
+
+  // Touch swipe
+  let touchX = 0;
+  document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+  document.addEventListener('touchend', e => {
+    const dx = touchX - e.changedTouches[0].clientX;
+    if (Math.abs(dx) > 50) dx > 0 ? nextSlide() : prevSlide();
+  });
+</script>
+</body>
+</html>
