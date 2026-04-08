@@ -27,14 +27,25 @@ const USDC_DECIMALS = 6;
 const PAYMENT_TIMEOUT_MS = 45_000; // 45 seconds max for entire payment flow
 
 /**
- * Create and send a Solana USDC transfer transaction via Phantom.
+ * Returns the active wallet provider: Phantom first, OKX as fallback.
+ * Works in both browser contexts.
+ */
+function getWalletProvider() {
+  if (typeof window === "undefined") return null;
+  if (window.solana?.isPhantom) return window.solana;
+  if (window.okxwallet?.solana) return window.okxwallet.solana;
+  return null;
+}
+
+/**
+ * Create and send a Solana USDC transfer transaction via Phantom or OKX wallet.
  * Returns the tx signature on success.
  * Includes a 45-second timeout to prevent UI from being stuck in "支付中...".
  */
-export async function payWithPhantom(
+export async function payWithWallet(
   challenge: PaymentChallenge
 ): Promise<{ sig: string } | { error: string }> {
-  if (!window.solana?.isPhantom) return { error: "no_wallet" };
+  if (!getWalletProvider()) return { error: "no_wallet" };
 
   // Race against a 45-second timeout — prevents infinite "支付中..." stuck state
   const timeoutPromise = new Promise<{ error: string }>(resolve =>
@@ -43,6 +54,9 @@ export async function payWithPhantom(
 
   return Promise.race([timeoutPromise, _doPayment(challenge)]);
 }
+
+/** @deprecated Use payWithWallet instead */
+export const payWithPhantom = payWithWallet;
 
 async function _doPayment(
   challenge: PaymentChallenge
@@ -65,8 +79,9 @@ async function _doPayment(
       : `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY ?? ""}`;
     const conn = new Connection(RPC, "confirmed");
 
-    await window.solana!.connect({ onlyIfTrusted: true });
-    const senderPubkey = new PublicKey(window.solana!.publicKey!.toString());
+    const provider = getWalletProvider()!;
+    await provider.connect({ onlyIfTrusted: true });
+    const senderPubkey = new PublicKey(provider.publicKey!.toString());
     const recipientPubkey = new PublicKey(challenge.recipient);
     const usdcMint = new PublicKey(USDC_MINT);
 
@@ -100,7 +115,7 @@ async function _doPayment(
     const amountLamports = BigInt(Math.round(challenge.amount * 10 ** USDC_DECIMALS));
     tx.add(createTransferCheckedInstruction(senderATA, usdcMint, receiverATA, senderPubkey, amountLamports, USDC_DECIMALS));
 
-    const { signature } = await window.solana!.signAndSendTransaction(tx);
+    const { signature } = await provider.signAndSendTransaction(tx);
     await conn.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
     return { sig: signature };
   } catch (e: unknown) {
@@ -149,8 +164,8 @@ export async function fetchWithPayment<T>(
     return { error: "Invalid 402 response", needsPayment: true };
   }
 
-  // Pay via Phantom
-  const payResult = await payWithPhantom(challenge);
+  // Pay via Phantom or OKX wallet
+  const payResult = await payWithWallet(challenge);
   if ("error" in payResult) {
     return { error: payResult.error, needsPayment: true, challenge };
   }

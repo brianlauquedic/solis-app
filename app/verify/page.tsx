@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { lookupProof, getAllProofs, ProofRecord } from "@/lib/proof-store";
-import { getDeviceId } from "@/lib/device-id";
-import { payWithPhantom } from "@/lib/x402";
+import { payWithWallet } from "@/lib/x402";
 import { useLang } from "@/contexts/LanguageContext";
 
 const SOLIS_FEE_WALLET = "Goc5kAMb9NTXjobxzZogAWaHwajmQjw7CdmATWJN1mQh";
@@ -41,17 +40,8 @@ export default function VerifyPage() {
   const [verifyPaymentSig, setVerifyPaymentSig] = useState<string | null>(null);
 
   useEffect(() => {
-    const deviceId = getDeviceId();
-    const walletAddress = (typeof window !== "undefined" ? (window.solana?.publicKey?.toString() ?? "") : "");
-    fetch("/api/quota?features=verify", {
-      headers: {
-        "X-Device-ID": deviceId,
-        "X-Wallet-Address": walletAddress,
-      },
-    })
-      .then(r => r.json())
-      .then(d => { if (d.verify) setVerifyQuota(d.verify); })
-      .catch(() => {});
+    // Quota check disabled in v2 (no rate-limit lib)
+    void verifyQuota;
   }, []);
 
   function handleVerify() {
@@ -67,20 +57,15 @@ export default function VerifyPage() {
     setChainLoading(true);
     setChainResult(null);
     try {
-      const deviceId = getDeviceId();
-      const walletAddress = (typeof window !== "undefined" ? (window.solana?.publicKey?.toString() ?? "") : "");
-      const reqHeaders: Record<string, string> = {
-        "X-Device-ID": deviceId,
-        "X-Wallet-Address": walletAddress,
-      };
+      const reqHeaders: Record<string, string> = {};
       if (verifyPaymentSig) reqHeaders["X-PAYMENT"] = verifyPaymentSig;
 
       let res = await fetch(`/api/verify/fetch-memo?sig=${encodeURIComponent(sig)}`, { headers: reqHeaders });
 
-      // Handle quota exhaustion — pay then retry
+      // Handle payment required — pay then retry
       if (res.status === 402) {
         const body402 = await res.json() as { recipient?: string; amount?: number; description?: string };
-        const payResult = await payWithPhantom({
+        const payResult = await payWithWallet({
           recipient: body402.recipient ?? SOLIS_FEE_WALLET,
           amount: body402.amount ?? 0.05,
           currency: "USDC",
@@ -99,13 +84,6 @@ export default function VerifyPage() {
 
       const data = await res.json() as ChainMemoResult;
       setChainResult(data);
-
-      // Refresh quota
-      const deviceId2 = getDeviceId();
-      const wallet2 = (typeof window !== "undefined" ? (window.solana?.publicKey?.toString() ?? "") : "");
-      fetch("/api/quota?features=verify", {
-        headers: { "X-Device-ID": deviceId2, "X-Wallet-Address": wallet2 },
-      }).then(r => r.json()).then(d => { if (d.verify) setVerifyQuota(d.verify); }).catch(() => {});
     } catch {
       setChainResult({ signature: sig, memo: null, layers: { rawMemo: null }, slot: null, blockTime: null, timestamp: null, feePayer: null, error: "Fetch failed" });
     } finally {

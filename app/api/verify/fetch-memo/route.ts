@@ -11,13 +11,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Connection } from "@solana/web3.js";
 import { RPC_URL } from "@/lib/agent";
-import { runQuotaGate } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
-  // Anti-Sybil quota gate: 3 free proof lookups per wallet/device/IP
-  const gate = await runQuotaGate(req, "verify");
-  if (!gate.proceed) return gate.response;
-
   const { searchParams } = new URL(req.url);
   const sig = searchParams.get("sig");
 

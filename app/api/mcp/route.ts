@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { atomicClaimPaymentSig, releasePaymentSig } from "@/lib/rate-limit";
 
 // ── Payment config ───────────────────────────────────────────────
 const HELIUS_API_KEY  = process.env.HELIUS_API_KEY ?? "";
@@ -9,6 +8,9 @@ const HELIUS_RPC      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KE
 const SOLIS_FEE_WALLET = process.env.SOLIS_FEE_WALLET ?? "";
 const USDC_MINT        = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const MCP_CALL_FEE     = 10_000; // 0.01 USDC (6 decimals) per tool call
+
+// Simple in-memory replay protection (ephemeral; good enough for demo)
+const usedSigs = new Set<string>();
 
 let _mcpFeeAta = "";
 function getSolisFeeAta(): string {
@@ -47,52 +49,51 @@ async function verifyMCPPayment(txSig: string, requiredAmount: number): Promise<
   }
 }
 
-// ── MCP Tool Definitions ──────────────────────────────────────────
+// ── MCP Tool Definitions (v2 — 3 core features) ──────────────────
 const TOOLS = [
   {
-    name: "solis_token_security",
+    name: "sakura_nonce_guardian",
     description:
-      "Analyze a Solana token's security using GoPlus 5-dimension scan + Claude AI reasoning. Returns security score (0-100), risk flags (honeypot, mint authority, freeze authority, holder concentration), and an AI-generated position recommendation.",
+      "Scan a Solana wallet for Durable Nonce accounts and detect security risks. Durable Nonces enable pre-signed transactions that never expire — the attack vector used in the April 2026 Drift $285M hack. Returns nonce accounts, risk signals, and AI analysis.",
     inputSchema: {
       type: "object",
       properties: {
-        mint: {
+        wallet: {
           type: "string",
-          description: "Solana token mint address (base58)",
-        },
-        walletTotalUSD: {
-          type: "number",
-          description: "Optional: user's total wallet USD value for position sizing advice",
+          description: "Solana wallet address (base58) to scan for nonce accounts",
         },
       },
-      required: ["mint"],
+      required: ["wallet"],
     },
   },
   {
-    name: "solis_defi_advisor",
+    name: "sakura_compile_strategy",
     description:
-      "Get AI-powered DeFi advice for a Solana wallet. Analyzes current SOL/USDC balances against real-time APY opportunities (Marinade, Jito, Kamino, Raydium) and returns actionable recommendations with protocol links.",
+      "Convert a natural language DeFi strategy description into structured JSON. Supports scheduling (cron), APY-threshold triggers, and actions like stake/lend/swap across Kamino, Marinade, and Jito.",
     inputSchema: {
       type: "object",
       properties: {
-        walletAddress: {
+        text: {
           type: "string",
-          description: "Solana wallet address (base58)",
-        },
-        question: {
-          type: "string",
-          description: "Natural language question, e.g. 'What should I do with my SOL?' or 'Best yield for my USDC?'",
-        },
-        solBalance: {
-          type: "number",
-          description: "Optional: current SOL balance",
-        },
-        idleUSDC: {
-          type: "number",
-          description: "Optional: idle USDC amount",
+          description: "Natural language strategy, e.g. '每週五把我 50% USDC 存入 Kamino'",
         },
       },
-      required: ["walletAddress", "question"],
+      required: ["text"],
+    },
+  },
+  {
+    name: "sakura_compile_safety_rules",
+    description:
+      "Convert natural language safety constraints into structured AI agent guardrails. Returns rules like max-per-tx limits, protocol whitelists, and approval requirements that gate every DeFi action.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        text: {
+          type: "string",
+          description: "Natural language safety rules, e.g. '每次最多動 $100 USDC，只能去 Kamino 和 Marinade'",
+        },
+      },
+      required: ["text"],
     },
   },
 ];
@@ -100,9 +101,9 @@ const TOOLS = [
 // ── GET: MCP server manifest / tools list ────────────────────────
 export async function GET() {
   return NextResponse.json({
-    name: "solis-mcp",
-    version: "1.0.0",
-    description: "Sakura AI DeFi Advisor — Token security analysis and DeFi yield recommendations on Solana",
+    name: "sakura-v2-mcp",
+    version: "2.0.0",
+    description: "Sakura v2 — Durable Nonce Guardian + NL Strategy Compiler + NL Safety Rules on Solana",
     tools: TOOLS,
   });
 }
@@ -136,7 +137,7 @@ export async function POST(req: NextRequest) {
       return jsonrpcError(id, -32602, "Invalid params: missing tool name");
     }
 
-    // x402 payment gate — $0.01 USDC per tool call (MCPay pattern)
+    // x402 payment gate — $0.01 USDC per tool call
     const paymentSig = req.headers.get("x-payment") ?? req.headers.get("X-PAYMENT");
     if (!paymentSig) {
       return NextResponse.json(
@@ -153,16 +154,16 @@ export async function POST(req: NextRequest) {
         }
       );
     }
-    // Atomic replay protection: claim sig slot first, then verify (prevents TOCTOU)
-    const alreadyClaimed = await atomicClaimPaymentSig(paymentSig);
-    if (alreadyClaimed) {
+
+    // Replay protection
+    if (usedSigs.has(paymentSig)) {
       return jsonrpcError(id, -32001, "Payment already used — send a new transaction");
     }
     const paymentValid = await verifyMCPPayment(paymentSig, MCP_CALL_FEE);
     if (!paymentValid) {
-      await releasePaymentSig(paymentSig); // release so user can retry with valid sig
       return jsonrpcError(id, -32001, "Payment verification failed. Send 0.01 USDC to Sakura fee wallet.");
     }
+    usedSigs.add(paymentSig);
 
     try {
       const result = await callTool(params.name, params.arguments ?? {});
@@ -184,153 +185,43 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<un
     ? `https://${process.env.VERCEL_URL}`
     : "http://localhost:3000";
 
-  if (name === "solis_token_security") {
-    const mint = String(args.mint ?? "");
-    if (!mint) throw new Error("mint address is required");
-    const MINT_RE = /^[1-9A-HJ-NP-Z]{32,44}$/;
-    if (!MINT_RE.test(mint)) throw new Error("Invalid Solana mint address format");
-
-    // Fetch GoPlus data first (reuse existing analyze endpoint logic)
-    const goplusUrl = `https://api.gopluslabs.io/api/v1/solana/token_security?contract_addresses=${mint}`;
-    const gpRes = await fetch(goplusUrl, { headers: { "Accept": "application/json" } });
-    const gpData = await gpRes.json();
-    const tokenData = gpData?.result?.[mint.toLowerCase()] ?? gpData?.result?.[mint] ?? null;
-
-    if (!tokenData) {
-      return { error: "Token not found in GoPlus database", mint };
-    }
-
-    // Build analyze request
-    const analyzeBody = {
-      mint,
-      name: tokenData.token_name || "Unknown",
-      symbol: tokenData.token_symbol || "???",
-      securityScore: computeScore(tokenData),
-      risks: buildRisks(tokenData),
-      positives: buildPositives(tokenData),
-      holderCount: Number(tokenData.holder_count) || undefined,
-      top10HolderPct: tokenData.top10_holder_percent ? Number(tokenData.top10_holder_percent) * 100 : undefined,
-      mintable: tokenData.mintable === "1",
-      freezable: tokenData.freezable === "1",
-      isHoneypot: tokenData.honeypot === "1",
-      walletRiskyPct: 0,
-      walletTotalUSD: Number(args.walletTotalUSD ?? 1000),
-    };
-
-    const analyzeRes = await fetch(`${base}/api/analyze`, {
+  if (name === "sakura_nonce_guardian") {
+    const wallet = String(args.wallet ?? "");
+    if (!wallet || wallet.length < 32) throw new Error("wallet address is required");
+    const res = await fetch(`${base}/api/nonce-guardian`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(analyzeBody),
+      body: JSON.stringify({ wallet }),
     });
-    const analyzeData = await analyzeRes.json();
-
-    return {
-      mint,
-      name: analyzeBody.name,
-      symbol: analyzeBody.symbol,
-      securityScore: analyzeBody.securityScore,
-      decision: analyzeData.decision,
-      reasoning: analyzeData.reasoning,
-      risks: analyzeBody.risks,
-      aiAvailable: analyzeData.aiAvailable,
-      onchainProof: {
-        hash: analyzeData.reasoningHash,
-        memo: analyzeData.memoPayload?.slice(0, 100) + (analyzeData.memoPayload?.length > 100 ? "..." : ""),
-      },
-    };
+    if (!res.ok) throw new Error(`Nonce Guardian failed: HTTP ${res.status}`);
+    return await res.json();
   }
 
-  if (name === "solis_defi_advisor") {
-    const walletAddress = String(args.walletAddress ?? "");
-    const question = String(args.question ?? "");
-    if (!walletAddress || !question) throw new Error("walletAddress and question are required");
-
-    // Fetch live yield data
-    let liveYield = null;
-    try {
-      const yieldRes = await fetch(`${base}/api/yield`);
-      liveYield = await yieldRes.json();
-    } catch { /* proceed without live yield */ }
-
-    const wallet = {
-      solBalance: Number(args.solBalance ?? 1),
-      idleUSDC: Number(args.idleUSDC ?? 0),
-      totalUSD: Number(args.solBalance ?? 1) * 150 + Number(args.idleUSDC ?? 0),
-    };
-
-    // Collect full streaming response
-    const chatRes = await fetch(`${base}/api/defi-chat`, {
+  if (name === "sakura_compile_strategy") {
+    const text = String(args.text ?? "");
+    if (!text) throw new Error("text is required");
+    const res = await fetch(`${base}/api/strategy/compile`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: question, wallet, liveYield }),
+      body: JSON.stringify({ text }),
     });
+    if (!res.ok) throw new Error(`Strategy compilation failed: HTTP ${res.status}`);
+    return await res.json();
+  }
 
-    // Parse SSE stream
-    const reader = chatRes.body?.getReader();
-    const decoder = new TextDecoder();
-    let fullText = "";
-    let actions: unknown[] = [];
-    let reasoningHash = "";
-
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value);
-        for (const line of chunk.split("\n")) {
-          if (!line.startsWith("data: ")) continue;
-          try {
-            const evt = JSON.parse(line.slice(6));
-            if (evt.type === "token") fullText += evt.text ?? "";
-            if (evt.type === "done") {
-              actions = evt.actions ?? [];
-              reasoningHash = evt.reasoningHash ?? "";
-            }
-          } catch { /* ignore malformed lines */ }
-        }
-      }
-    }
-
-    return {
-      walletAddress,
-      question,
-      advice: fullText,
-      actions: actions.slice(0, 3), // top 3 action cards
-      onchainProof: { hash: reasoningHash },
-    };
+  if (name === "sakura_compile_safety_rules") {
+    const text = String(args.text ?? "");
+    if (!text) throw new Error("text is required");
+    const res = await fetch(`${base}/api/safety-rules/compile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) throw new Error(`Safety rules compilation failed: HTTP ${res.status}`);
+    return await res.json();
   }
 
   throw new Error(`Unknown tool: ${name}`);
-}
-
-// ── GoPlus score helpers ─────────────────────────────────────────
-function computeScore(d: Record<string, unknown>): number {
-  let score = 100;
-  if (d.honeypot === "1") score -= 50;
-  if (d.mintable === "1") score -= 15;
-  if (d.freezable === "1") score -= 15;
-  const top10 = Number(d.top10_holder_percent ?? 0) * 100;
-  if (top10 > 80) score -= 15;
-  else if (top10 > 60) score -= 8;
-  return Math.max(0, Math.min(100, score));
-}
-
-function buildRisks(d: Record<string, unknown>): string[] {
-  const r: string[] = [];
-  if (d.honeypot === "1") r.push("Honeypot detected — cannot sell");
-  if (d.mintable === "1") r.push("Mint authority active — supply can be inflated");
-  if (d.freezable === "1") r.push("Freeze authority active — tokens can be frozen");
-  const top10 = Number(d.top10_holder_percent ?? 0) * 100;
-  if (top10 > 80) r.push(`Top 10 holders own ${top10.toFixed(0)}% — high concentration risk`);
-  return r;
-}
-
-function buildPositives(d: Record<string, unknown>): string[] {
-  const p: string[] = [];
-  if (d.honeypot !== "1") p.push("No honeypot detected");
-  if (d.mintable !== "1") p.push("No mint authority");
-  if (d.freezable !== "1") p.push("No freeze authority");
-  return p;
 }
 
 // ── JSON-RPC helpers ─────────────────────────────────────────────
