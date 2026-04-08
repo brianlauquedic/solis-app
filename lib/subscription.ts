@@ -2,8 +2,8 @@
  * Sakura Credit System — 点数订阅模型
  *
  * 设计原则（洞察人性）：
- *   1. 免费层给 100 点 — 够体验一次深度分析（80点）或 10 次安全分析（10点×10），
- *      让用户感受到价值，但不足以长期依赖 → 自然产生付费动机；每月自动重置
+ *   1. 免费层给 100 点 — 每个主功能各 3 次（安全分析/持倉健檢/Agent/顧問各消耗8-9点），
+ *      深度分析需 150 点（付費專屬）→ 用戶能均衡體驗所有功能，自然產生升級動機；每月自動重置
  *   2. Basic $8/月，1,500 点 + 500 点结转 — 比 Netflix 便宜，有结转减少焦虑
  *      命名"Basic"而非"Standard"→ 让 Pro 看起来不贵
  *   3. Pro $28/月，6,000 点 + 未用点数结转（上限 2,000）
@@ -52,11 +52,11 @@ export type Feature = "analyze" | "advisor" | "advisor_deep" | "agent" | "verify
 
 export const FEATURE_CREDIT_COST: Record<Feature, number> = {
   verify:       1,   // RPC only                            → ~$0.0001/次
-  analyze:      10,  // claude-sonnet-4-6                   → ~$0.003/次
-  portfolio:    15,  // claude-sonnet-4-6                   → ~$0.005/次
-  agent:        15,  // claude-sonnet-4-6 rebalance         → ~$0.005/次
-  advisor:      30,  // claude-sonnet-4-6 简单对话           → ~$0.01/次
-  advisor_deep: 80,  // claude-sonnet-4-6 + thinking       → ~$0.05–0.15/次
+  analyze:      8,   // claude-sonnet-4-6                   → ~$0.003/次  (free: 3次)
+  portfolio:    8,   // claude-sonnet-4-6                   → ~$0.005/次  (free: 3次)
+  agent:        8,   // claude-sonnet-4-6 rebalance         → ~$0.005/次  (free: 3次)
+  advisor:      9,   // claude-sonnet-4-6 简单对话           → ~$0.01/次   (free: 3次)
+  advisor_deep: 150, // claude-sonnet-4-6 + thinking       → ~$0.05–0.15/次 (free: 0次，付費專屬)
 };
 
 // ── Tier credit allocations ───────────────────────────────────────
