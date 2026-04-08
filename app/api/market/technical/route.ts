@@ -14,6 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeConfluence, type OHLCV, type ConfluenceResult } from "@/lib/technical-analysis";
+import { isValidSolanaAddress } from "@/lib/rate-limit";
 
 const COINGECKO_KEY = process.env.COINGECKO_API_KEY ?? "";  // optional Pro key
 const GMGN_BASE    = process.env.GMGN_HOST ?? "https://openapi.gmgn.ai";
@@ -207,7 +208,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       currentPrice = ohlcv[ohlcv.length - 1]?.close ?? 0;
 
     // ── Path 2: Unknown Solana SPL token (by mint) — use GMGN + DexScreener ──
-    } else if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint)) {
+    } else if (mint && isValidSolanaAddress(mint)) {
       const [candles, info] = await Promise.all([
         fetchGmgnOHLCV(mint),
         fetchDexScreenerTokenInfo(mint),
