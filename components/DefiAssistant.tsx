@@ -393,16 +393,25 @@ export default function DefiAssistant({ walletAddress, walletSnapshot }: Props) 
 
   // Re-translate welcome-back message when lang changes in-session
   useEffect(() => {
-    setMessages(prev => prev.map(m => {
-      if (m.role === "assistant" && (
-        m.text.startsWith("歡迎回來！") ||
-        m.text.startsWith("Welcome back!") ||
-        m.text.startsWith("おかえりなさい！")
-      )) {
-        return { ...m, text: t("chatWelcomeBackGeneric") };
-      }
-      return m;
-    }));
+    setMessages(prev => {
+      if (prev.length === 0) return prev;
+      // If any message contains CJK and we switched away from zh, clear the chat
+      const hasCJK = /[\u3000-\u9fff\uf900-\ufaff]/.test(prev.map(m => m.text).join(" "));
+      const hasLatin = /[a-zA-Z]{4,}/.test(prev.map(m => m.text).join(" "));
+      if (hasCJK && lang !== "zh") return [];
+      if (hasLatin && !hasCJK && lang === "zh") return [];
+      // Otherwise just retranslate welcome-back messages
+      return prev.map(m => {
+        if (m.role === "assistant" && (
+          m.text.startsWith("歡迎回來！") ||
+          m.text.startsWith("Welcome back!") ||
+          m.text.startsWith("おかえりなさい！")
+        )) {
+          return { ...m, text: t("chatWelcomeBackGeneric") };
+        }
+        return m;
+      });
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
