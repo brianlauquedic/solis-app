@@ -924,12 +924,30 @@ async function executeTool(name: string, input: Record<string, unknown>): Promis
     }
     case "get_messari_research": {
       const query = input.query as string;
+      // Try Messari first if key configured
       const result = await sakGetMessariResearch(query);
-      if (!result) return {
-        error: "Messari API 未配置。請在 .env.local 設置 MESSARI_API_KEY=your_key。",
-        note:  "Messari 提供機構級加密研究，可在 messari.io 申請 API key。",
-      };
-      return { ...result, dataSource: "Messari AI Research" };
+      if (result) return { ...result, dataSource: "Messari AI Research" };
+      // Fallback: aggregate free on-chain research from DeFiLlama + CoinGecko
+      try {
+        const [llamaRes, cgRes] = await Promise.allSettled([
+          fetch("https://api.llama.fi/v2/chains").then(r => r.ok ? r.json() : null),
+          fetch("https://api.coingecko.com/api/v3/coins/solana?localization=false&tickers=false&community_data=false&developer_data=false").then(r => r.ok ? r.json() : null),
+        ]);
+        const llama = llamaRes.status === "fulfilled" ? llamaRes.value : null;
+        const cg    = cgRes.status === "fulfilled" ? cgRes.value : null;
+        const solChain = Array.isArray(llama) ? llama.find((c: {name?: string; tvl?: number}) => c.name === "Solana") : null;
+        const price    = cg?.market_data?.current_price?.usd ?? "N/A";
+        const mcap     = cg?.market_data?.market_cap?.usd ? `$${(cg.market_data.market_cap.usd / 1e9).toFixed(1)}B` : "N/A";
+        const tvl      = solChain?.tvl ? `$${(solChain.tvl / 1e9).toFixed(2)}B` : "N/A";
+        const change7d = cg?.market_data?.price_change_percentage_7d?.toFixed(1) ?? "N/A";
+        return {
+          answer: `Solana research summary (free data):\n• Price: $${price} | 7d change: ${change7d}%\n• Market Cap: ${mcap}\n• DeFiLlama TVL: ${tvl}\n• Query: "${query}"\n\nFor deeper institutional research, consider Messari Pro.`,
+          sources: ["DeFiLlama", "CoinGecko"],
+          dataSource: "DeFiLlama + CoinGecko (free fallback)",
+        };
+      } catch {
+        return { error: "Research data unavailable", query };
+      }
     }
     case "get_drift_perp_markets": {
       const markets = await sakGetDriftPerpMarkets();
