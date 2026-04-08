@@ -335,23 +335,27 @@ export async function runQuotaGate(
       return { proceed: true, ids, paid: false };
     }
 
-    // Credits exhausted — differentiate free vs paid messaging
+    // Credits/quota exhausted — differentiate free vs paid messaging
     const now = Date.now();
     const { balance, cost, tier } = result;
 
     if (tier === "free") {
       const record = await getOrCreateFreeRecord(wallet);
       const nextResetDays = Math.max(1, Math.ceil((record.expiresAt - now) / (1000 * 60 * 60 * 24)));
+      // feature_limit: free tier per-feature 3-use limit hit (still has credits, but quota exhausted)
+      const isFeatureLimit = result.reason === "feature_limit";
       return {
         proceed: false,
         response: NextResponse.json(
           {
-            error: "free_credits_exhausted",
+            error: isFeatureLimit ? "free_quota_exhausted" : "free_credits_exhausted",
             tier: "free",
             feature,
             creditBalance: balance,
             creditCost: cost,
-            message: `免費額度不足（需 ${cost} 點，餘 ${balance} 點）。約 ${nextResetDays} 天後自動重置 100 點，或立即升級訂閱獲得更多點數。`,
+            message: isFeatureLimit
+              ? `免費體驗次數已用完（此功能限 3 次）。約 ${nextResetDays} 天後重置，或立即升級訂閱。`
+              : `免費額度不足（需 ${cost} 點，餘 ${balance} 點）。約 ${nextResetDays} 天後自動重置 100 點，或立即升級訂閱獲得更多點數。`,
             upgradeUrl: "/api/subscription",
             nextResetDays,
           },

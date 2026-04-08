@@ -60,6 +60,17 @@ export const FEATURE_CREDIT_COST: Record<Feature, number> = {
   advisor_deep: 150, // claude-sonnet-4-6 + thinking       → ~$0.05–0.15/次 (free: 0次，付費專屬)
 };
 
+// ── Free tier per-feature hard limits ────────────────────────────
+// 0 = no hard limit (rely on credit balance check instead)
+export const FREE_TIER_FEATURE_LIMIT: Record<Feature, number> = {
+  verify:       0,    // ~100 uses on 100pts — effectively unlimited, use credit gate
+  analyze:      3,
+  portfolio:    3,
+  agent:        3,
+  advisor:      3,
+  advisor_deep: 0,    // Blocked by credit balance (150pts > 100pts free budget)
+};
+
 // ── Tier credit allocations ───────────────────────────────────────
 
 export const TIER_MONTHLY_CREDITS: Record<SubscriptionTier, number> = {
@@ -205,8 +216,12 @@ async function redisEval(script: string, keys: string[], args: string[]): Promis
 }
 
 // Lua script: atomically check balance, deduct credits, and track per-feature usage.
-// ARGV[1] = cost, ARGV[2] = feature name (for featureUsage counter)
-// Returns: new balance (≥0) on success, -1 if no record, -2 if insufficient credits.
+// ARGV[1] = cost, ARGV[2] = feature name, ARGV[3] = free tier feature limit (0 = skip check)
+// Returns:
+//   ≥0  — success (new credit balance)
+//   -1  — no record found
+//   -2  — insufficient credit balance
+//   -3  — free tier per-feature limit reached (featureUsage[feature] >= limit)
 const DEDUCT_LUA = `
 local raw = redis.call("GET", KEYS[1])
 if not raw then return -1 end
@@ -214,7 +229,13 @@ local ok, rec = pcall(cjson.decode, raw)
 if not ok then return -1 end
 local cost = tonumber(ARGV[1])
 local feature = ARGV[2]
+local freeLimit = tonumber(ARGV[3]) or 0
 if rec["creditBalance"] < cost then return -2 end
+if rec["tier"] == "free" and feature and feature ~= "" and freeLimit > 0 then
+  if not rec["featureUsage"] then rec["featureUsage"] = {} end
+  local usedCount = rec["featureUsage"][feature] or 0
+  if usedCount >= freeLimit then return -3 end
+end
 rec["creditBalance"] = rec["creditBalance"] - cost
 if feature and feature ~= "" then
   if not rec["featureUsage"] then rec["featureUsage"] = {} end
@@ -337,26 +358,27 @@ export async function deductCredits(
 
 /**
  * Atomically check balance and deduct credits in one Redis operation.
- * Eliminates TOCTOU race between checkCreditBalance + deductCredits.
+ * Also enforces free tier per-feature hard limits (e.g. 3 uses of analyze).
  *
  * Returns:
  *   { success: true,  newBalance: number }  — deducted OK
- *   { success: false, reason: "no_record" | "insufficient", balance: number, cost: number }
+ *   { success: false, reason: "no_record" | "insufficient" | "feature_limit" }
  */
 export async function atomicDeductCredits(
   walletAddress: string,
   feature: Feature
 ): Promise<
   | { success: true; newBalance: number; tier: SubscriptionTier }
-  | { success: false; reason: "no_record" | "insufficient"; balance: number; cost: number; tier: SubscriptionTier }
+  | { success: false; reason: "no_record" | "insufficient" | "feature_limit"; balance: number; cost: number; tier: SubscriptionTier }
 > {
   const cost = FEATURE_CREDIT_COST[feature];
+  const freeLimit = FREE_TIER_FEATURE_LIMIT[feature];
   const key = `solis:sub:${walletAddress}`;
 
   // ── Redis path: atomic Lua ───────────────────────────────────────
   if (redisAvailable) {
     try {
-      const result = await redisEval(DEDUCT_LUA, [key], [String(cost), feature]);
+      const result = await redisEval(DEDUCT_LUA, [key], [String(cost), feature, String(freeLimit)]);
       const num = Number(result);
       if (num >= 0) {
         // Success — read tier from cached record (non-blocking best-effort)
@@ -367,6 +389,12 @@ export async function atomicDeductCredits(
         const record = await getSubscription(walletAddress);
         const balance = record?.creditBalance ?? 0;
         return { success: false, reason: "insufficient", balance, cost, tier: record?.tier ?? "free" };
+      }
+      if (num === -3) {
+        // Free tier per-feature limit reached
+        const record = await getSubscription(walletAddress);
+        const balance = record?.creditBalance ?? 0;
+        return { success: false, reason: "feature_limit", balance, cost, tier: "free" };
       }
       // -1: no record — fall through to getOrCreate path
     } catch {
@@ -379,6 +407,13 @@ export async function atomicDeductCredits(
   const runWithLock = async (): Promise<ReturnType<typeof atomicDeductCredits>> => {
     const record = await getSubscription(walletAddress);
     if (!record) return { success: false, reason: "no_record", balance: 0, cost, tier: "free" };
+    // Free tier feature limit check
+    if (record.tier === "free" && freeLimit > 0) {
+      const usedCount = record.featureUsage?.[feature] ?? 0;
+      if (usedCount >= freeLimit) {
+        return { success: false, reason: "feature_limit", balance: record.creditBalance, cost, tier: "free" };
+      }
+    }
     if (record.creditBalance < cost) {
       return { success: false, reason: "insufficient", balance: record.creditBalance, cost, tier: record.tier };
     }
