@@ -36,19 +36,32 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => setPhantomAvailable(!!window.solana?.isPhantom), 300);
-    return () => clearTimeout(timer);
+    // Check immediately, then retry at 300ms and 1500ms (slow extension load)
+    const check = () => setPhantomAvailable(!!window.solana?.isPhantom);
+    check();
+    const t1 = setTimeout(check, 300);
+    const t2 = setTimeout(check, 1500);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   async function connect() {
-    if (!window.solana) return;
+    if (!window.solana?.isPhantom) {
+      window.open("https://phantom.app/", "_blank");
+      return;
+    }
     setPhantomLoading(true);
     try {
       const resp = await window.solana.connect();
       const addr = resp.publicKey.toString();
       setWalletAddress(addr);
       localStorage.setItem("sakura_wallet", addr);
-    } catch { /* user rejected */ } finally {
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message ?? "";
+      // Only alert on non-user-rejection errors
+      if (!msg.toLowerCase().includes("rejected") && !msg.toLowerCase().includes("cancelled")) {
+        console.error("[Sakura] wallet connect error:", err);
+      }
+    } finally {
       setPhantomLoading(false);
     }
   }
