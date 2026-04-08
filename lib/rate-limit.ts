@@ -155,8 +155,12 @@ const FC_TTL_SEC = 2_592_000; // 30 days
 /**
  * Atomically increment the free-tier feature counter and check against limit.
  * Returns true = allowed (within limit), false = blocked (limit exceeded).
+ *
+ * existingUsage: usage count from featureUsage JSON field (legacy system).
+ * Used to seed the INCR key via SET NX on first access, ensuring users who
+ * already consumed some/all uses in the old system are not given a fresh counter.
  */
-async function checkAndIncrFreeFeature(wallet: string, feature: Feature): Promise<boolean> {
+async function checkAndIncrFreeFeature(wallet: string, feature: Feature, existingUsage: number = 0): Promise<boolean> {
   const limit = FREE_TIER_FEATURE_LIMIT[feature as SubFeature];
   if (!limit || limit <= 0) return true; // feature has no per-use limit
 
@@ -164,11 +168,18 @@ async function checkAndIncrFreeFeature(wallet: string, feature: Feature): Promis
 
   if (redisAvailable) {
     try {
-      const results = await redisPipeline([
-        ["INCR", key],
-        ["EXPIRE", key, String(FC_TTL_SEC)],
-      ]);
-      const count = Number(results[0]?.result ?? 0);
+      // Seed the counter from existing featureUsage if the key doesn't exist yet (NX = only if Not eXists).
+      // This migrates users from the old cjson-based system to the new INCR system on their first post-deploy use.
+      const cmds: PipelineCommand[] = [];
+      if (existingUsage > 0) {
+        cmds.push(["SET", key, String(existingUsage), "EX", String(FC_TTL_SEC), "NX"]);
+      }
+      cmds.push(["INCR", key]);
+      cmds.push(["EXPIRE", key, String(FC_TTL_SEC)]);
+      const results = await redisPipeline(cmds);
+      // INCR result is always the last-but-one command; offset depends on whether SET NX was added
+      const incrIdx = existingUsage > 0 ? 1 : 0;
+      const count = Number(results[incrIdx]?.result ?? 0);
       return count <= limit;
     } catch {
       return true; // Redis error → fail open (credit gate still provides secondary protection)
@@ -177,7 +188,8 @@ async function checkAndIncrFreeFeature(wallet: string, feature: Feature): Promis
 
   // In-memory fallback (dev)
   const memKey = `fc:${wallet}:${feature}`;
-  const count = (memStore.get(memKey) ?? 0) + 1;
+  const current = memStore.get(memKey) ?? existingUsage;
+  const count = current + 1;
   memStore.set(memKey, count);
   return count <= limit;
 }
@@ -430,8 +442,11 @@ export async function runQuotaGate(
 
   // Free tier: INCR counter gate (simple Redis INCR — no cjson, no Lua, 100% reliable)
   // Runs BEFORE credit deduction so 4th+ use triggers x402 payment immediately.
+  // Pass existingUsage from the legacy featureUsage JSON field so existing users
+  // who already consumed uses in the old system are properly migrated (SET NX seed).
   if (freeRecord.tier === "free") {
-    const allowed = await checkAndIncrFreeFeature(wallet, feature);
+    const existingUsage = (freeRecord.featureUsage as Record<string, number> | undefined)?.[feature] ?? 0;
+    const allowed = await checkAndIncrFreeFeature(wallet, feature, existingUsage);
     if (!allowed) {
       return { proceed: false, response: quotaExhaustedResponse(feature, 3) };
     }

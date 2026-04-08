@@ -559,6 +559,10 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
         }
         // Free tier quota hit OR no credits → trigger $0.10 USDC per-use payment
         if (challenge.recipient) {
+          if (challenge.recipient === "not-configured") {
+            setError("支付功能尚未配置，請聯繫管理員");
+            return;
+          }
           const payResult = await payWithPhantom({
             recipient: challenge.recipient,
             amount: challenge.amount,
@@ -566,14 +570,18 @@ export default function TokenAnalysis({ walletAddress, isDayMode = false }: Prop
             network: "solana-mainnet",
             description: "Sakura 安全分析 0.10 USDC",
           });
-          if (!("error" in payResult)) {
-            setAnalyzePaymentSig(payResult.sig);
-            res = await fetch("/api/analyze", {
-              method: "POST",
-              headers: { ...headers, "X-PAYMENT": payResult.sig },
-              body: analyzeBody,
-            });
+          if ("error" in payResult) {
+            setError(payResult.error === "user_rejected" || payResult.error.includes("rejected")
+              ? "已取消支付"
+              : `支付失敗: ${payResult.error}`);
+            return;
           }
+          setAnalyzePaymentSig(payResult.sig);
+          res = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { ...headers, "X-PAYMENT": payResult.sig },
+            body: analyzeBody,
+          });
         }
       }
 
