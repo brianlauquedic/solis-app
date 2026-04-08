@@ -1251,8 +1251,7 @@ Rules:
         let loopMessages = [...messages];
 
         while (continueLoop) {
-          // Use streaming API so tokens appear in real-time (no waiting for full response)
-          const streamInstance = client.messages.stream({
+          const response = await client.messages.create({
             model: "claude-sonnet-4-6",
             max_tokens: 4096,
             tools: TOOLS,
@@ -1260,31 +1259,21 @@ Rules:
             system: systemPrompt,
           });
 
-          // Stream text/thinking deltas in real-time via async iterator
-          for await (const chunk of streamInstance) {
-            if (chunk.type === "content_block_delta") {
-              if (chunk.delta.type === "text_delta") {
-                finalText += chunk.delta.text;
-                send("token", { text: chunk.delta.text });
-              } else if (chunk.delta.type === "thinking_delta") {
-                allThinkingText += chunk.delta.thinking;
-                send("thinking_delta", { text: chunk.delta.thinking });
-              }
-            }
-          }
-
-          // Get the fully assembled message for tool call handling
-          const response = await streamInstance.finalMessage();
-
-          // Process tool_use blocks (text/thinking already streamed above)
+          // Process content blocks (thinking + text + tool_use interleaved)
           // Collect all tool results first, then append once (prevents duplicate assistant messages)
           const toolResults: Array<{ type: "tool_result"; tool_use_id: string; content: string }> = [];
 
           for (const block of response.content) {
             if (block.type === "thinking") {
-              // Already streamed above — skip to avoid duplicates
+              allThinkingText += block.thinking + "\n";
+              send("thinking_delta", { text: block.thinking });
             } else if (block.type === "text") {
-              // Already streamed above — skip to avoid duplicates
+              finalText += block.text;
+              // Simulate streaming: send in small chunks so UI updates progressively
+              const chunks = block.text.match(/[\s\S]{1,30}/g) ?? [block.text];
+              for (const chunk of chunks) {
+                send("token", { text: chunk });
+              }
             } else if (block.type === "tool_use") {
               send("tool_call", { name: block.name, args: block.input });
 
