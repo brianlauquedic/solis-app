@@ -211,6 +211,74 @@ function localizeRiskLevel(level: string, tFn: (k: string) => string): string {
   return level;
 }
 
+// ── Client-side instant plan (mirrors server deterministicPlan, no API call) ──
+// Shown immediately after animation; silently replaced when Sonnet result arrives.
+function clientDeterministicPlan(
+  solBalance: number, totalUSD: number, idleUSDC: number, lang: string
+): RebalancePlan {
+  const MARINADE_APY = 7.2;
+  const KAMINO_APY   = 8.2;
+  const solPrice = solBalance > 0 && totalUSD > 0 ? totalUSD / solBalance : 180;
+  const actions: RebalancePlan["actions"] = [];
+  let projectedYield = 0;
+
+  if (solBalance > 0.1) {
+    const stakeAmt = solBalance * 0.7;
+    const yearlyEarn = stakeAmt * MARINADE_APY / 100 * solPrice;
+    projectedYield += yearlyEarn;
+    actions.push({
+      type: "stake", protocol: "Marinade Finance", icon: "🫙",
+      amount: stakeAmt, amountDisplay: `${stakeAmt.toFixed(2)} SOL`,
+      expectedAPY: MARINADE_APY, riskLevel: "低",
+      reasoning: lang === "zh"
+        ? `将 ${stakeAmt.toFixed(2)} SOL 质押获取 ${MARINADE_APY}% 年化，mSOL 保留流动性，预计年收益 $${yearlyEarn.toFixed(0)}`
+        : `Stake ${stakeAmt.toFixed(2)} SOL at ${MARINADE_APY}% APY via Marinade, earning ~$${yearlyEarn.toFixed(0)}/yr`,
+      url: "https://marinade.finance/", color: "#8B5CF6",
+    });
+  }
+  if (idleUSDC > 5) {
+    const yearlyEarn = idleUSDC * KAMINO_APY / 100;
+    projectedYield += yearlyEarn;
+    actions.push({
+      type: "lend", protocol: "Kamino Finance", icon: "🌿",
+      amount: idleUSDC, amountDisplay: `$${idleUSDC.toFixed(0)} USDC`,
+      expectedAPY: KAMINO_APY, riskLevel: "低",
+      reasoning: lang === "zh"
+        ? `$${idleUSDC.toFixed(0)} USDC 闲置零收益，存入 Kamino 自动复利 ${KAMINO_APY}%，预计年收益 $${yearlyEarn.toFixed(0)}`
+        : `Deposit $${idleUSDC.toFixed(0)} idle USDC into Kamino at ${KAMINO_APY}% APY, earning ~$${yearlyEarn.toFixed(0)}/yr`,
+      url: "https://app.kamino.finance/", color: "#10B981",
+    });
+  }
+
+  const stakedUSD = actions.filter(a => a.type === "stake").reduce((s, a) => s + a.amount * solPrice, 0);
+  const lentUSD   = actions.filter(a => a.type === "lend").reduce((s, a) => s + a.amount, 0);
+  const summary = lang === "zh"
+    ? actions.length > 0 ? `發現 ${actions.length} 個優化機會，可將年化收益提升至 +$${projectedYield.toFixed(0)}` : "當前餘額較少，建議先積累更多 SOL/USDC"
+    : actions.length > 0 ? `Found ${actions.length} optimization opportunit${actions.length > 1 ? "ies" : "y"} — projected yield +$${projectedYield.toFixed(0)}/yr` : "Low balance — consider building up more SOL/USDC first";
+
+  return {
+    currentAllocation: {
+      sol:    Math.round((solBalance * solPrice / totalUSD) * 100) || 0,
+      usdc:   Math.round((idleUSDC / totalUSD) * 100) || 0,
+      staked: 0, lent: 0,
+    },
+    recommendedAllocation: {
+      sol:    Math.max(0, Math.round(((solBalance * solPrice - stakedUSD) / totalUSD) * 100)),
+      usdc:   Math.max(0, Math.round(((idleUSDC - lentUSD) / totalUSD) * 100)),
+      staked: Math.round((stakedUSD / totalUSD) * 100) || 0,
+      lent:   Math.round((lentUSD / totalUSD) * 100) || 0,
+    },
+    actions,
+    projectedAnnualYield: projectedYield,
+    currentAnnualYield: 0,
+    confidenceScore: 87,
+    summary,
+    aiAvailable: false,
+    planHash: "",
+    memoPayload: "",
+  };
+}
+
 export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = false }: Props) {
   const { t, lang } = useLang();
   const [agentState, setAgentState] = useState<AgentState>("idle");
@@ -362,8 +430,14 @@ export default function AgentPanel({ walletAddress, walletSnapshot, isDayMode = 
       await new Promise(r => setTimeout(r, step.duration));
     }
 
+    // ⚡ Show instant plan right after animation — no more waiting on Sonnet!
+    // Sonnet result will silently upgrade this below.
+    const instantPlan = clientDeterministicPlan(wallet.solBalance, wallet.totalUSD, wallet.idleUSDC, lang);
+    setPlan(instantPlan);
+    setAgentState("done");
+
     try {
-      // Await the result — likely already done if Haiku responded during animation
+      // Background: await Sonnet and upgrade plan if it returned successfully
       let res = await rebalancePromise;
 
       // 402: Basic/Pro subscription exhausted (tier field) OR x402 per-use payment
