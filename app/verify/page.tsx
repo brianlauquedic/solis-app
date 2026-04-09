@@ -5,7 +5,7 @@ import { lookupProof, getAllProofs, ProofRecord } from "@/lib/proof-store";
 import { payWithWallet } from "@/lib/x402";
 import { useLang } from "@/contexts/LanguageContext";
 
-const SOLIS_FEE_WALLET = "Goc5kAMb9NTXjobxzZogAWaHwajmQjw7CdmATWJN1mQh";
+const SAKURA_FEE_WALLET = "Goc5kAMb9NTXjobxzZogAWaHwajmQjw7CdmATWJN1mQh";
 
 interface ChainMemoResult {
   signature: string;
@@ -66,7 +66,7 @@ export default function VerifyPage() {
       if (res.status === 402) {
         const body402 = await res.json() as { recipient?: string; amount?: number; description?: string };
         const payResult = await payWithWallet({
-          recipient: body402.recipient ?? SOLIS_FEE_WALLET,
+          recipient: body402.recipient ?? SAKURA_FEE_WALLET,
           amount: body402.amount ?? 0.05,
           currency: "USDC",
           network: "solana-mainnet",

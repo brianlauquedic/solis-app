@@ -554,7 +554,7 @@ export const translations = {
   viewRawMemo:         { zh: "查看原始 Memo 數據", en: "View Raw Memo Data", ja: "生のMemoデータを表示" },
   noMemoField:         { zh: "ℹ️ 此交易不含 Memo 字段，或 Memo 為空", en: "ℹ️ This transaction has no Memo field, or the Memo is empty", ja: "ℹ️ このトランザクションにはMemoフィールドがないか、Memoが空です" },
   inputHashOrMemo:     { zh: "輸入推理哈希或交易 Memo", en: "Enter reasoning hash or transaction Memo", ja: "推論ハッシュまたはトランザクションMemoを入力" },
-  hashInputPlaceholder: { zh: "SHA-256 哈希 或 solis:xxxxxxxxxxxxxxxx", en: "SHA-256 hash or solis:xxxxxxxxxxxxxxxx", ja: "SHA-256ハッシュ または solis:xxxxxxxxxxxxxxxx" },
+  hashInputPlaceholder: { zh: "SHA-256 哈希 或 sakura:xxxxxxxxxxxxxxxx", en: "SHA-256 hash or sakura:xxxxxxxxxxxxxxxx", ja: "SHA-256ハッシュ または sakura:xxxxxxxxxxxxxxxx" },
   verifyBtn:           { zh: "驗證 →", en: "Verify →", ja: "検証 →" },
   viewRecentProofs:    { zh: "📋 查看本機最近的分析記錄", en: "📋 View recent local analysis records", ja: "📋 最近のローカル分析記録を表示" },
   noProofsYet:         { zh: "暫無記錄，請先在代幣分析頁進行分析", en: "No records yet — run an analysis on the Security tab first", ja: "記録なし — まずセキュリティタブで分析を実行してください" },

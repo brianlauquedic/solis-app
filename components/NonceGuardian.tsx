@@ -2,11 +2,22 @@
 
 import { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { payWithWallet } from "@/lib/x402";
 import type { NonceGuardianResult, RiskSignal } from "@/lib/nonce-scanner";
+
+interface ProofData {
+  sha256: string;
+  txSig: string | null;
+  explorerUrl: string | null;
+  message: string;
+}
 
 interface ScanResult extends NonceGuardianResult {
   aiAnalysis?: string | null;
+  proof?: ProofData | null;
 }
+
+type PaymentState = "idle" | "waiting" | "paying" | "verifying" | "done" | "error";
 
 export default function NonceGuardian() {
   const { walletAddress } = useWallet();
@@ -14,6 +25,11 @@ export default function NonceGuardian() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // x402 payment state
+  const [payState, setPayState] = useState<PaymentState>("idle");
+  const [payChallenge, setPayChallenge] = useState<{ recipient: string; amount: number } | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
 
   async function scan() {
     const addr = inputAddr.trim();
@@ -24,19 +40,81 @@ export default function NonceGuardian() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setPayState("idle");
+    setPayChallenge(null);
+    setPayError(null);
+
     try {
       const res = await fetch("/api/nonce-guardian", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wallet: addr }),
       });
+
+      // x402: payment required for AI analysis
+      if (res.status === 402) {
+        const body = await res.json();
+        // Show basic scan results while prompting payment
+        if (body.scanResult) setResult(body.scanResult);
+        setPayChallenge({ recipient: body.recipient, amount: body.amount });
+        setPayState("waiting");
+        return;
+      }
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data: ScanResult = await res.json();
       setResult(data);
+      setPayState("done");
     } catch (err) {
       setError(err instanceof Error ? err.message : "掃描失敗");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function payAndGetReport() {
+    if (!payChallenge) return;
+    setPayState("paying");
+    setPayError(null);
+
+    const payResult = await payWithWallet({
+      recipient: payChallenge.recipient,
+      amount: payChallenge.amount,
+      currency: "USDC",
+      network: "solana-mainnet",
+      description: "Sakura Nonce Guardian — AI Security Report + SHA-256 鏈上存證",
+    });
+
+    if ("error" in payResult) {
+      if (payResult.error === "user_rejected") {
+        setPayState("waiting");
+      } else {
+        setPayState("error");
+        setPayError(payResult.error);
+      }
+      return;
+    }
+
+    // Payment done — retry with X-PAYMENT header
+    setPayState("verifying");
+    try {
+      const res = await fetch("/api/nonce-guardian", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-PAYMENT": payResult.sig,
+        },
+        body: JSON.stringify({ wallet: inputAddr.trim() }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: ScanResult = await res.json();
+      setResult(data);
+      setPayState("done");
+      setPayChallenge(null);
+    } catch (err) {
+      setPayState("error");
+      setPayError(err instanceof Error ? err.message : "報告獲取失敗");
     }
   }
 
@@ -84,6 +162,15 @@ export default function NonceGuardian() {
           2026年4月1日，有人因為一個看不見的「永久有效交易」損失了 $2.85億。
           本工具掃描您錢包關聯的所有 Durable Nonce 賬戶，用 AI 標記潛在「定時炸彈」。
         </p>
+        {/* Pricing badge */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.3)",
+          borderRadius: 8, padding: "4px 12px", marginTop: 10,
+          fontSize: 11, color: "#A78BFA",
+        }}>
+          🔒 掃描免費 · AI 安全報告 $1.00 USDC · SHA-256 永久鏈上存證
+        </div>
       </div>
 
       {/* Input */}
@@ -147,6 +234,63 @@ export default function NonceGuardian() {
         </div>
       )}
 
+      {/* x402 Payment Prompt */}
+      {payState === "waiting" && payChallenge && (
+        <div style={{
+          background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.35)",
+          borderRadius: 12, padding: "20px 22px", marginBottom: 20,
+        }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#A78BFA", marginBottom: 8 }}>
+            🔒 解鎖 AI 安全報告
+          </div>
+          <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.8, marginBottom: 16 }}>
+            基礎掃描已完成。AI 深度分析報告需支付 <strong style={{ color: "#A78BFA" }}>${payChallenge.amount} USDC</strong>。
+            <br />報告 SHA-256 哈希將永久記錄於 Solana 鏈上，獨立可驗證。
+          </div>
+          <button
+            onClick={payAndGetReport}
+            style={{
+              background: "linear-gradient(135deg, #7C3AED, #4F46E5)",
+              border: "none", borderRadius: 8, padding: "11px 24px",
+              fontSize: 13, fontWeight: 600, color: "#fff", cursor: "pointer",
+              letterSpacing: "0.04em",
+            }}
+          >
+            💳 支付 ${payChallenge.amount} USDC · 獲取 AI 報告
+          </button>
+        </div>
+      )}
+
+      {payState === "paying" && (
+        <div style={{
+          background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.35)",
+          borderRadius: 12, padding: "16px 20px", marginBottom: 20,
+          fontSize: 13, color: "#A78BFA",
+        }}>
+          🌸 等待錢包確認支付…
+        </div>
+      )}
+
+      {payState === "verifying" && (
+        <div style={{
+          background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.35)",
+          borderRadius: 12, padding: "16px 20px", marginBottom: 20,
+          fontSize: 13, color: "#A78BFA",
+        }}>
+          ✦ 驗證付款並生成 AI 報告…
+        </div>
+      )}
+
+      {payState === "error" && payError && (
+        <div style={{
+          background: "rgba(255,68,68,0.08)", border: "1px solid rgba(255,68,68,0.3)",
+          borderRadius: 8, padding: "12px 16px", marginBottom: 16,
+          fontSize: 13, color: "#FF4444",
+        }}>
+          ❌ {payError}
+        </div>
+      )}
+
       {/* Results */}
       {result && (
         <div>
@@ -200,9 +344,7 @@ export default function NonceGuardian() {
                   borderLeft: `3px solid ${severityColor[signal.severity] ?? "var(--border)"}`,
                   borderRadius: 8, padding: "14px 16px", marginBottom: 8,
                 }}>
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: 8, marginBottom: 6,
-                  }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                     <span style={{
                       fontSize: 10, fontWeight: 600, letterSpacing: "0.08em",
                       color: severityColor[signal.severity],
@@ -267,11 +409,9 @@ export default function NonceGuardian() {
             <div style={{
               background: "var(--bg-card)", border: "1px solid var(--border)",
               borderTop: "2px solid var(--accent)",
-              borderRadius: 10, padding: "18px 20px",
+              borderRadius: 10, padding: "18px 20px", marginBottom: 16,
             }}>
-              <div style={{
-                display: "flex", alignItems: "center", gap: 8, marginBottom: 12,
-              }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
                 <span style={{
                   fontSize: 10, color: "var(--accent)", letterSpacing: "0.12em",
                   fontFamily: "var(--font-mono)", fontWeight: 600,
@@ -284,6 +424,44 @@ export default function NonceGuardian() {
                 whiteSpace: "pre-wrap",
               }}>
                 {result.aiAnalysis}
+              </div>
+            </div>
+          )}
+
+          {/* SHA-256 On-Chain Proof */}
+          {result.proof && (
+            <div style={{
+              background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.3)",
+              borderRadius: 10, padding: "16px 20px", marginBottom: 16,
+            }}>
+              <div style={{ fontSize: 11, color: "#10B981", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 10 }}>
+                🔒 SHA-256 永久鏈上存證
+              </div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>報告哈希</div>
+              <div style={{
+                fontFamily: "var(--font-mono)", fontSize: 11, color: "#10B981",
+                wordBreak: "break-all", background: "var(--bg-base)",
+                borderRadius: 6, padding: "8px 12px", marginBottom: 12,
+              }}>
+                {result.proof.sha256}
+              </div>
+              {result.proof.explorerUrl && (
+                <a
+                  href={result.proof.explorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontSize: 12, color: "#10B981", textDecoration: "none",
+                    display: "inline-flex", alignItems: "center", gap: 4,
+                    background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)",
+                    borderRadius: 6, padding: "5px 12px",
+                  }}
+                >
+                  🔗 Solscan 查看鏈上記錄 →
+                </a>
+              )}
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.7 }}>
+                {result.proof.message}
               </div>
             </div>
           )}

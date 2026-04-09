@@ -15,7 +15,7 @@ const RPC_URL =
 const MAX_MEMO_BYTES = 560;
 
 function getPlatformKeypair(): Keypair | null {
-  const raw = process.env.SOLIS_AGENT_PRIVATE_KEY;
+  const raw = process.env.SAKURA_AGENT_PRIVATE_KEY;
   if (!raw) return null;
   try {
     const arr = JSON.parse(raw) as number[];
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   if (!keypair) {
     // No platform key configured — fall back to client-side Phantom signing
     return NextResponse.json(
-      { error: "no_platform_key", message: "SOLIS_AGENT_PRIVATE_KEY not configured" },
+      { error: "no_platform_key", message: "SAKURA_AGENT_PRIVATE_KEY not configured" },
       { status: 501 }
     );
   }
