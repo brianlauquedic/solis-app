@@ -21,37 +21,37 @@ const PAGE_TEXT: Record<L, {
 }> = {
   zh: {
     back: "← 返回首頁",
-    badge: "USE CASES",
-    title: "Sakura 使用案例",
-    subtitle: "真實場景下，Nonce Guardian、Ghost Run、Liquidation Shield 如何保護 Solana 用戶的鏈上資產。每個案例基於 Solana 主網真實發生的事件與普遍的 DeFi 使用模式。",
-    contextLabel: "情境",
+    badge: "USE CASES · REAL SOLANA SCENARIOS",
+    title: "Sakura 真實場景案例",
+    subtitle: "七個源自 Solana 主網真實事件的場景：$2.85 億 Drift 攻擊如何讓毫不知情的用戶在數月後瞬間損失全部資產、多步 DeFi 策略如何在執行前毫無預警地遭遇衝突與滑點、Kamino 借貸倉位如何在 10 分鐘暴跌中被清算人機器人搶先一步——以及 Sakura 的三道 Solana 原生防線如何在每個關鍵時刻精準介入。每個場景附帶精確數字：健康因子、token delta、救援費用、節省金額——不是模糊承諾，而是可驗證的結果。",
+    contextLabel: "真實場景",
     outcomeLabel: "Sakura 的解決方案",
-    ctaTitle: "立即體驗三大功能",
-    ctaSubtitle: "掃描、模擬、監控均完全免費——僅在執行時收取費用",
+    ctaTitle: "立即體驗三道防線",
+    ctaSubtitle: "掃描、幽靈模擬、健康因子監控完全免費——機構級保護，普通用戶可及",
     ctaPhantom: "👻 連接 Phantom →",
     ctaOkx: "◈ Connect OKX →",
   },
   en: {
     back: "← Back to Home",
-    badge: "USE CASES",
-    title: "Sakura Use Cases",
-    subtitle: "How Nonce Guardian, Ghost Run, and Liquidation Shield protect Solana users' onchain assets in real scenarios. Each case is grounded in events that actually happened on Solana mainnet and common DeFi usage patterns.",
-    contextLabel: "Context",
-    outcomeLabel: "Sakura's Solution",
-    ctaTitle: "Try All Three Features",
-    ctaSubtitle: "Scanning, simulation, and monitoring are completely free — fees apply only on execution",
+    badge: "USE CASES · REAL SOLANA SCENARIOS",
+    title: "Sakura Real-World Scenarios",
+    subtitle: "Seven scenarios grounded in actual Solana mainnet events: how the $285M Drift attack quietly eroded users' assets months before anyone knew a nonce account had been compromised; how multi-step DeFi strategies silently absorb slippage and contract conflicts before execution; how Kamino lending positions tip into liquidation in the seconds before a push notification arrives. And how Sakura's three Solana-native defense protocols intervene at each critical moment — with exact numbers: health factors, token deltas, rescue costs, net savings — verifiable outcomes, not marketing claims.",
+    contextLabel: "Scenario",
+    outcomeLabel: "Sakura's Response",
+    ctaTitle: "Activate All Three Defense Protocols",
+    ctaSubtitle: "Scanning, ghost simulation, and health factor monitoring are completely free — institutional protection, democratized",
     ctaPhantom: "👻 Connect Phantom →",
     ctaOkx: "◈ Connect OKX →",
   },
   ja: {
     back: "← ホームへ戻る",
-    badge: "USE CASES",
-    title: "Sakura ユースケース",
-    subtitle: "Nonce Guardian、Ghost Run、Liquidation ShieldがどのようにSolanaユーザーのオンチェーン資産を現実のシナリオで保護するか。各ケースはSolanaメインネットで実際に起きたイベントと一般的なDeFi利用パターンに基づいています。",
-    contextLabel: "背景",
-    outcomeLabel: "Sakuraの解決策",
-    ctaTitle: "3つの機能を今すぐ体験",
-    ctaSubtitle: "スキャン・シミュレーション・モニタリングは完全無料——実行時のみ課金",
+    badge: "USE CASES · REAL SOLANA SCENARIOS",
+    title: "Sakura リアルワールドシナリオ",
+    subtitle: "Solanaメインネットで実際に起きた出来事に基づく7つのシナリオ——2.85億ドルのDriftエクスプロイト、マルチステップDeFi戦略のスリッページ、Kaminoレンディングの清算——Nonce Guardian・Ghost Run・Liquidation Shieldが、いかにして全オンチェーンユーザーをミリ秒単位・機関投資家水準の精度で守るかを示します。",
+    contextLabel: "シナリオ",
+    outcomeLabel: "Sakuraの対応",
+    ctaTitle: "3つの防衛プロトコルを今すぐ起動",
+    ctaSubtitle: "スキャン・ゴーストシミュレーション・ヘルスファクター監視は完全無料——機関投資家レベルの保護を民主化",
     ctaPhantom: "👻 Phantomを接続 →",
     ctaOkx: "◈ OKXを接続 →",
   },
@@ -320,6 +320,33 @@ export default function UseCasesPage() {
           <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.9, maxWidth: 580 }}>
             {p.subtitle}
           </p>
+        </div>
+
+        {/* Sakura intro */}
+        <div style={{
+          background: "var(--bg-card)", border: "1px solid var(--border)",
+          borderLeft: "3px solid var(--accent)", borderRadius: 10,
+          padding: "18px 22px", marginBottom: 40,
+          display: "flex", gap: 14, alignItems: "flex-start",
+        }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+            background: "var(--accent-soft)", border: "1px solid var(--accent-mid)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 15, fontFamily: "var(--font-heading)", color: "var(--accent)",
+          }}>桜</div>
+          <div>
+            <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 5, textTransform: "uppercase" }}>
+              🌸 Sakura AI Guardian · 備えあれば憂いなし — Real Threats, Real Defense
+            </div>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.9 }}>
+              {lang === "zh"
+                ? "每一個場景都源自 Solana 主網真實發生的事件。Sakura 以匠人精神打造三道防線應對這些真實威脅：Nonce Guardian 以攻擊者自己的 RPC 武器反守為攻——2026 年 4 月 1 日，Drift $2.85 億攻擊用的是 getProgramAccounts，Sakura 用的也是它，只是方向相反；Ghost Run 讓普通用戶第一次擁有機構級策略預演能力，在投入任何資本之前看到精確結果；Liquidation Shield 以 SPL Token Approve 硬性約束守住借貸倉位，400ms 閃電救援在清算發生前還原健康因子。所有 AI 決策 SHA-256 永久上鏈，任何人可在 Solscan 獨立核驗——無需信任 Sakura，無需信任任何人。"
+                : lang === "ja"
+                ? "すべてのシナリオはSolanaメインネットで実際に起きた出来事に基づいています。Sakuraは匠の精神でこれらの実際の脅威に対応する3つの防衛ラインを構築：Nonce Guardianは攻撃者自身のRPC武器を逆用——2026年4月1日のDrift 2.85億ドル攻撃はgetProgramAccountsを使用、SakuraもそれをあなたのためのシールドとしてgetProgramAccountsを使用；Ghost Runは普通のユーザーが初めて機関投資家レベルの戦略事前演習能力を持つことを可能にし、資本を投入する前に正確な結果を確認；Liquidation ShieldはSPL Token Approveの強制制約で貸出ポジションを守り、400msで清算発生前にヘルスファクターを回復。すべてのAI判断はSHA-256で永続オンチェーン刻印、誰でもSolscanで独立検証可能——Sakuraを信頼する必要なし。"
+                : "Each scenario shows Sakura's three defense protocols operating against real threats: Nonce Guardian counter-attacking with the same RPC primitives attackers use; Ghost Run making zero-capital-at-risk the new standard for multi-step DeFi execution; Liquidation Shield completing rescue within 400ms before liquidation triggers, constrained by SPL Token Approve at the token-program level. All AI decisions SHA-256 inscribed on-chain — independently verifiable by anyone, anywhere."}
+            </div>
+          </div>
         </div>
 
         {/* Use case sections */}

@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 
 const CONTENT = {
   en: {
-    badge: "POLICY",
+    badge: "LEGAL · SAKURA AI GUARDIAN",
     title: "Terms of Service",
     updated: "Last updated: 6 April 2026",
     notice: "Important Notice: Section 11 of these Terms contains a binding arbitration clause and class-action waiver. Please read it carefully before using the Services.",
@@ -132,7 +132,7 @@ const CONTENT = {
     ],
   },
   zh: {
-    badge: "政策",
+    badge: "法律 · SAKURA AI GUARDIAN",
     title: "使用條款",
     updated: "最後更新：2026年4月6日",
     notice: "重要聲明：本條款第11條包含具有約束力的仲裁條款及集體訴訟棄權聲明，請在使用服務前仔細閱讀。",
@@ -259,7 +259,7 @@ const CONTENT = {
     ],
   },
   ja: {
-    badge: "ポリシー",
+    badge: "法的事項 · SAKURA AI GUARDIAN",
     title: "利用規約",
     updated: "最終更新：2026年4月6日",
     notice: "重要なお知らせ：本規約の第11条には、拘束力のある仲裁条項とクラスアクション放棄が含まれています。サービスをご利用になる前に必ずお読みください。",
@@ -438,6 +438,24 @@ export default function TermsPage() {
           <p style={{ fontSize: 13, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
             {c.updated}
           </p>
+        </div>
+
+        {/* Sakura platform intro */}
+        <div style={{
+          background: "var(--bg-card)", border: "1px solid var(--border)",
+          borderLeft: "3px solid var(--accent)", borderRadius: 8,
+          padding: "16px 20px", marginBottom: 24,
+          fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.85,
+        }}>
+          <strong style={{ color: "var(--text-primary)", fontFamily: "var(--font-heading)", letterSpacing: "0.04em" }}>
+            {lang === "zh" ? "關於 Sakura" : lang === "ja" ? "Sakuraについて" : "About Sakura"}
+          </strong>
+          {" — "}
+          {lang === "zh"
+            ? "Sakura 是 Solana 上第一個原生 AI 守護協議，以匠人精神應對三個真實威脅：Nonce Guardian 防禦 Drift $2.85 億同款攻擊向量（以攻擊者的 getProgramAccounts 反守為攻）、Ghost Run 以 simulateTransaction 幽靈執行多步 DeFi 策略（在零資本風險下確認精確 token delta）、Liquidation Shield 在 400ms 內完成跨協議借貸倉位救援（SPL Token Approve 硬性鎖定 AI 可動用資金上限）。三項不可妥協的設計原則：① 零託管——私鑰永不離開您的設備；② 按使用付費——無訂閱，無帳號，連接即用；③ AI 決策 SHA-256 永久上鏈——任何人可在 Solscan 獨立核驗，無需信任 Sakura 的任何服務器。備えあれば憂いなし——這是架構層面的承諾，不是營銷口號。"
+            : lang === "ja"
+            ? "SakuraはSolana上初のネイティブAIガーディアンプロトコルで、匠の精神で3つの現実の脅威に対応します：Nonce GuardianがDrift $2.85億同型攻撃ベクターを防御（攻撃者のgetProgramAccountsを盾に転用）、Ghost RunがsimulateTransactionでマルチステップDeFi戦略をゴースト実行（資本リスクゼロで正確なtoken deltaを確認）、Liquidation Shieldが400ms以内にクロスプロトコル貸出ポジションを救済（SPL Token ApproveがAI使用資金上限をハードロック）。3つの妥協なき設計原則：①ゼロカストディ——秘密鍵はデバイス外に出ない；②使用量課金——サブスクリプション不要、アカウント不要、接続即利用；③AI判断SHA-256永続オンチェーン刻印——誰でもSolscanで独立検証可能、Sakuraのサーバーへの信頼不要。備えあれば憂いなし——アーキテクチャレベルの約束、マーケティングスローガンではありません。"
+            : "Sakura is the first native AI guardian protocol on Solana, responding with Takumi precision to three real threats: Nonce Guardian defends against the $285M Drift-class attack vector (repurposing the attacker's own getProgramAccounts as your shield); Ghost Run ghost-executes multi-step DeFi strategies with simulateTransaction at zero capital risk (confirming exact token deltas before you commit a dollar); Liquidation Shield executes cross-protocol lending rescue within 400ms (SPL Token Approve hard-locking the maximum funds the AI can touch). Three non-negotiable design principles: ① Zero custody — private keys never leave your device; ② Pay-per-use — no subscription, no account, connect and go; ③ AI decisions SHA-256 permanently on-chain — independently verifiable by anyone on Solscan, zero reliance on Sakura's servers. 備えあれば憂いなし — an architectural commitment, not a marketing slogan."}
         </div>
 
         {/* Global notice */}

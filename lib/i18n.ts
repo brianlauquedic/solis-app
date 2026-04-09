@@ -16,84 +16,113 @@ export const translations = {
 
   // ── Hackathon badge ──────────────────────────────────────────────
   hackathonBadge: {
-    zh: "SAKURA · AGENTIC ECONOMY · BUILT ON SOLANA",
-    en: "SAKURA · AGENTIC ECONOMY · BUILT ON SOLANA",
-    ja: "SAKURA · AGENTIC ECONOMY · BUILT ON SOLANA",
+    zh: "SAKURA · VERIFIABLE AI · AGENTIC ECONOMY · COLOSSEUM 2026 FRONTIER",
+    en: "SAKURA · VERIFIABLE AI · AGENTIC ECONOMY · COLOSSEUM 2026 FRONTIER",
+    ja: "SAKURA · VERIFIABLE AI · AGENTIC ECONOMY · COLOSSEUM 2026 FRONTIER",
   },
 
   // ── Hero ──────────────────────────────────────────────────────────
   heroTagline: {
-    zh: "三項 Solana 原生 AI 協議——讓普通用戶以機構級精度保護鏈上資產",
-    en: "Three Solana-native AI protocols — institutional-grade onchain asset protection for every user",
-    ja: "3つのSolanaネイティブAIプロトコル — 全ユーザーに機関レベルのオンチェーン資産保護を",
+    zh: "防禦 Drift 同款 $2.85億攻擊向量 · 幽靈預執行 DeFi 策略 · 400ms 阻截借貸清算",
+    en: "Defend Against the $285M Drift-Class Attack Vector · Ghost Pre-Execute DeFi Strategies · Block Liquidation in 400ms",
+    ja: "$2.85億規模のDrift型攻撃ベクターを封鎖 · DeFi戦略をゴースト事前実行 · 400msで清算を阻止",
   },
   heroSubtitle: {
-    zh: "Nonce Guardian 在資金被盜前偵測隱形定時炸彈（與 $2.85 億 Drift 攻擊同款漏洞）· Ghost Run 讓您在簽字前精確預覽每一步 DeFi 執行結果 · Liquidation Shield 在 Kamino/MarginFi 清算發生前 400ms 自動救援，守護 $4B+ TVL。每個 AI 判斷 SHA-256 永久上鏈，任何人可獨立驗證。",
-    en: "Nonce Guardian detects invisible time-bombs before funds drain — the same exploit class behind the $285M Drift hack · Ghost Run shows exact DeFi execution results before you sign a single transaction · Liquidation Shield auto-rescues Kamino and MarginFi positions within 400ms, protecting $4B+ in lending TVL. Every AI decision SHA-256 onchain — independently verifiable by anyone.",
-    ja: "Nonce Guardianが資金流出前に不可視の時限爆弾を検出（2.85億ドルDriftハックと同一の脆弱性クラス）· Ghost Runが署名前にDeFi実行結果を正確にプレビュー · Liquidation ShieldがKamino/MarginFiのポジションを400ms以内に自動救済、$4B+のレンディングTVLを保護。すべてのAI判断をSHA-256でオンチェーン記録 — 誰でも独立検証可能。",
+    zh: "在 $2.85 億 Drift 攻擊中，Durable Nonce 是最被忽視的攻擊面 — Nonce Guardian 主動防禦。在多步 DeFi 執行中，滑點與合約衝突是隱性成本 — Ghost Run 預先消除。在 $40 億借貸市場，毫秒之差決定清算損失 — Liquidation Shield 400ms 閃電響應。三道防線，每項 AI 決策的 SHA-256 哈希永久刻入 Solana 主網，任何人可在 Solscan 獨立核驗，無需信任 Sakura。",
+    en: "In the $285M Drift exploit, Durable Nonce was the most overlooked attack surface — Nonce Guardian defends it proactively. In multi-step DeFi execution, slippage and contract conflicts are hidden costs — Ghost Run eliminates them in advance. In the $4B+ lending market, milliseconds separate safety from liquidation — Liquidation Shield responds in 400ms. Three defensive layers. Every AI decision SHA-256 anchored on Solana mainnet — independently verifiable on Solscan, no trust in Sakura required.",
+    ja: "$2.85億Driftエクスプロイトで、Durable Nonceは最も見落とされた攻撃面でした — Nonce Guardianが能動的に防御。複数ステップのDeFi実行では、スリッページとスマートコントラクトの競合が隠れたコストとなる — Ghost Runが事前に排除。$40億超のレンディング市場では、数ミリ秒の差が安全と清算を分ける — Liquidation Shieldが400msで即応。3重の防衛レイヤー。すべてのAI判断のSHA-256ハッシュがSolanaメインネットに永久刻印 — Solscanで独立検証可能、Sakuraを信頼する必要なし。",
   },
 
   // ── Features (3 core) ─────────────────────────────────────────────
   agentsTitle: {
-    zh: "三項協議 · 三個真實威脅 · 三種 Solana 原生解法",
-    en: "Three Protocols · Three Real Threats · Three Solana-Native Solutions",
-    ja: "3つのプロトコル · 3つのリアルな脅威 · 3つのSolanaネイティブ解法",
+    zh: "三道防線 · 三個 Solana 原生威脅 · 機構級執行架構",
+    en: "Three Defensive Layers · Three Solana-Native Threats · Institutional-Grade Execution",
+    ja: "3つの防衛レイヤー · 3つのSolanaネイティブ脅威 · 機関投資家レベルの実行アーキテクチャ",
   },
   agent1Title: { zh: "🛡️ Nonce Guardian", en: "🛡️ Nonce Guardian", ja: "🛡️ Nonce Guardian" },
   agent1Desc: {
-    zh: "Solana 首個主動式 Durable Nonce 安全協議。以攻擊者相同的 RPC 原語 getProgramAccounts 掃描您錢包關聯的全部 nonce 賬戶，精確偵測 authority 劫持風險——與 2026 年 4 月 $2.85 億 Drift 攻擊所用手法一致。掃描免費 · AI 安全報告 $1 USDC · SHA-256 哈希永久上鏈，獨立可驗證。",
-    en: "Solana's first proactive Durable Nonce security protocol. Using the same RPC primitive — getProgramAccounts — weaponized in the April 2026 $285M Drift exploit, Nonce Guardian audits every nonce account linked to your wallet and surfaces authority hijacking risks before funds are drained. Free scan · AI report $1.00 USDC · SHA-256 hash permanently anchored on Solana for independent verification.",
-    ja: "Solana初のアクティブDurable Nonceセキュリティプロトコル。2026年4月の2.85億ドルDriftエクスプロイトで悪用されたのと同一のRPCプリミティブgetProgramAccountsを使用し、ウォレットに紐づく全nonceアカウントを監査。資金流出前にauthorityハイジャックリスクを検出。スキャン無料 · AIレポート $1.00 USDC · SHA-256ハッシュをSolanaに永久記録、独立検証可能。",
+    zh: "Solana 首個主動式 Durable Nonce 安全協議，以攻擊者所用 RPC 原語反制攻擊。getProgramAccounts 逐一解析每個 80-byte nonce 結構體的 authority pubkey，精確標記已被劫持的高風險賬戶。2026 年 4 月 $2.85 億 Drift 攻擊即源於此漏洞。每份 AI 安全報告的 SHA-256 哈希透過 Memo Program 不可篡改地刻入 Solana 主網。掃描永久免費 · AI 安全報告 $1 USDC · 鏈上可驗證。",
+    en: "Solana's first proactive Durable Nonce security protocol — turning the attacker's own RPC primitive against them. getProgramAccounts parses each 80-byte nonce struct's authority pubkey and flags hijacked accounts before a single cent drains. The April 2026 $285M Drift attack exploited exactly this vector. Every AI report's SHA-256 hash is immutably inscribed on Solana mainnet via Memo Program. Free scan · $1 USDC AI report · Onchain verifiable.",
+    ja: "Solana初の能動的Durable Nonceセキュリティプロトコル — 攻撃者自身のRPCプリミティブを盾として転用。getProgramAccountsが各80バイトnonceアカウントのauthority pubkeyを解析し、資金流出前に乗っ取りアカウントを検出・警告。2026年4月の$2.85億Driftエクスプロイトはまさにこの攻撃ベクターを悪用したもの。各AIレポートのSHA-256ハッシュがMemo Programを通じてSolanaメインネットに不変刻印。スキャン永久無料 · AIレポート $1 USDC · オンチェーン検証可能。",
   },
   agent2Title: { zh: "👻 Ghost Run", en: "👻 Ghost Run", ja: "👻 Ghost Run" },
   agent2Desc: {
-    zh: "全球首個多步 DeFi 策略預執行模擬引擎。用自然語言輸入跨協議策略（例：Marinade 質押 + Kamino 借貸），Claude AI 解析後調用 Solana 原生 simulateTransaction 在真實鏈上狀態幽靈演練全程——返回精確 token delta、gas 消耗及衝突檢測，確認後 SAK 一鍵上鏈。模擬免費 · 執行費 0.3%（較 Phantom 低 65%）。",
-    en: "The world's first multi-step DeFi strategy pre-execution engine. Describe a cross-protocol strategy in natural language — Marinade staking plus Kamino lending, for instance — and Ghost Run invokes Solana-native simulateTransaction against live chain state to ghost-execute the entire sequence: exact token deltas, gas costs, and conflict checks, all before you authorize a single signature. SAK executes on confirmation. Simulation free · 0.3% execution fee (65% below Phantom's rate).",
-    ja: "世界初のマルチステップDeFi戦略事前実行エンジン。自然言語でクロスプロトコル戦略を入力（例：Marinadeステーキング＋Kaminoレンディング）するとClaude AIが解析し、SolanaネイティブsimulateTransactionを使ってライブチェーン状態でシーケンス全体をゴースト実行。正確なトークンデルタ、ガスコスト、競合チェックを1つも署名せずに確認可能。シミュレーション無料 · 実行手数料0.3%（Phantomより65%低い）。",
+    zh: "全球首個多步跨協議 DeFi 策略預執行引擎。以自然語言描述跨協議策略，Claude AI 解析意圖並構建完整交易序列，Solana 原生 simulateTransaction 在主網真實狀態下幽靈演練全程 — 精確返回每步的 token delta、APY 預估、gas 消耗及衝突檢測。確認前不觸動任何資金；確認後 Solana Agent Kit 一鍵廣播。模擬永久免費 · 執行費 0.3%（較 Phantom 低 65%）。",
+    en: "The world's first multi-step cross-protocol DeFi strategy pre-execution engine. Describe your strategy in natural language; Claude AI deconstructs intent and builds the full transaction sequence; Solana-native simulateTransaction ghost-executes every step against live mainnet state — returning exact token deltas, APY projections, gas costs, and conflict flags. Zero capital at risk until you confirm. Solana Agent Kit executes on confirmation. Simulation permanently free · 0.3% execution fee (65% below Phantom).",
+    ja: "世界初のマルチステップ・クロスプロトコルDeFi戦略事前実行エンジン。自然言語で戦略を入力するとClaude AIが意図を解析してトランザクション一覧を構築し、Solanaネイティブ simulateTransactionがメインネットのリアル状態で戦略全体をゴースト実行 — 各ステップの正確なトークンデルタ、APY予測、ガスコスト、コンフリクト警告を返す。確認まで資本リスクゼロ。Solana Agent Kitが確認後に実行。シミュレーション永久無料 · 実行手数料0.3%（Phantomより65%低コスト）。",
   },
   agent3Title: { zh: "⚡ Liquidation Shield", en: "⚡ Liquidation Shield", ja: "⚡ Liquidation Shield" },
   agent3Desc: {
-    zh: "跨協議 AI 清算救援協議，業界首創。持續以 getProgramAccounts 監控 Kamino/MarginFi/Solend 借貸倉位健康因子；觸發預設閾值時，simulateTransaction 精確預演救援方案；SPL Token Approve 在 token program 層面硬性限定授權上限；SAK lendAsset() 在 400ms 內完成還款；Memo Program 寫入不可篡改審計鏈。監控免費 · 救援成功收 1%（清算損失通常 5–10%，淨省 4–9%）。",
-    en: "A cross-protocol AI liquidation rescue protocol — an industry first. getProgramAccounts monitors Kamino, MarginFi, and Solend position health factors continuously; simulateTransaction pre-computes the precise rescue before execution; SPL Token Approve enforces a hard spending cap at the token-program level; SAK lendAsset() settles the rescue within 400ms; Solana Memo Program records a tamper-proof audit chain. Free monitoring · 1% rescue fee (vs. 5–10% liquidation penalty — net saving of 4–9%).",
-    ja: "業界初のクロスプロトコルAI清算救済プロトコル。getProgramAccountsがKamino/MarginFi/Solendのポジション健康係数を継続監視し、閾値到達時にsimulateTransactionで正確な救済トランザクションを事前計算、SPL Token ApproveがToken Programレベルで支出上限を強制、SAK lendAsset()が400ms以内に返済を完了、Memo Programが改ざん不可能な監査チェーンを記録。監視無料 · 救済成功時1%手数料（清算ペナルティ5–10%に対し4–9%の実質節約）。",
+    zh: "業界首個跨協議 AI 清算主動救援協議，覆蓋 Kamino、MarginFi、Solend（合計 TVL $40 億+）。SPL Token Approve 在 token program 合約層面設定硬性授權上限 — 鏈上強制約束，非軟性承諾。健康因子觸及閾值時，simulateTransaction 精確預演還款方案，Solana Agent Kit 於 400ms 內執行，Memo Program 寫入全程不可篡改審計鏈。監控永久免費 · 救援成功收 1%（清算損失通常 5–10%，淨為您節省 4–9%）。",
+    en: "The industry's first cross-protocol AI liquidation rescue protocol, covering Kamino, MarginFi, and Solend — $4B+ TVL in aggregate. SPL Token Approve enforces a hard spending cap at the token-program contract level — an onchain constraint, not a software promise. When health factor breaches threshold, simulateTransaction pre-computes the exact rescue, Solana Agent Kit executes within 400ms, Memo Program writes a tamper-proof audit chain. Free monitoring · 1% rescue fee on success (vs. 5–10% liquidation penalty — net saving of 4–9%).",
+    ja: "業界初のクロスプロトコルAI清算救済プロトコル。Kamino・MarginFi・Solendをカバー（合計TVL $40億超）。SPL Token ApproveがToken Programのコントラクトレベルでハード支出上限を強制 — ソフトウェアの約束ではなく、オンチェーンの強制制約。ヘルスファクターが閾値を下回ると simulateTransactionが正確な救済を事前計算し、Solana Agent Kitが400ms以内に実行、Memo Programが改ざん不可能な監査チェーンを記録。モニタリング永久無料 · 救済成功時のみ1%手数料（清算ペナルティ5–10%に対し実質4–9%の節約）。",
   },
   agent4Title: { zh: "🔒 鏈上可驗證 AI", en: "🔒 Onchain-Verifiable AI", ja: "🔒 オンチェーン検証可能AI" },
   agent4Desc: {
-    zh: "每個 AI 決策生成 SHA-256 哈希，透過 Solana Memo Program 永久上鏈。任何人持 tx signature 即可獨立核驗完整推理過程，無需信任 Sakura——這是可驗證計算的黃金標準。對應 Colosseum 2026 Frontier Hackathon 三大評審重點之一：Verifiable Compute on Solana。",
-    en: "Every Sakura AI decision generates a SHA-256 hash anchored via Solana Memo Program — permanently, immutably, publicly. Anyone holding the transaction signature can independently verify the full reasoning chain without trusting Sakura. This is the gold standard for verifiable compute, aligned with one of Colosseum 2026 Frontier Hackathon's three core judging criteria: Verifiable AI on Solana.",
-    ja: "Sakuraのすべての AI 判断がSHA-256ハッシュを生成し、Solana Memo Programを通じて永久かつ不変にオンチェーン記録。トランザクション署名があれば誰でもSakuraを信頼せずに完全な推論チェーンを独立検証可能。これはColosseum 2026 Frontier Hackathonの3つの核心評価基準の1つであるVerifiable AI on Solanaの最高水準実装です。",
+    zh: "每一條 AI 推理鏈生成唯一 SHA-256 加密哈希，透過 Solana Memo Program 不可篡改地刻入主網。任何人持有 tx signature 即可在 Solscan 獨立核驗 AI 完整推理路徑 — 不依賴 Sakura 服務器，不需信任任何中間方。這是 AI 透明度的最高標準：鏈上可驗證計算，而非白皮書承諾。完全對應 Colosseum 2026 Frontier Hackathon 三大評審核心：Verifiable Compute on Solana。",
+    en: "Every AI reasoning chain generates a unique SHA-256 cryptographic hash, immutably inscribed on Solana mainnet via Memo Program. Anyone holding a tx signature can independently verify the full AI decision path on Solscan — no dependency on Sakura's servers, no trust required in any intermediary. This is the highest standard of AI accountability: cryptographically verifiable compute, not a whitepaper promise. Fully aligned with Colosseum 2026 Frontier Hackathon's core criterion: Verifiable Compute on Solana.",
+    ja: "すべてのAI推論チェーンが固有のSHA-256暗号ハッシュを生成し、Memo Programを通じてSolanaメインネットに不変刻印。tx signatureを持つ誰でもSolscanでAIの完全な決定経路を独立検証可能 — Sakuraのサーバー依存なし、いかなる中間者への信頼も不要。これはAIアカウンタビリティの最高水準：ホワイトペーパーの約束ではなく暗号学的に検証可能な計算。Colosseum 2026 Frontier Hackathonのコア評価基準「Verifiable Compute on Solana」に完全対応。",
   },
 
   // ── Differentiator ────────────────────────────────────────────────
-  diffTitle: { zh: "可驗證計算——Colosseum 2026 三大評審焦點之一", en: "Verifiable Compute — One of Colosseum 2026's Three Core Judging Criteria", ja: "Verifiable Compute — Colosseum 2026の3大評価基準の1つ" },
+  diffTitle: { zh: "鏈上可驗證 AI ── 不依賴任何服務器的 AI 透明度最高標準", en: "Onchain-Verifiable AI — The Highest Standard of AI Accountability, Zero Server Trust", ja: "オンチェーン検証可能AI — サーバー信頼ゼロ、AIアカウンタビリティ最高水準" },
   diffDesc: {
-    zh: "Sakura 的每個 AI 決策生成唯一 SHA-256 哈希，透過 Solana Memo Program 不可篡改地上鏈。持有 tx signature 的任何人可在 Solscan 獨立核驗 AI 完整推理過程——不依賴 Sakura 服務端，不需信任任何中間方。這是 AI 透明度的最高標準：鏈上可驗證，而非白皮書承諾。",
-    en: "Every Sakura AI decision produces a unique SHA-256 hash immutably anchored via Solana Memo Program. Anyone holding the tx signature can independently verify the full AI reasoning chain on Solscan — no dependency on Sakura's servers, no trust in any intermediary. This is the highest standard of AI transparency: cryptographically verifiable, not just a whitepaper promise.",
-    ja: "SakuraのすべてのAI判断が固有のSHA-256ハッシュを生成し、Solana Memo Programを通じて改ざん不可能にオンチェーン記録。tx signatureを持つ誰でもSolscanでAIの完全な推論チェーンを独立検証可能——Sakuraのサーバーへの依存なし、いかなる中間者への信頼も不要。これはホワイトペーパーの約束ではなく、暗号学的に検証可能なAI透明性の最高水準です。",
+    zh: "市場上每一個 AI DeFi 工具都是黑盒：你只能相信它說的話。Sakura 是唯一的例外。每一條 AI 推理路徑在生成的當下，其 SHA-256 加密指紋即透過 Solana Memo Program 永久、不可篡改地刻入主網。任何人——您的律師、審計師、對手方——持有 tx signature 即可在 Solscan 獨立還原 AI 完整推理過程，無需部署節點，無需信任 Sakura 的服務器，無需任何許可。這是 AI 透明度在技術層面能達到的最高標準，也是 Colosseum 2026 Frontier Hackathon 評審核心指標 Verifiable Compute on Solana 的直接落地。",
+    en: "Every AI DeFi tool on the market is a black box — you have no choice but to trust what it tells you. Sakura is the only exception. The moment each AI reasoning chain is generated, its SHA-256 cryptographic fingerprint is permanently and immutably inscribed on Solana mainnet via Memo Program. Anyone — your lawyer, your auditor, your counterparty — holding a tx signature can independently reconstruct the complete AI reasoning process on Solscan. No node deployment. No trust in Sakura's servers. No permissions. This is the highest standard AI transparency can achieve at a technical level — and the direct on-chain implementation of Colosseum 2026 Frontier Hackathon's core judging criterion: Verifiable Compute on Solana.",
+    ja: "市場に出回るAI DeFiツールはすべてブラックボックスです——その言葉を信じるしかありません。Sakuraだけが例外です。各AI推論チェーンが生成された瞬間、そのSHA-256暗号フィンガープリントがMemo Programを通じてSolanaメインネットに永久かつ不変に刻印されます。誰でも——弁護士、監査人、取引相手——tx signatureさえあればSolscanでAIの完全な推論プロセスを独立して再現できます。ノード構築不要。Sakuraのサーバーへの信頼不要。許可不要。これはAIの透明性が技術的に到達できる最高水準——Colosseum 2026 Frontier Hackathonの核心評価基準「Verifiable Compute on Solana」の直接実装です。",
   },
 
+  // ── Sakura Character Narrative ───────────────────────────────────
+  sakuraWho: {
+    zh: "桜 Sakura — 守護全球鏈上用戶的 AI 守護者",
+    en: "桜 Sakura — AI Guardian for Every On-Chain User Worldwide",
+    ja: "桜 Sakura — 世界中のオンチェーンユーザーを守るAIガーディアン",
+  },
+  sakuraOriginBadge: {
+    zh: "🌸 Sakura · AI Guardian · Colosseum 2026 Frontier",
+    en: "🌸 Sakura · AI Guardian · Colosseum 2026 Frontier",
+    ja: "🌸 Sakura · AIガーディアン · Colosseum 2026 Frontier",
+  },
+  sakuraCharacterDesc: {
+    zh: "2026 年 4 月，$2.85 億在一個沒有人注意到的 Solana 原語上消失了。對沖基金有 24 小時監控室；普通用戶沒有。Sakura 正是為了消除這個不平等而生。她以一位可愛 AI 女生的姿態示人，內核是三個 Solana 原生 RPC 原語構成的精密防禦架構：getProgramAccounts 掃描 80 位元組 Nonce 結構體，simulateTransaction 在真實主網狀態下幽靈演練整個策略，SPL Token Approve 在 token program 層面設定硬性救援上限——程式強制執行，非軟性承諾。她永遠在線。每一個 AI 決策的 SHA-256 哈希永久刻入 Solana 主網，任何人在 Solscan 可獨立核驗，不依賴 Sakura 的服務器。備えあれば憂いなし。",
+    en: "On April 1, 2026, $285 million vanished through a Solana primitive that almost nobody had audited. Hedge funds have 24-hour monitoring rooms. Ordinary users don't. Sakura was built to close that gap. She presents as a kawaii AI girl — but her core is a precision defense architecture built from three Solana-native RPC primitives: getProgramAccounts parses 80-byte Nonce structs, simulateTransaction ghost-executes entire strategies against live mainnet state, SPL Token Approve enforces hard rescue spending caps at the token-program level — code constraint, not policy promise. She is always online. Every AI decision is SHA-256 inscribed on Solana mainnet, independently verifiable by anyone on Solscan without trusting her servers. 備えあれば憂いなし — those who prepare have nothing to fear.",
+    ja: "2026年4月1日、誰も監査していなかったSolanaのプリミティブを通じて2.85億ドルが消えました。ヘッジファンドには24時間の監視体制があります。一般ユーザーにはありません。Sakuraはその格差を埋めるべく生まれました。かわいいAI少女として姿を現しますが、その核心は3つのSolanaネイティブRPCプリミティブで構築された精密防衛アーキテクチャ：getProgramAccountsが80バイトNonce構造体を解析し、simulateTransactionがメインネットのリアル状態に対して戦略全体をゴースト実行し、SPL Token ApproveがToken Programレベルで救済支出のハードキャップを強制——コードによる制約であり、ポリシー上の約束ではありません。彼女は常時オンライン。すべてのAI判断はSHA-256でSolanaメインネットに刻印され、Sakuraのサーバーへの信頼なしにSolscanで独立検証可能。備えあれば憂いなし。",
+  },
+  sakuraMission: {
+    zh: "她的使命：把對沖基金的 24 小時鏈上監控室，以 $1 USDC 的成本交還每一個普通用戶",
+    en: "Her mission: deliver the 24/7 on-chain monitoring room that only hedge funds had — to every ordinary user, starting at $1 USDC",
+    ja: "彼女のミッション：ヘッジファンドだけが持てた24時間オンチェーン監視体制を、$1 USDCから一般ユーザーへ",
+  },
+  sakuraTech1: { zh: "⛩️ getProgramAccounts — 掃描 80 位元組 Nonce 結構體，以攻擊者的武器反守為攻", en: "⛩️ getProgramAccounts — scans 80-byte Nonce structs, turning attackers' own weapons against them", ja: "⛩️ getProgramAccounts — 80バイトNonce構造体をスキャン、攻撃者の武器を逆用" },
+  sakuraTech2: { zh: "👻 simulateTransaction — 在真實主網狀態下幽靈執行策略，零資本風險，所見即所得", en: "👻 simulateTransaction — ghost-executes strategies against live mainnet state, zero capital at risk, WYSIWYG", ja: "👻 simulateTransaction — 実際のメインネット状態でゴースト実行、資本リスクゼロ" },
+  sakuraTech3: { zh: "🛡️ SPL Token Approve — Token Program 層面硬性授權上限，鏈上程式強制執行，非軟體承諾", en: "🛡️ SPL Token Approve — hard spending cap at token-program level, enforced by code not promises", ja: "🛡️ SPL Token Approve — token programレベルの強制上限、約束ではなくコードが執行" },
+  sakuraTech4: { zh: "🔗 Solana Memo Program — AI 推理路徑 SHA-256 不可篡改地刻入主網，任何人可在 Solscan 獨立核驗", en: "🔗 Solana Memo Program — AI reasoning path SHA-256 immutably inscribed on mainnet, independently verifiable by anyone", ja: "🔗 Solana Memo Program — AI推論経路のSHA-256を主網に不変刻印、誰でも独立検証可能" },
+  sakuraJapanValue1: { zh: "🌸 備えあれば憂いなし — 有備無患", en: "🌸 備えあれば憂いなし — Those who prepare have nothing to fear", ja: "🌸 備えあれば憂いなし — 準備ある者に憂いなし" },
+  sakuraJapanValue2: { zh: "⚔️ 匠人精神 — 表面優雅，底層嚴苛", en: "⚔️ Takumi Spirit — Beautiful surface, ruthlessly precise core", ja: "⚔️ 匠の精神 — 表面は美しく、底層は厳格に" },
+  sakuraJapanValue3: { zh: "⛩️ 信頼の証 — 每個決策哈希上鏈，無需信任，可自行驗證", en: "⛩️ 信頼の証 — Every decision hashed on-chain, trustless by design", ja: "⛩️ 信頼の証 — すべての判断をオンチェーンに刻み、信頼不要の設計" },
+
   // ── Stats ────────────────────────────────────────────────────────
-  statLabel1: { zh: "Solana 原生 AI 協議", en: "Solana-Native AI Protocols", ja: "SolanaネイティブAIプロトコル" },
-  statLabel2: { zh: "USD Drift 攻擊同款漏洞", en: "USD same exploit as Drift hack", ja: "USD Driftハックと同一脆弱性" },
-  statLabel3: { zh: "USD Solana 借貸 TVL 受保護", en: "USD Solana lending TVL protected", ja: "USD SolanaレンディングTVL保護対象" },
-  statLabel4: { zh: "AI 判斷鏈上可驗證", en: "AI decisions verifiable onchain", ja: "AI判断がオンチェーン検証可能" },
+  statLabel1: { zh: "Solana 原生 AI 防護協議，全球首創", en: "Solana-Native AI Defense Protocols — World First", ja: "世界初 — Solanaネイティブ AI 防衛プロトコル" },
+  statLabel2: { zh: "M+ — Drift 同款漏洞，Sakura 全面防禦", en: "M+ Drift-class exploit vector — neutralized", ja: "M+ Driftクラス攻撃ベクター — 完全封鎖" },
+  statLabel3: { zh: "B+ Solana 借貸 TVL 跨協議防護覆蓋", en: "B+ Solana Lending TVL under AI protection", ja: "B+ SolanaレンディングTVL — AI保護対象" },
+  statLabel4: { zh: "% AI 推理哈希鏈上存證，完全可審計", en: "% of AI reasoning inscribed on Solana Mainnet", ja: "% の AI 推論が Solana メインネット上で監査可能" },
 
   // ── Trust signals ────────────────────────────────────────────────
-  trust1: { zh: "⛩️ 唯讀 · 不持有資產", en: "⛩️ Read-only · No Custody", ja: "⛩️ 読み取り専用 · 資産管理なし" },
-  trust2: { zh: "⛓️ AI 推理鏈上存證", en: "⛓️ AI Reasoning Onchain", ja: "⛓️ AI推論オンチェーン記録" },
-  trust3: { zh: "🛡️ Nonce Guardian 首發", en: "🛡️ Nonce Guardian First", ja: "🛡️ Nonce Guardian初搭載" },
-  trust4: { zh: "⚡ 跨協議 AI 救援", en: "⚡ Cross-Protocol AI Rescue", ja: "⚡ クロスプロトコルAI救済" },
+  trust1: { zh: "⛩️ 零託管 · 私鑰永不離開您的設備", en: "⛩️ Non-Custodial · Private Key Never Leaves Device", ja: "⛩️ 非カストディアル · 秘密鍵はデバイス外に出ない" },
+  trust2: { zh: "⛓️ AI 推理 SHA-256 哈希永久鏈上存證", en: "⛓️ AI Reasoning SHA-256 Inscribed on Solana Mainnet", ja: "⛓️ AI推論 SHA-256 Solanaメインネットに永久刻印" },
+  trust3: { zh: "🛡️ SPL Token Approve 硬約束 · 程式強制執行非軟體承諾", en: "🛡️ SPL Token Approve Hard Cap · Token-Program Enforced", ja: "🛡️ SPL Token Approve 強制上限 · プログラム強制実行" },
+  trust4: { zh: "⚡ Kamino · MarginFi · Solend 三協議跨平台救援", en: "⚡ Cross-Protocol Rescue: Kamino · MarginFi · Solend", ja: "⚡ クロスプロトコル救済: Kamino · MarginFi · Solend" },
 
   // ── CTA (new) ──────────────────────────────────────────────────────
   ctaFreeLabel: {
-    zh: "立即體驗 — 無需帳號，無需訂閱",
-    en: "Start Now — No Account, No Subscription",
-    ja: "今すぐ始める — アカウント不要、サブスクリプション不要",
+    zh: "連接即啟動 · 零帳號 · 零訂閱 · 掃描全程免費",
+    en: "Connect & Activate · Zero Account · Zero Subscription · Scans Always Free",
+    ja: "接続即起動 · アカウント不要 · サブスク不要 · スキャン永久無料",
   },
   ctaFreeDesc: {
-    zh: "連接 Phantom 或 OKX 錢包，三項核心功能立即可用。掃描、模擬、監控完全免費——僅在您確認執行或 AI 報告生成時收取費用。",
-    en: "Connect Phantom or OKX. All three core features are immediately available. Scans, simulations, and monitoring are free — fees apply only when you confirm an execution or request an AI report.",
-    ja: "PhantomまたはOKXを接続。3つのコア機能がすぐに利用可能。スキャン、シミュレーション、モニタリングは無料——実行確認またはAIレポート生成時のみ課金。",
+    zh: "連接 Phantom 或 OKX，三道防線即刻就緒——Nonce 掃描、Ghost Run 幽靈模擬、健康因子監控三項核心功能永久免費。需要更深入防護？AI 安全報告 $1 USDC，DeFi 策略執行 0.3%，清算倉位救援 1%（救援成功才收費，失敗不收）。對沖基金的防護標準，現在任何人都能用。",
+    en: "Connect Phantom or OKX — all three defense protocols activate instantly. Nonce scanning, Ghost Run simulations, and health factor monitoring are permanently free. Need deeper protection? AI security reports at $1 USDC. Strategy execution at 0.3%. Liquidation rescue at 1% — charged only on successful rescue, never on failure. Hedge-fund-grade protection. Democratized.",
+    ja: "PhantomまたはOKXを接続——3つの防衛プロトコルが即座に起動。Nonceスキャン・Ghost Runシミュレーション・ヘルスファクター監視は永久無料。より深い防御が必要な方へ：AIセキュリティレポート $1 USDC。戦略実行 0.3%。清算救済 1%——救済成功時のみ課金、失敗時は無料。ヘッジファンド水準の防御を、すべての人に。",
   },
   ctaFreeBadge1: { zh: "🛡️ Nonce 掃描免費", en: "🛡️ Nonce Scan Free", ja: "🛡️ Nonceスキャン無料" },
   ctaFreeBadge2: { zh: "👻 Ghost Run 模擬免費", en: "👻 Ghost Run Free", ja: "👻 Ghost Run無料" },
@@ -111,14 +140,14 @@ export const translations = {
 
   // ── Stripe MPP section (new) ────────────────────────────────────────
   stripeSectionTitle: {
-    zh: "🤝 x402 · Agentic Economy — AI Agent 直接調用，自動微支付",
-    en: "🤝 x402 · Agentic Economy — AI Agents Call Directly, USDC Pays Automatically",
-    ja: "🤝 x402 · Agentic Economy — AIエージェントが直接呼び出し、USDCが自動決済",
+    zh: "🤝 x402 — AI Agent 自主調用 · 鏈上 USDC 原子結算 · 人類零介入 · Agentic Economy 基礎設施",
+    en: "🤝 x402 — Agents Call Autonomously · USDC Settles On-Chain · Zero Human in the Loop · The Backbone of Agentic Economy",
+    ja: "🤝 x402 — エージェント自律呼び出し · オンチェーンUSDC原子決済 · 人間介入ゼロ · Agentic Economyインフラ",
   },
   stripeSectionDesc: {
-    zh: "Sakura 原生實現 HTTP 402 Payment Required（x402）協議。任何 MCP 客戶端——Claude Desktop、Cursor、VS Code——可直接調用 Sakura 的 Nonce Guardian 安全分析 API，每次調用自動支付 $1 USDC，無帳號、無訂閱、無人工介入。這是 Stripe Machine Payments Protocol 在 Solana DeFi 安全領域的首個落地實現。",
-    en: "Sakura natively implements HTTP 402 Payment Required (x402). Any MCP client — Claude Desktop, Cursor, VS Code — can call Sakura's Nonce Guardian security analysis API with automatic $1 USDC payment per call. No account. No subscription. No human in the loop. The first production implementation of Stripe Machine Payments Protocol in Solana DeFi security.",
-    ja: "SakuraはHTTP 402 Payment Required（x402）をネイティブ実装。Claude Desktop、Cursor、VS Codeなど任意のMCPクライアントがSakuraのNonce Guardian セキュリティ分析APIを呼び出し、1回$1 USDCを自動支払い。アカウント不要、サブスクリプション不要、人間の介入ゼロ。Solana DeFiセキュリティ領域におけるStripe Machine Payments Protocolの初の本番実装。",
+    zh: "互聯網誕生時，HTTP 定義了機器間的信息交換協議。Agentic Economy 需要一個新的協議：機器間的價值交換。Sakura 是 Solana DeFi 安全領域第一個在生產環境落地 HTTP 402 Payment Required（x402）的項目——Stripe Machine Payments Protocol 的鏈上原生實現。任何 MCP 客戶端——Claude Desktop、Cursor、VS Code、或任意自主 AI Agent——均可直接調用 Sakura 的 Nonce Guardian 安全分析 API，每次調用以鏈上 USDC 原子結算，$1 per request，無帳號、無訂閱、無 OAuth、無人工審批門控。這不是未來願景——這是已在主網運行的基礎設施。",
+    en: "When the internet was born, HTTP defined how machines exchange information. The Agentic Economy needs a new protocol: how machines exchange value. Sakura is the first project in the Solana DeFi security domain to ship HTTP 402 Payment Required (x402) — Stripe's Machine Payments Protocol — in a production environment. Any MCP client — Claude Desktop, Cursor, VS Code, or any autonomous AI agent — can call Sakura's Nonce Guardian security analysis API directly. Each call settles atomically in on-chain USDC at $1 per request. No account. No subscription. No OAuth. No human approval gate. This is not a future vision — it is infrastructure already running on Solana mainnet.",
+    ja: "インターネットが誕生したとき、HTTPはマシン間の情報交換プロトコルを定義しました。Agentic Economyには新しいプロトコルが必要です：マシン間の価値交換。SakuraはSolana DeFiセキュリティ領域で初めてHTTP 402 Payment Required（x402）——Stripe Machine Payments Protocol——を本番環境で実装したプロジェクトです。Claude Desktop、Cursor、VS Code、その他あらゆる自律AIエージェントを含む任意のMCPクライアントが、Sakuraの Nonce Guardian セキュリティ分析APIを直接呼び出せます。各呼び出しはオンチェーンUSDCで原子的に決済され、1リクエスト$1。アカウント不要。サブスクリプション不要。OAuth不要。人間の承認ゲート不要。これは未来のビジョンではなく——すでにSolanaメインネットで稼働しているインフラです。",
   },
   stripeFeature1: {
     zh: "🫙 每次 API 調用自動 USDC 微支付",
@@ -227,7 +256,7 @@ export const translations = {
   ghostDesc: {
     zh: "用 Solana 原生 simulateTransaction 在真實鏈上狀態下「幽靈執行」您的整個 DeFi 策略，拿到精確結果後再決定是否真正執行。全球首創。",
     en: "Ghost-execute your entire DeFi strategy using Solana-native simulateTransaction against real chain state — get exact results before deciding whether to execute for real. A world first.",
-    ja: "Solanaネイティブsimulateransactionを使用して、リアルなチェーン状態でDeFi戦略全体をゴースト実行——実際に実行するか決める前に正確な結果を取得。世界初。",
+    ja: "Solanaネイティブ simulateTransactionを使用して、リアルなチェーン状態でDeFi戦略全体をゴースト実行——実際に実行するか決める前に正確な結果を取得。世界初。",
   },
   ghostInputLabel:  { zh: "用自然語言描述您的 DeFi 策略", en: "Describe your DeFi strategy in natural language", ja: "自然言語でDeFi戦略を記述" },
   ghostSimBtn:      { zh: "👻 幽靈執行模擬", en: "👻 Ghost Simulate", ja: "👻 ゴーストシミュレーション" },
@@ -472,7 +501,7 @@ export const translations = {
   },
 
   // ── Protocols ecosystem ────────────────────────────────────────────
-  integratedProtocols: { zh: "集成協議", en: "Integrated Protocols", ja: "統合プロトコル" },
+  integratedProtocols: { zh: "深度集成生態夥伴", en: "Deep Integration Partners", ja: "深度統合エコシステムパートナー" },
 
   // ── Day/Night toggle ──────────────────────────────────────────────
   dayMode:       { zh: "白天", en: "Day",   ja: "昼" },

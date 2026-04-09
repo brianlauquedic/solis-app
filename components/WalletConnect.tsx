@@ -192,6 +192,103 @@ export default function WalletConnect({ walletAddress, onEnterApp }: Props = {})
       </div>
 
 
+      {/* ── 桜の守護者 Sakura Character Narrative ── */}
+      <div style={{
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+        borderTop: "2px solid var(--accent)",
+        borderRadius: 12, padding: "28px 28px 24px",
+        marginBottom: 28, position: "relative", overflow: "hidden",
+      }}>
+        {/* Decorative petal watermark */}
+        <div style={{
+          position: "absolute", top: -10, right: 10, fontSize: 100,
+          opacity: 0.03, userSelect: "none", pointerEvents: "none", lineHeight: 1,
+        }}>🌸</div>
+        <div style={{
+          position: "absolute", bottom: -20, left: 5, fontSize: 60,
+          opacity: 0.025, userSelect: "none", pointerEvents: "none", lineHeight: 1,
+        }}>桜</div>
+
+        {/* Aesthetic badge */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 6,
+          background: "rgba(255,75,75,0.06)", border: "1px solid rgba(255,75,75,0.2)",
+          borderRadius: 20, padding: "3px 12px", marginBottom: 18,
+        }}>
+          <span style={{ fontSize: 10, color: "var(--accent)", letterSpacing: "0.15em", fontFamily: "var(--font-mono)" }}>
+            {t("sakuraOriginBadge")}
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 18 }}>
+          {/* Kanji crest */}
+          <div style={{
+            width: 48, height: 48, borderRadius: 10, flexShrink: 0,
+            background: "var(--accent-soft)", border: "1px solid var(--accent-mid)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 22, fontFamily: "var(--font-heading)", color: "var(--accent)",
+            boxShadow: "0 2px 12px rgba(255,75,75,0.1)",
+          }}>桜</div>
+
+          <div style={{ flex: 1 }}>
+            <div style={{
+              fontSize: 9, fontWeight: 400, letterSpacing: "0.22em",
+              color: "var(--accent)", fontFamily: "var(--font-mono)",
+              marginBottom: 6, textTransform: "uppercase",
+            }}>Sakura AI Guardian · 🌸 備えあれば憂いなし · Colosseum 2026 Frontier</div>
+
+            <div className="jp-heading" style={{
+              fontSize: 15, fontWeight: 400, color: "var(--text-primary)",
+              letterSpacing: "0.07em", marginBottom: 12,
+            }}>{t("sakuraWho")}</div>
+
+            <div style={{
+              fontSize: 12, color: "var(--text-secondary)", lineHeight: 2.1,
+              letterSpacing: "0.02em", marginBottom: 18,
+            }}>{t("sakuraCharacterDesc")}</div>
+
+            {/* Mission statement */}
+            <div style={{
+              background: "var(--accent-soft)", border: "1px solid var(--accent-mid)",
+              borderRadius: 6, padding: "10px 14px", marginBottom: 16,
+              fontSize: 12, color: "var(--accent)",
+              fontFamily: "var(--font-heading)", letterSpacing: "0.06em",
+            }}>
+              ◈ {t("sakuraMission")}
+            </div>
+
+            {/* Japanese values */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+              {(["sakuraJapanValue1", "sakuraJapanValue2", "sakuraJapanValue3"] as const).map(k => (
+                <span key={k} style={{
+                  fontSize: 10, color: "var(--text-secondary)",
+                  background: "var(--bg-base)", border: "1px solid var(--border)",
+                  borderRadius: 20, padding: "3px 10px", letterSpacing: "0.03em",
+                }}>{t(k)}</span>
+              ))}
+            </div>
+
+            {/* Tech primitives */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {(["sakuraTech1", "sakuraTech2", "sakuraTech3", "sakuraTech4"] as const).map(k => (
+                <div key={k} style={{
+                  fontSize: 11, color: "var(--text-secondary)",
+                  background: "var(--bg-base)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 4, padding: "5px 10px",
+                  letterSpacing: "0.02em", fontFamily: "var(--font-mono)",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>
+                  <span style={{ color: "var(--accent)", fontSize: 8, opacity: 0.7 }}>▸</span>
+                  {t(k)}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ── 四大守護 4 Agent Cards ── */}
       <div style={{ marginBottom: 12 }}>
         <div className="jp-heading" style={{

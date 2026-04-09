@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 
 const CONTENT = {
   en: {
-    badge: "POLICY",
+    badge: "PRIVACY · SAKURA AI GUARDIAN",
     title: "Privacy Policy",
     updated: "Last updated: 6 April 2026",
     sections: [
@@ -128,7 +128,7 @@ const CONTENT = {
     ],
   },
   zh: {
-    badge: "政策",
+    badge: "隱私 · SAKURA AI GUARDIAN",
     title: "隱私政策",
     updated: "最後更新：2026年4月6日",
     sections: [
@@ -251,7 +251,7 @@ const CONTENT = {
     ],
   },
   ja: {
-    badge: "ポリシー",
+    badge: "プライバシー · SAKURA AI GUARDIAN",
     title: "プライバシーポリシー",
     updated: "最終更新：2026年4月6日",
     sections: [
@@ -420,6 +420,24 @@ export default function PrivacyPage() {
           <p style={{ fontSize: 13, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
             {c.updated}
           </p>
+        </div>
+
+        {/* Sakura platform intro */}
+        <div style={{
+          background: "var(--bg-card)", border: "1px solid var(--border)",
+          borderLeft: "3px solid var(--accent)", borderRadius: 8,
+          padding: "16px 20px", marginBottom: 32,
+          fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.85,
+        }}>
+          <strong style={{ color: "var(--text-primary)", fontFamily: "var(--font-heading)", letterSpacing: "0.04em" }}>
+            {lang === "zh" ? "Sakura 零託管原則" : lang === "ja" ? "Sakura ゼロカストディ原則" : "Sakura Zero-Custody Principle"}
+          </strong>
+          {" — "}
+          {lang === "zh"
+            ? "大多數 AI DeFi 工具在隱私上提供的只是一份政策文件——你只能選擇相信。Sakura 的隱私保護建立在三個可以被獨立驗證的架構原則之上，而不是一份需要相信的承諾：① 唯讀優先——Nonce Guardian 以完全唯讀模式運行；Ghost Run 模擬永遠不請求簽名；即使 Liquidation Shield 需要 SPL Token Approve，也是由您在自己的錢包內完成授權——Sakura 的服務器在任何時候都無法訪問您的私鑰或助記詞；② 最小數據收集——我們只收集提供服務所必需的鏈上公開數據，AI 交互記錄僅用於服務交付，絕不出售，不共享給廣告商；③ AI 決策鏈上透明——每一條 AI 推理路徑的 SHA-256 哈希永久刻入 Solana 主網，您和任何第三方均可在 Solscan 以 tx signature 獨立核驗，無需信任 Sakura 的任何服務器。這不是「我們承諾保護您的隱私」——這是「我們無法違反您的隱私」的架構設計。備えあれば憂いなし。"
+            : lang === "ja"
+            ? "ほとんどのAI DeFiツールがプライバシーについて提供するのはポリシー文書だけ——あなたは信じるかどうかを選ぶしかありません。Sakuraのプライバシー保護は独立して検証できる3つのアーキテクチャ原則に基づいており、信じなければならない約束ではありません：①読み取り専用優先——Nonce Guardianは完全な読み取り専用モードで動作；Ghost Runシミュレーションは決して署名を要求しない；Liquidation ShieldがSPL Token Approveを必要とする場合でも、あなた自身のウォレット内で承認が完了——Sakuraのサーバーは秘密鍵やシードフレーズに一切アクセスできない；②最小データ収集——サービス提供に必要なオンチェーン公開データのみを収集し、AI対話記録はサービス提供のみに使用、広告主への販売・共有は一切しない；③AI判断のオンチェーン透明性——すべてのAI推論経路のSHA-256ハッシュがSolanaメインネットに永久刻印され、tx signatureでSolscanで独立検証可能、Sakuraのサーバーへの信頼不要。これは「プライバシーを守ることを約束します」ではなく、「Sakuraがプライバシーを侵害できない」設計です。備えあれば憂いなし。"
+            : "Most AI DeFi tools offer only a policy document on privacy — you have no choice but to trust it. Sakura's privacy protection rests on three architectural principles that can be independently verified, not a promise you must believe: ① Read-only first — Nonce Guardian operates in fully read-only mode; Ghost Run simulations never request a signature; even where Liquidation Shield requires SPL Token Approve, the authorization is completed inside your own wallet — Sakura's servers cannot access your private keys or seed phrase at any time; ② Minimum data collection — we collect only on-chain public data necessary to deliver the service; AI interaction records are used solely for service delivery and never sold or shared with advertisers; ③ On-chain AI transparency — the SHA-256 hash of every AI reasoning path is permanently inscribed on Solana mainnet, independently verifiable by you or any third party via tx signature on Solscan, with zero reliance on Sakura's servers. This is not 'we promise to protect your privacy' — it is 'we are architecturally incapable of violating your privacy.' 備えあれば憂いなし."}
         </div>
 
         {c.sections.map((sec, i) => (
