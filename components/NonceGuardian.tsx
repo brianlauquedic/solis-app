@@ -57,10 +57,18 @@ export default function NonceGuardian() {
       // x402: payment required for AI analysis
       if (res.status === 402) {
         const body = await res.json();
-        // Show basic scan results while prompting payment
-        if (body.scanResult) setResult(body.scanResult);
-        setPayChallenge({ recipient: body.recipient, amount: body.amount });
-        setPayState("waiting");
+        const scanResult = body.scanResult;
+        if (scanResult) setResult(scanResult);
+        // Only prompt payment if there are actual risks to analyze
+        const hasRisks = scanResult &&
+          (scanResult.riskSignals?.length > 0 || scanResult.accounts?.length > 0);
+        if (hasRisks) {
+          setPayChallenge({ recipient: body.recipient, amount: body.amount });
+          setPayState("waiting");
+        } else {
+          // Clean scan — no risks, no point paying for a report
+          setPayState("done");
+        }
         return;
       }
 
