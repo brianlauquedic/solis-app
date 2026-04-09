@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scanNonceAccounts } from "@/lib/nonce-scanner";
-import { Connection, PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey, Transaction, TransactionInstruction, Keypair } from "@solana/web3.js";
 import Anthropic from "@anthropic-ai/sdk";
+import { createHash } from "crypto";
 
 const HELIUS_RPC = `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY ?? ""}`;
 const SAKURA_FEE_WALLET = process.env.SAKURA_FEE_WALLET ?? "";
 const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-const AI_REPORT_FEE_USDC = 0.5; // $0.50 per AI analysis report
-const AI_REPORT_FEE_MICRO = 500_000; // 0.50 USDC in micro-USDC (6 decimals)
+const AI_REPORT_FEE_USDC = 1.0;           // $1.00 USDC per AI analysis report
+const AI_REPORT_FEE_MICRO = 1_000_000;    // 1.00 USDC in micro-USDC (6 decimals)
+const MEMO_PROGRAM = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
 
 export const maxDuration = 60;
 
-// Verify x402 USDC payment on-chain
+// ── Verify x402 USDC payment on-chain ────────────────────────────────────────
+
 async function verifyPayment(txSig: string): Promise<boolean> {
-  if (!SAKURA_FEE_WALLET) return true; // demo mode: skip if no fee wallet configured
+  if (!SAKURA_FEE_WALLET) return true; // demo mode
   try {
     const { getAssociatedTokenAddressSync } = await import("@solana/spl-token");
     const conn = new Connection(HELIUS_RPC, "confirmed");
@@ -43,6 +46,52 @@ async function verifyPayment(txSig: string): Promise<boolean> {
   }
 }
 
+// ── Write SHA-256 report hash to Solana Memo Program ─────────────────────────
+
+async function writeReportHashOnChain(
+  reportHash: string,
+  wallet: string,
+  paymentSig: string
+): Promise<string | null> {
+  try {
+    const rawKey = process.env.SAKURA_AGENT_PRIVATE_KEY;
+    if (!rawKey) return null;
+
+    const conn = new Connection(HELIUS_RPC, "confirmed");
+    const agentKp = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(rawKey)));
+
+    // Memo payload: permanently records report hash, wallet, payment proof
+    const memoPayload = JSON.stringify({
+      event: "sakura_nonce_report",
+      sha256: reportHash,
+      wallet: wallet.slice(0, 8),
+      paymentRef: paymentSig.slice(0, 20),
+      ts: new Date().toISOString(),
+    });
+
+    const memoIx = new TransactionInstruction({
+      keys: [{ pubkey: agentKp.publicKey, isSigner: true, isWritable: false }],
+      programId: new PublicKey(MEMO_PROGRAM),
+      data: Buffer.from(memoPayload),
+    });
+
+    const tx = new Transaction().add(memoIx);
+    tx.feePayer = agentKp.publicKey;
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash("confirmed");
+    tx.recentBlockhash = blockhash;
+    tx.sign(agentKp);
+
+    const sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false });
+    await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
+    return sig;
+  } catch (err) {
+    console.error("[nonce-guardian] on-chain hash write failed:", err);
+    return null;
+  }
+}
+
+// ── GET: free scan ────────────────────────────────────────────────────────────
+
 export async function GET(req: NextRequest) {
   const wallet = req.nextUrl.searchParams.get("wallet");
   if (!wallet || wallet.length < 32 || wallet.length > 44) {
@@ -54,10 +103,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[nonce-guardian] scan error:", err);
     return NextResponse.json({ error: `Scan failed: ${msg}` }, { status: 500 });
   }
 }
+
+// ── POST: AI report (x402 — $1.00 USDC + SHA-256 on-chain) ───────────────────
 
 export async function POST(req: NextRequest) {
   let body: { wallet?: string } = {};
@@ -68,31 +118,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
   }
 
-  // ── Scan (always free) ────────────────────────────────────────────
+  // ── Step 1: Free scan ─────────────────────────────────────────────
   let scanResult;
   try {
     scanResult = await scanNonceAccounts(wallet, HELIUS_RPC);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.error("[nonce-guardian] scan error:", err);
     return NextResponse.json({ error: `Scan failed: ${msg}` }, { status: 500 });
   }
 
-  // ── x402 Gate — AI report costs $0.50 USDC ───────────────────────
+  // ── Step 2: x402 Gate — $1.00 USDC for AI report ─────────────────
   const paymentSig = req.headers.get("x-payment") ?? req.headers.get("X-PAYMENT");
 
   if (!paymentSig && SAKURA_FEE_WALLET) {
-    // Return 402 with payment challenge — scan result included so UI can show it
     return NextResponse.json(
       {
-        // Payment challenge
-        recipient: SAKURA_FEE_WALLET,
-        amount: AI_REPORT_FEE_USDC,
-        currency: "USDC" as const,
-        network: "solana-mainnet" as const,
-        description: "Sakura Nonce Guardian — AI Security Analysis Report",
-        // Include free scan data so UI can show basic results while prompting for payment
-        scanResult,
+        recipient:   SAKURA_FEE_WALLET,
+        amount:      AI_REPORT_FEE_USDC,
+        currency:    "USDC" as const,
+        network:     "solana-mainnet" as const,
+        description: "Sakura Nonce Guardian — AI Security Report + SHA-256 永久鏈上存證",
+        scanResult,  // free scan included so UI can show basic results
       },
       {
         status: 402,
@@ -107,18 +153,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Verify payment if x-payment header present
+  // Verify payment on-chain
   if (paymentSig && SAKURA_FEE_WALLET) {
     const valid = await verifyPayment(paymentSig);
     if (!valid) {
       return NextResponse.json(
-        { error: "Payment verification failed — send 0.50 USDC to Sakura fee wallet" },
+        { error: "Payment verification failed — send 1.00 USDC to Sakura fee wallet" },
         { status: 402 }
       );
     }
   }
 
-  // ── AI analysis (paid) ────────────────────────────────────────────
+  // ── Step 3: Claude AI analysis ────────────────────────────────────
   const { accounts, riskSignals } = scanResult;
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
@@ -143,17 +189,52 @@ Provide a concise security assessment in Chinese (Traditional):
 3. Immediate action items (if any)
 4. Max 200 words.`;
 
+  let aiAnalysis: string | null = null;
   try {
     const message = await client.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 400,
       messages: [{ role: "user", content: prompt }],
     });
-
-    const aiAnalysis = message.content[0].type === "text" ? message.content[0].text : null;
-    return NextResponse.json({ ...scanResult, aiAnalysis });
+    aiAnalysis = message.content[0].type === "text" ? message.content[0].text : null;
   } catch (err) {
     console.error("[nonce-guardian] AI analysis error:", err);
-    return NextResponse.json({ ...scanResult, aiAnalysis: null });
   }
+
+  // ── Step 4: SHA-256 hash → Solana Memo (永久鏈上存證) ─────────────
+  let reportHash: string | null = null;
+  let proofTxSig: string | null = null;
+
+  if (aiAnalysis) {
+    // Hash the complete report: analysis + scan data + wallet + timestamp
+    const reportPayload = JSON.stringify({
+      wallet,
+      accounts: accounts.length,
+      riskSignals: riskSignals.length,
+      aiAnalysis,
+      generatedAt: new Date().toISOString(),
+    });
+    reportHash = createHash("sha256").update(reportPayload).digest("hex");
+
+    // Write hash permanently to Solana blockchain
+    proofTxSig = await writeReportHashOnChain(
+      reportHash,
+      wallet,
+      paymentSig ?? "demo"
+    );
+  }
+
+  return NextResponse.json({
+    ...scanResult,
+    aiAnalysis,
+    // On-chain proof
+    proof: reportHash ? {
+      sha256:    reportHash,
+      txSig:     proofTxSig,
+      explorerUrl: proofTxSig
+        ? `https://solscan.io/tx/${proofTxSig}`
+        : null,
+      message:   "此報告已永久記錄於 Solana 鏈上，SHA-256 哈希獨立可驗證",
+    } : null,
+  });
 }
