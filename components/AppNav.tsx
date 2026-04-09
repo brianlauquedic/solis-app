@@ -49,10 +49,6 @@ export default function AppNav() {
           <span className="jp-heading" style={{ fontSize: 16, fontWeight: 500, color: "var(--text-primary)", letterSpacing: "0.08em" }}>Sakura</span>
         </button>
         <span style={{
-          fontSize: 9, color: "var(--accent)", border: "1px solid var(--accent-mid)",
-          borderRadius: 3, padding: "1px 5px", letterSpacing: 1.5, fontFamily: "var(--font-mono)",
-        }}>v2</span>
-        <span style={{
           fontSize: 10, color: "var(--text-muted)",
           borderLeft: "1px solid var(--border)", paddingLeft: 10,
           fontFamily: "var(--font-heading)", letterSpacing: "0.1em",
