@@ -8,6 +8,7 @@ import LiquidationShield from "@/components/LiquidationShield";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useWallet } from "@/contexts/WalletContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLang } from "@/contexts/LanguageContext";
 import Footer from "@/components/Footer";
 
 type Tab = "nonce" | "ghost" | "shield";
@@ -21,6 +22,7 @@ const TABS: { id: Tab; icon: string; label: string }[] = [
 function AppContent() {
   const { walletAddress, shortAddr, disconnect, showLanding, setShowLanding, activeProvider } = useWallet();
   const { isDayMode, timeBg } = useTheme();
+  const { t } = useLang();
   const [activeTab, setActiveTab] = useState<Tab>("nonce");
 
   return (
@@ -47,14 +49,6 @@ function AppContent() {
                   fontFamily: "var(--font-heading)", color: "var(--text-primary)",
                 }}>
                   Sakura
-                </span>
-                <span style={{
-                  fontSize: 10, color: "var(--accent)", letterSpacing: "0.15em",
-                  fontFamily: "var(--font-mono)", background: "var(--accent-soft)",
-                  border: "1px solid var(--accent-mid)", borderRadius: 10,
-                  padding: "2px 8px",
-                }}>
-                  v2
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -84,7 +78,7 @@ function AppContent() {
                     letterSpacing: "0.04em",
                   }}
                 >
-                  退出
+                  {t("appDisconnect")}
                 </button>
                 <button
                   onClick={() => setShowLanding(true)}
@@ -95,7 +89,7 @@ function AppContent() {
                     letterSpacing: "0.04em",
                   }}
                 >
-                  ← 首頁
+                  {t("appHome")}
                 </button>
               </div>
             </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useLang } from "@/contexts/LanguageContext";
 import type { StrategyStep, GhostRunResult, StepSimulation } from "@/lib/ghost-run";
 
 interface SimulateResponse {
@@ -24,6 +25,7 @@ const EXAMPLE_STRATEGIES = [
 
 export default function GhostRun() {
   const { walletAddress } = useWallet();
+  const { t } = useLang();
   const [strategy, setStrategy] = useState("");
   const [loading, setLoading] = useState(false);
   const [executing, setExecuting] = useState(false);
@@ -33,8 +35,8 @@ export default function GhostRun() {
 
   async function runSimulation() {
     const text = strategy.trim();
-    if (!text) { setError("請輸入您的 DeFi 策略"); return; }
-    if (!walletAddress) { setError("請先連接錢包"); return; }
+    if (!text) { setError(t("ghostInputError")); return; }
+    if (!walletAddress) { setError(t("enterAddressError")); return; }
 
     setLoading(true);
     setError(null);
@@ -108,11 +110,10 @@ export default function GhostRun() {
           fontSize: 20, fontWeight: 300, color: "var(--text-primary)",
           fontFamily: "var(--font-heading)", letterSpacing: "0.06em", marginBottom: 8,
         }}>
-          👻 幽靈執行 DeFi 策略
+          {t("ghostTitle")}
         </h2>
         <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: 560 }}>
-          用 Solana 原生 <code style={{ fontFamily: "var(--font-mono)", color: "#7C6FFF" }}>simulateTransaction</code> 在真實鏈上狀態下「幽靈執行」您的整個 DeFi 策略，
-          拿到精確結果後再決定是否真正執行。全球首創。
+          {t("ghostDesc")}
         </p>
       </div>
 
@@ -123,7 +124,7 @@ export default function GhostRun() {
         borderRadius: 10, padding: "20px 22px", marginBottom: 20,
       }}>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>
-          用自然語言描述您的 DeFi 策略
+          {t("ghostInputLabel")}
         </div>
         <textarea
           value={strategy}
@@ -166,7 +167,7 @@ export default function GhostRun() {
             letterSpacing: "0.04em",
           }}
         >
-          {loading ? "幽靈執行中…" : "👻 幽靈執行模擬"}
+          {loading ? t("ghostSimulating") : t("ghostSimBtn")}
         </button>
       </div>
 
@@ -306,7 +307,7 @@ export default function GhostRun() {
                 letterSpacing: "0.05em",
               }}
             >
-              {executing ? "執行中…" : "⚡ 確認執行策略（真實上鏈）"}
+              {executing ? t("ghostExecuting") : t("ghostConfirmBtn")}
             </button>
           )}
 
@@ -318,7 +319,7 @@ export default function GhostRun() {
               borderRadius: 10, padding: "18px 20px",
             }}>
               <div style={{ fontSize: 15, fontWeight: 600, color: execResult.success ? "var(--green)" : "#FF4444", marginBottom: 10 }}>
-                {execResult.success ? "✅ 策略執行成功" : "⚠️ 部分執行失敗"}
+                {execResult.success ? t("ghostSuccessMsg") : t("ghostPartialMsg")}
               </div>
               {execResult.signatures.map((sig, i) => (
                 <div key={i} style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)", marginBottom: 4 }}>
@@ -345,12 +346,10 @@ export default function GhostRun() {
         borderRadius: 8,
       }}>
         <div style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.08em", marginBottom: 6, fontFamily: "var(--font-mono)" }}>
-          什麼是幽靈執行？
+          {t("ghostHowTitle")}
         </div>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.85 }}>
-          Solana 原生 RPC <code style={{ fontFamily: "var(--font-mono)", color: "var(--accent)" }}>simulateTransaction</code> 可以在
-          <strong style={{ color: "var(--text-primary)" }}>真實鏈上狀態</strong>下執行交易，無需廣播、無需簽名，返回精確的 token 變化量和 gas 消耗。
-          Jupiter 構建真實交易，Ghost Run 模擬它，讓您在簽字前看到確切結果。
+          {t("ghostHowDesc")}
         </div>
       </div>
     </div>

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useLang } from "@/contexts/LanguageContext";
+import { tpl } from "@/lib/i18n";
 import { payWithWallet } from "@/lib/x402";
 import type { NonceGuardianResult, RiskSignal } from "@/lib/nonce-scanner";
 
@@ -21,6 +23,7 @@ type PaymentState = "idle" | "waiting" | "paying" | "verifying" | "done" | "erro
 
 export default function NonceGuardian() {
   const { walletAddress } = useWallet();
+  const { t } = useLang();
   const [inputAddr, setInputAddr] = useState(walletAddress ?? "");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
@@ -34,7 +37,7 @@ export default function NonceGuardian() {
   async function scan() {
     const addr = inputAddr.trim();
     if (!addr || addr.length < 32) {
-      setError("請輸入有效的 Solana 錢包地址");
+      setError(t("nonceInvalidAddr"));
       return;
     }
     setLoading(true);
@@ -66,7 +69,7 @@ export default function NonceGuardian() {
       setResult(data);
       setPayState("done");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "掃描失敗");
+      setError(err instanceof Error ? err.message : t("nonceScanFailed"));
     } finally {
       setLoading(false);
     }
@@ -114,7 +117,7 @@ export default function NonceGuardian() {
       setPayChallenge(null);
     } catch (err) {
       setPayState("error");
-      setPayError(err instanceof Error ? err.message : "報告獲取失敗");
+      setPayError(err instanceof Error ? err.message : t("nonceReportFailed"));
     }
   }
 
@@ -126,10 +129,10 @@ export default function NonceGuardian() {
   };
 
   const severityLabel: Record<string, string> = {
-    critical: "🚨 極高風險",
-    high: "⚠️ 高風險",
-    medium: "⚡ 中風險",
-    low: "✓ 低風險",
+    critical: t("nonceSevCritical"),
+    high: t("nonceSevHigh"),
+    medium: t("nonceSevMedium"),
+    low: t("nonceSevLow"),
   };
 
   const maxSeverity = result?.riskSignals.reduce<string | null>((acc, s) => {
@@ -156,11 +159,10 @@ export default function NonceGuardian() {
           fontSize: 20, fontWeight: 300, color: "var(--text-primary)",
           fontFamily: "var(--font-heading)", letterSpacing: "0.06em", marginBottom: 8,
         }}>
-          🛡️ 隱形定時炸彈偵測
+          {t("nonceTitle")}
         </h2>
         <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: 560 }}>
-          2026年4月1日，有人因為一個看不見的「永久有效交易」損失了 $2.85億。
-          本工具掃描您錢包關聯的所有 Durable Nonce 賬戶，用 AI 標記潛在「定時炸彈」。
+          {t("nonceDesc")}
         </p>
         {/* Pricing badge */}
         <div style={{
@@ -169,7 +171,7 @@ export default function NonceGuardian() {
           borderRadius: 8, padding: "4px 12px", marginTop: 10,
           fontSize: 11, color: "#A78BFA",
         }}>
-          🔒 掃描免費 · AI 安全報告 $1.00 USDC · SHA-256 永久鏈上存證
+          {t("noncePriceBadge")}
         </div>
       </div>
 
@@ -180,7 +182,7 @@ export default function NonceGuardian() {
         borderRadius: 10, padding: "20px 22px", marginBottom: 20,
       }}>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8, letterSpacing: "0.03em" }}>
-          輸入錢包地址進行掃描
+          {t("nonceInputLabel")}
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <input
@@ -206,7 +208,7 @@ export default function NonceGuardian() {
               letterSpacing: "0.04em", whiteSpace: "nowrap",
             }}
           >
-            {loading ? "掃描中…" : "開始掃描"}
+            {loading ? t("nonceScanning") : t("nonceScanBtn")}
           </button>
         </div>
         {walletAddress && walletAddress !== inputAddr && (
@@ -218,7 +220,7 @@ export default function NonceGuardian() {
               letterSpacing: "0.03em",
             }}
           >
-            ↑ 使用已連接錢包地址
+            {t("shieldUseConnected")}
           </button>
         )}
       </div>
@@ -241,11 +243,10 @@ export default function NonceGuardian() {
           borderRadius: 12, padding: "20px 22px", marginBottom: 20,
         }}>
           <div style={{ fontSize: 14, fontWeight: 600, color: "#A78BFA", marginBottom: 8 }}>
-            🔒 解鎖 AI 安全報告
+            {t("nonceReportTitle")}
           </div>
           <div style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.8, marginBottom: 16 }}>
-            基礎掃描已完成。AI 深度分析報告需支付 <strong style={{ color: "#A78BFA" }}>${payChallenge.amount} USDC</strong>。
-            <br />報告 SHA-256 哈希將永久記錄於 Solana 鏈上，獨立可驗證。
+            {t("noncePriceBadge")}
           </div>
           <button
             onClick={payAndGetReport}
@@ -256,7 +257,7 @@ export default function NonceGuardian() {
               letterSpacing: "0.04em",
             }}
           >
-            💳 支付 ${payChallenge.amount} USDC · 獲取 AI 報告
+            {t("noncePayBtn")}
           </button>
         </div>
       )}
@@ -267,7 +268,7 @@ export default function NonceGuardian() {
           borderRadius: 12, padding: "16px 20px", marginBottom: 20,
           fontSize: 13, color: "#A78BFA",
         }}>
-          🌸 等待錢包確認支付…
+          {t("noncePayPending")}
         </div>
       )}
 
@@ -277,7 +278,7 @@ export default function NonceGuardian() {
           borderRadius: 12, padding: "16px 20px", marginBottom: 20,
           fontSize: 13, color: "#A78BFA",
         }}>
-          ✦ 驗證付款並生成 AI 報告…
+          {t("nonceVerifying")}
         </div>
       )}
 
@@ -307,13 +308,13 @@ export default function NonceGuardian() {
               </div>
               <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
                 {result.accounts.length === 0
-                  ? "✅ 未發現 Nonce 賬戶"
-                  : `發現 ${result.accounts.length} 個 Nonce 賬戶`}
+                  ? t("nonceNoAccounts")
+                  : tpl(t("nonceFoundAccounts"), { count: result.accounts.length })}
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>
                 {result.riskSignals.length === 0
-                  ? "無風險信號"
-                  : `${result.riskSignals.length} 個風險信號`}
+                  ? t("nonceNoSignals")
+                  : tpl(t("nonceHasSignals"), { count: result.riskSignals.length })}
               </div>
             </div>
             {maxSeverity && (
@@ -336,7 +337,7 @@ export default function NonceGuardian() {
                 fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.15em",
                 textTransform: "uppercase", marginBottom: 10, fontFamily: "var(--font-mono)",
               }}>
-                風險信號
+                {t("nonceRiskSignals")}
               </div>
               {result.riskSignals.map((signal: RiskSignal, i: number) => (
                 <div key={i} style={{
@@ -374,7 +375,7 @@ export default function NonceGuardian() {
                 fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.15em",
                 textTransform: "uppercase", marginBottom: 10, fontFamily: "var(--font-mono)",
               }}>
-                Nonce 賬戶列表
+                {t("nonceAccountList")}
               </div>
               {result.accounts.map((acct, i) => (
                 <div key={i} style={{
@@ -397,7 +398,7 @@ export default function NonceGuardian() {
                     border: `1px solid ${acct.isOwned ? "rgba(52,199,89,0.3)" : "rgba(255,68,68,0.3)"}`,
                     fontWeight: 600, letterSpacing: "0.04em",
                   }}>
-                    {acct.isOwned ? "✓ 自有" : "⚠ 外部控制"}
+                    {acct.isOwned ? t("nonceOwned") : t("nonceExtCtrl")}
                   </span>
                 </div>
               ))}
@@ -435,9 +436,9 @@ export default function NonceGuardian() {
               borderRadius: 10, padding: "16px 20px", marginBottom: 16,
             }}>
               <div style={{ fontSize: 11, color: "#10B981", fontWeight: 700, letterSpacing: "0.1em", marginBottom: 10 }}>
-                🔒 SHA-256 永久鏈上存證
+                {t("nonceOnchainProof")}
               </div>
-              <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>報告哈希</div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>{t("nonceReportHash")}</div>
               <div style={{
                 fontFamily: "var(--font-mono)", fontSize: 11, color: "#10B981",
                 wordBreak: "break-all", background: "var(--bg-base)",
@@ -457,7 +458,7 @@ export default function NonceGuardian() {
                     borderRadius: 6, padding: "5px 12px",
                   }}
                 >
-                  🔗 Solscan 查看鏈上記錄 →
+                  {t("nonceSolscanLink")}
                 </a>
               )}
               <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.7 }}>
@@ -474,10 +475,10 @@ export default function NonceGuardian() {
             }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
               <div style={{ fontSize: 15, color: "var(--text-primary)", fontWeight: 500, marginBottom: 6 }}>
-                此錢包無 Durable Nonce 風險
+                {t("nonceCleanTitle")}
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                未發現任何關聯的 Nonce 賬戶。定期重新掃描以保持安全。
+                {t("nonceCleanDesc")}
               </div>
             </div>
           )}
@@ -491,12 +492,10 @@ export default function NonceGuardian() {
         borderRadius: 8,
       }}>
         <div style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.08em", marginBottom: 6, fontFamily: "var(--font-mono)" }}>
-          什麼是 DURABLE NONCE？
+          {t("nonceEduTitle")}
         </div>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.85 }}>
-          Durable Nonce 是 Solana 的一個功能，允許創建<strong style={{ color: "var(--text-primary)" }}>永不過期的預簽名交易</strong>。
-          如果攻擊者控制了一個與您錢包關聯的 Nonce 賬戶，他們可以在您不知情的情況下，
-          在未來任何時間執行預先準備好的惡意交易。這是2026年4月 Drift 攻擊的核心手法。
+          {t("nonceEduDesc")}
         </div>
       </div>
     </div>

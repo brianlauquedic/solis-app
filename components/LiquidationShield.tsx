@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWallet } from "@/contexts/WalletContext";
+import { useLang } from "@/contexts/LanguageContext";
 import type { LendingPosition, RescueSimulation, MonitorResult, ShieldConfig } from "@/lib/liquidation-shield";
 
 interface MonitorResponse extends MonitorResult {
@@ -42,6 +43,7 @@ function healthLabel(hf: number): string {
 
 export default function LiquidationShield() {
   const { walletAddress } = useWallet();
+  const { t } = useLang();
   const [inputAddr, setInputAddr] = useState(walletAddress ?? "");
   const [maxUsdc, setMaxUsdc] = useState("1000");
   const [triggerHF, setTriggerHF] = useState("1.05");
@@ -132,12 +134,10 @@ export default function LiquidationShield() {
           fontSize: 20, fontWeight: 300, color: "var(--text-primary)",
           fontFamily: "var(--font-heading)", letterSpacing: "0.06em", marginBottom: 8,
         }}>
-          🛡️ AI 清算防護盾
+          {t("shieldTitle")}
         </h2>
         <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.8, maxWidth: 560 }}>
-          掃描您在 Kamino、MarginFi 的借貸倉位健康因子。
-          預授權救援資金後，AI 在健康因子觸發閾值時自動執行救援，防止清算損失。
-          SPL Token Approve 硬約束確保 AI 絕不超出您授權的金額。
+          {t("shieldDesc")}
         </p>
       </div>
 
@@ -148,11 +148,11 @@ export default function LiquidationShield() {
         borderRadius: 10, padding: "20px 22px", marginBottom: 20,
       }}>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 14 }}>
-          設定救援參數（SPL Token Approve 硬約束）
+          {t("shieldConfigLabel")}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
           <div>
-            <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>最大救援金額 (USDC)</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>{t("shieldMaxUsdc")}</div>
             <input
               type="number"
               value={maxUsdc}
@@ -164,10 +164,10 @@ export default function LiquidationShield() {
                 color: "var(--text-primary)", fontFamily: "var(--font-mono)", boxSizing: "border-box",
               }}
             />
-            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>Token program 強制執行此上限</div>
+            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>{t("shieldMaxUsdcHint")}</div>
           </div>
           <div>
-            <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>觸發健康因子閾值</div>
+            <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 6 }}>{t("shieldTriggerHF")}</div>
             <input
               type="number"
               value={triggerHF}
@@ -179,7 +179,7 @@ export default function LiquidationShield() {
                 color: "var(--text-primary)", fontFamily: "var(--font-mono)", boxSizing: "border-box",
               }}
             />
-            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>低於此值觸發自動救援</div>
+            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>{t("shieldTriggerHFHint")}</div>
           </div>
         </div>
 
@@ -188,7 +188,7 @@ export default function LiquidationShield() {
           <input
             value={inputAddr}
             onChange={e => setInputAddr(e.target.value)}
-            placeholder="Solana 錢包地址 (base58)"
+            placeholder={t("addressPlaceholder")}
             style={{
               flex: 1, background: "var(--bg-base)", border: "1px solid var(--border)",
               borderRadius: 8, padding: "10px 14px", fontSize: 13,
@@ -207,7 +207,7 @@ export default function LiquidationShield() {
               letterSpacing: "0.04em", whiteSpace: "nowrap",
             }}
           >
-            {loading ? "掃描中…" : "🔍 掃描倉位"}
+            {loading ? t("shieldScanning") : t("shieldScanBtn")}
           </button>
         </div>
         {walletAddress && walletAddress !== inputAddr && (
@@ -215,7 +215,7 @@ export default function LiquidationShield() {
             onClick={() => setInputAddr(walletAddress)}
             style={{ marginTop: 8, fontSize: 11, color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0 }}
           >
-            ↑ 使用已連接錢包地址
+            {t("shieldUseConnected")}
           </button>
         )}
       </div>
@@ -246,11 +246,11 @@ export default function LiquidationShield() {
               </div>
               <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
                 {result.positions.length === 0
-                  ? "未發現借貸倉位"
-                  : `${result.positions.length} 個倉位 · ${result.atRisk.length > 0 ? `${result.atRisk.length} 個需關注` : "全部安全"}`}
+                  ? t("shieldNoPositions")
+                  : `${result.positions.length} · ${result.atRisk.length > 0 ? `${result.atRisk.length} ${t("shieldAtRisk")}` : t("shieldAllSafe")}`}
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>
-                SOL 價格: ${result.solPrice} · 掃描協議: Kamino + MarginFi
+                SOL: ${result.solPrice} · Kamino + MarginFi
               </div>
             </div>
             {result.atRisk.length > 0 && (
@@ -258,7 +258,7 @@ export default function LiquidationShield() {
                 background: "rgba(255,68,68,0.12)", border: "1px solid rgba(255,68,68,0.3)",
                 borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, color: "#FF4444",
               }}>
-                🚨 {result.atRisk.length} 個高風險
+                🚨 {result.atRisk.length} {t("shieldHighRisk")}
               </div>
             )}
           </div>
@@ -295,10 +295,10 @@ export default function LiquidationShield() {
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10, marginBottom: 12 }}>
-                  <MetricBox label="抵押品" value={`$${pos.collateralUsd.toFixed(0)}`} sub={pos.collateralToken} />
-                  <MetricBox label="借款" value={`$${pos.debtUsd.toFixed(0)}`} sub={pos.debtToken} />
-                  <MetricBox label="健康因子" value={pos.healthFactor.toFixed(3)} highlight={healthColor(pos.healthFactor)} />
-                  <MetricBox label="清算閾值 LTV" value={`${(pos.liquidationThreshold * 100).toFixed(0)}%`} />
+                  <MetricBox label={t("shieldCollateral")} value={`$${pos.collateralUsd.toFixed(0)}`} sub={pos.collateralToken} />
+                  <MetricBox label={t("shieldDebt")} value={`$${pos.debtUsd.toFixed(0)}`} sub={pos.debtToken} />
+                  <MetricBox label={t("shieldHealthFactor")} value={pos.healthFactor.toFixed(3)} highlight={healthColor(pos.healthFactor)} />
+                  <MetricBox label={t("shieldLiqThreshold")} value={`${(pos.liquidationThreshold * 100).toFixed(0)}%`} />
                 </div>
 
                 {/* Rescue simulation (for at-risk positions) */}
@@ -311,14 +311,14 @@ export default function LiquidationShield() {
                       RESCUE SIMULATION (simulateTransaction)
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-                      <MetricBox label="需還款" value={`$${sim.rescueUsdc.toFixed(2)} USDC`} highlight="#FF9F0A" />
-                      <MetricBox label="救援後 HF" value={sim.postRescueHealth.toFixed(3)} highlight="var(--green)" />
-                      <MetricBox label="Gas 費" value={`${(sim.gasSol * 1e6).toFixed(1)} μSOL`} />
+                      <MetricBox label={t("shieldRescueNeeded")} value={`$${sim.rescueUsdc.toFixed(2)} USDC`} highlight="#FF9F0A" />
+                      <MetricBox label={t("shieldPostHF")} value={sim.postRescueHealth.toFixed(3)} highlight="var(--green)" />
+                      <MetricBox label="Gas" value={`${(sim.gasSol * 1e6).toFixed(1)} μSOL`} />
                     </div>
                     <div style={{ marginTop: 8, fontSize: 11, color: sim.withinMandate ? "var(--green)" : "#FF4444" }}>
                       {sim.withinMandate
-                        ? `✓ 在預授權範圍內 (上限 $${result.config.approvedUsdc} USDC)`
-                        : `✗ 超出預授權上限 $${result.config.approvedUsdc} USDC`}
+                        ? `✓ ≤ $${result.config.approvedUsdc} USDC`
+                        : `✗ > $${result.config.approvedUsdc} USDC`}
                     </div>
 
                     {!rescueRes && sim.withinMandate && (
@@ -332,7 +332,7 @@ export default function LiquidationShield() {
                           cursor: rescuingIdx === i ? "not-allowed" : "pointer",
                         }}
                       >
-                        {rescuingIdx === i ? "救援執行中…" : "⚡ SAK 執行救援"}
+                        {rescuingIdx === i ? t("shieldRescuing") : t("shieldRescueBtn")}
                       </button>
                     )}
 
@@ -343,7 +343,7 @@ export default function LiquidationShield() {
                         borderRadius: 8,
                       }}>
                         <div style={{ fontSize: 13, fontWeight: 600, color: rescueRes.success ? "var(--green)" : "#FF4444", marginBottom: 6 }}>
-                          {rescueRes.success ? "✅ 救援成功" : "⚠️ 救援失敗"}
+                          {rescueRes.success ? t("shieldRescueSuccess") : t("shieldRescueFailed")}
                         </div>
                         {rescueRes.rescueSig && (
                           <div style={{ fontSize: 11, color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
@@ -352,7 +352,7 @@ export default function LiquidationShield() {
                         )}
                         {rescueRes.auditChain && (
                           <div style={{ fontSize: 11, color: "var(--accent)", marginTop: 4, fontFamily: "var(--font-mono)" }}>
-                            ✦ 審計鏈: {rescueRes.auditChain}
+                            {t("shieldAuditChain")}: {rescueRes.auditChain}
                           </div>
                         )}
                         {rescueRes.error && (
@@ -390,10 +390,10 @@ export default function LiquidationShield() {
             }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
               <div style={{ fontSize: 15, color: "var(--text-primary)", fontWeight: 500, marginBottom: 6 }}>
-                此錢包無借貸倉位
+                {t("shieldNoPositions")}
               </div>
               <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
-                未在 Kamino 或 MarginFi 發現任何活躍借貸倉位
+                {t("shieldNoPositionsDesc")}
               </div>
             </div>
           )}
@@ -407,14 +407,10 @@ export default function LiquidationShield() {
         borderRadius: 8,
       }}>
         <div style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: "0.08em", marginBottom: 6, fontFamily: "var(--font-mono)" }}>
-          如何運作？
+          {t("shieldHowTitle")}
         </div>
         <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.85 }}>
-          <strong style={{ color: "var(--text-primary)" }}>SPL Token Approve</strong> 設定硬性上限（由 token program 強制執行）→
-          AI 用 <code style={{ fontFamily: "var(--font-mono)", color: "var(--accent)" }}>getProgramAccounts</code> 監控健康因子 →
-          觸發時 <code style={{ fontFamily: "var(--font-mono)", color: "var(--accent)" }}>simulateTransaction</code> 預演救援 →
-          SAK <code style={{ fontFamily: "var(--font-mono)", color: "var(--accent)" }}>lendAsset()</code> 執行還款 →
-          Memo Program 寫入鏈上審計記錄（引用授權 TX）。
+          {t("shieldHowDesc")}
         </div>
       </div>
     </div>
