@@ -240,11 +240,12 @@ export default function GhostRun() {
           }}
         />
         {/* Example strategies */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
+        <div className="example-chips-row" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
           {EXAMPLE_STRATEGIES.map((ex, i) => (
             <button
               key={i}
               onClick={() => setStrategy(ex)}
+              className="example-chip"
               style={{
                 fontSize: 11, color: "var(--text-muted)",
                 background: "var(--bg-base)", border: "1px solid var(--border)",
@@ -259,6 +260,7 @@ export default function GhostRun() {
         <button
           onClick={runSimulation}
           disabled={loading}
+          className="mobile-btn-full"
           style={{
             marginTop: 14, background: loading ? "var(--border)" : "#7C6FFF",
             border: "none", borderRadius: 8, padding: "10px 24px",

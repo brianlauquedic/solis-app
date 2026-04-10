@@ -192,7 +192,7 @@ export default function NonceGuardian() {
         <div style={{ fontSize: 12, color: "var(--text-secondary)", marginBottom: 8, letterSpacing: "0.03em" }}>
           {t("nonceInputLabel")}
         </div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="wallet-input-row" style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <input
             value={inputAddr}
             onChange={e => setInputAddr(e.target.value)}
@@ -208,6 +208,7 @@ export default function NonceGuardian() {
           <button
             onClick={scan}
             disabled={loading}
+            className="mobile-btn-full"
             style={{
               background: loading ? "var(--border)" : "#FF4444",
               border: "none", borderRadius: 8, padding: "10px 20px",

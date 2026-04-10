@@ -169,8 +169,55 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   Mobile 移動端
+   Mobile 移動端 — 日系 UI · 絲滑觸控 · 和の美
    ══════════════════════════════════════════════════════════════ */
+
+/* ── Global touch optimizations (all screen sizes) ── */
+button, a, [role="button"] {
+  touch-action: manipulation;       /* prevent 300ms tap delay */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Elegant touch feedback — 朱色の響き ── */
+button:active {
+  opacity: 0.72;
+  transform: scale(0.975);
+  transition: opacity 0.08s ease, transform 0.08s ease;
+}
+
+/* ── Smooth momentum scrolling ── */
+html {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* ── iOS safe-area: iPhone notch + home indicator ── */
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+footer {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+}
+
+/* ── Input / Textarea — prevent iOS auto-zoom (must be ≥16px) ── */
+input, textarea, select {
+  font-size: 16px !important;
+  -webkit-appearance: none;
+}
+
+/* ── Focus states — 集中の証 ── */
+input:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 1.5px var(--accent-mid), 0 0 0 3px var(--accent-soft);
+  transition: box-shadow 0.2s ease;
+}
+
+/* ── Button transitions — 静かな応答 ── */
+button {
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.2s ease;
+}
+
 @media (max-width: 640px) {
   /* ── Layout ── */
   .feature-grid   { grid-template-columns: 1fr !important; }
@@ -178,41 +225,133 @@ body {
   .token-grid     { grid-template-columns: 1fr !important; }
   .token-sidebar  { display: none !important; }
   .header-label   { display: none !important; }
-  .hero-title     { font-size: 32px !important; }
+  .hero-title     { font-size: 30px !important; letter-spacing: 0.06em !important; }
   .hero-subtitle  { font-size: 20px !important; }
-  .tab-btn        { font-size: 11px !important; padding: 8px 8px !important; }
   .quick-stats    { flex-wrap: wrap; gap: 12px !important; }
   .opportunity-alert { flex-direction: column !important; align-items: flex-start !important; }
   .opportunity-alert a { margin-left: 0 !important; margin-top: 10px !important; width: 100% !important; text-align: center !important; }
   .verify-steps   { grid-template-columns: 1fr !important; }
   .wallet-summary { flex-wrap: wrap !important; gap: 10px !important; }
-  .proof-hash     { font-size: 9px !important; }
+  .proof-hash     { font-size: 10px !important; }
   .ecosystem-badges { gap: 6px !important; }
   .quick-actions-grid { grid-template-columns: 1fr !important; }
 
   /* ── Main container ── */
-  .main-container { padding: 20px 14px !important; }
+  .main-container { padding: 16px 14px !important; }
 
-  /* ── App header (inner app bar) ── */
-  .app-header     { flex-wrap: wrap !important; gap: 6px !important; }
+  /* ── App header ── */
+  .app-header       { flex-wrap: wrap !important; gap: 6px !important; }
   .app-header-right { flex-wrap: wrap !important; gap: 6px !important; }
   .app-header-secondary { display: none !important; }
 
-  /* ── Hero tagline (long one-liner) ── */
-  .hero-tagline   { letter-spacing: 0.04em !important; font-size: 12px !important; line-height: 1.7 !important; }
+  /* ── Hero tagline ── */
+  .hero-tagline {
+    letter-spacing: 0.03em !important;
+    font-size: 12px !important;
+    line-height: 1.8 !important;
+    word-break: break-word !important;
+  }
+
+  /* ── Tab navigation — 手触り良い ── */
+  .tab-btn {
+    font-size: 11px !important;
+    padding: 12px 6px !important;
+    min-height: 44px !important;
+  }
 
   /* ── CTA box ── */
-  .cta-box        { padding: 18px 14px !important; }
+  .cta-box { padding: 20px 16px !important; }
 
   /* ── Sakura character card ── */
-  .sakura-card    { padding: 18px 14px 16px !important; }
+  .sakura-card { padding: 20px 16px 18px !important; }
 
   /* ── LiquidationShield grids ── */
-  .shield-config-grid  { grid-template-columns: 1fr !important; }
-  .shield-rescue-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+  .shield-config-grid { grid-template-columns: 1fr !important; }
+  .shield-rescue-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
   /* ── Footer ── */
-  .footer-root    { padding: 32px 16px 20px !important; }
-  .footer-top-row { gap: 24px !important; }
+  .footer-root    { padding: 32px 16px calc(env(safe-area-inset-bottom) + 20px) !important; }
+  .footer-top-row { gap: 28px !important; }
   .footer-brand   { min-width: 100% !important; max-width: 100% !important; }
+
+  /* ── Touch targets — 指先に優しい ── */
+  .mobile-touch-target {
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* ── Card refinement — 余白の美 ── */
+  .mobile-card-compact { padding: 16px !important; }
+
+  /* ── Smooth card press — 押し込み感 ── */
+  .mobile-pressable:active {
+    transform: scale(0.99) !important;
+    opacity: 0.88 !important;
+  }
+
+  /* ── Full-width primary actions on mobile ── */
+  .mobile-btn-full {
+    width: 100% !important;
+    padding: 14px !important;
+    font-size: 14px !important;
+    min-height: 48px !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── Example chips — scrollable row ── */
+  .example-chips-row {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 4px !important;
+  }
+  .example-chips-row::-webkit-scrollbar { display: none; }
+
+  .example-chip {
+    font-size: 11px !important;
+    padding: 7px 11px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    min-height: 32px !important;
+  }
+
+  /* ── Input field refinement ── */
+  input[type="text"], textarea {
+    padding: 12px 14px !important;
+    border-radius: 10px !important;
+    min-height: 48px !important;
+  }
+
+  textarea {
+    min-height: 88px !important;
+    line-height: 1.7 !important;
+  }
+
+  /* ── Wallet address input with button — stack on mobile ── */
+  .wallet-input-row {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  .wallet-input-row input {
+    width: 100% !important;
+  }
+  .wallet-input-row button {
+    width: 100% !important;
+    padding: 13px !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── Section headers — spacing refinement ── */
+  h2.mobile-section-title {
+    font-size: 18px !important;
+    margin-bottom: 10px !important;
+  }
+
+  /* ── Metric boxes — 数値の美 ── */
+  .metric-box {
+    padding: 12px !important;
+    border-radius: 8px !important;
+  }
 }

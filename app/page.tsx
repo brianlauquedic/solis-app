@@ -157,20 +157,21 @@ function TabButton({ icon, label, active, onClick }: {
   icon: string; label: string; active: boolean; onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} style={{
+    <button onClick={onClick} className="tab-btn" style={{
       flex: 1, padding: "10px 16px", border: "none",
       fontSize: 13, fontWeight: active ? 500 : 400,
       cursor: "pointer",
-      background: "transparent",
-      color: active ? "var(--text-primary)" : "var(--text-muted)",
+      background: active ? "var(--accent-soft)" : "transparent",
+      color: active ? "var(--accent)" : "var(--text-muted)",
       borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
-      transition: "all 0.25s",
+      transition: "background 0.2s ease, color 0.2s ease, border-color 0.2s ease",
       fontFamily: "var(--font-body)",
       letterSpacing: "0.04em",
       marginBottom: -1,
       display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+      minHeight: 44,
     }}>
-      <span>{icon}</span>
+      <span style={{ fontSize: 15 }}>{icon}</span>
       <span>{label}</span>
     </button>
   );
