@@ -80,6 +80,19 @@ function AppContent() {
                 >
                   {t("appDisconnect")}
                 </button>
+                <a
+                  href="/mcp"
+                  style={{
+                    fontSize: 11, fontWeight: 600, color: "var(--accent)",
+                    textDecoration: "none", padding: "6px 10px",
+                    border: "1px solid var(--accent-mid)",
+                    background: "var(--accent-soft)",
+                    borderRadius: 6, letterSpacing: "0.06em",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  MCP API
+                </a>
                 <button
                   onClick={() => setShowLanding(true)}
                   style={{

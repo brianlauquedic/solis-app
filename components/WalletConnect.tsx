@@ -36,6 +36,31 @@ export default function WalletConnect({ walletAddress, onEnterApp }: Props = {})
   return (
     <div style={{ maxWidth: 760, margin: "0 auto" }}>
 
+      {/* ── Top nav ── */}
+      <div style={{
+        display: "flex", justifyContent: "flex-end", alignItems: "center",
+        gap: 8, marginBottom: 32,
+      }}>
+        <a href="/docs" style={{
+          fontSize: 11, color: "var(--text-muted)", textDecoration: "none",
+          padding: "3px 9px", borderRadius: 5,
+          border: "1px solid var(--border)", background: "var(--bg-card)",
+          fontFamily: "var(--font-mono)", letterSpacing: "0.06em",
+        }}>Docs</a>
+        <a href="/use-cases" style={{
+          fontSize: 11, color: "var(--text-muted)", textDecoration: "none",
+          padding: "3px 9px", borderRadius: 5,
+          border: "1px solid var(--border)", background: "var(--bg-card)",
+          fontFamily: "var(--font-mono)", letterSpacing: "0.06em",
+        }}>Use Cases</a>
+        <a href="/mcp" style={{
+          fontSize: 11, fontWeight: 700, color: "var(--accent)", textDecoration: "none",
+          padding: "3px 9px", borderRadius: 5,
+          border: "1px solid var(--accent-mid)", background: "var(--accent-soft)",
+          fontFamily: "var(--font-mono)", letterSpacing: "0.08em",
+        }}>MCP API</a>
+      </div>
+
       {/* ── 題字 Hero ── */}
       <div style={{ textAlign: "center", marginBottom: 56 }}>
 
