@@ -85,7 +85,7 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
 
   async function runSimulation(overrideStrategy?: string, overrideWallet?: string) {
     const text = (overrideStrategy ?? strategy).trim();
-    const wallet = overrideWallet ?? walletAddress;
+    const wallet = overrideWallet ?? (isDemo ? DEMO_WALLET : walletAddress);
     if (!text) { setError(t("ghostInputError")); return; }
     if (!wallet) { setError(t("enterAddressError")); return; }
 
