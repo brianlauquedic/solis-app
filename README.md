@@ -3,7 +3,7 @@
 > Three Solana-native AI protocols protecting your onchain assets.
 > Built for [Colosseum Frontier Hackathon 2026](https://frontier.colosseum.org/) · April 6 – May 11
 
-**Live demo (no wallet required):** `https://your-domain.vercel.app/?demo=true`
+**Live demo (no wallet required):** `https://solis-app-sigma.vercel.app/?demo=true`
 
 ---
 
@@ -135,10 +135,10 @@ Sakura exposes a **Model Context Protocol (MCP) JSON-RPC 2.0 API** at `/api/mcp`
 
 ```bash
 # Discover tools
-curl https://your-domain.vercel.app/api/mcp
+curl https://solis-app-sigma.vercel.app/api/mcp
 
 # Call a tool (requires x-payment: 1.00 USDC tx signature)
-curl -X POST https://your-domain.vercel.app/api/mcp \
+curl -X POST https://solis-app-sigma.vercel.app/api/mcp \
   -H "Content-Type: application/json" \
   -H "x-payment: <solana_tx_signature>" \
   -d '{
@@ -190,7 +190,7 @@ curl -X POST https://your-domain.vercel.app/api/mcp \
 Visit `/?demo=true` — no wallet required. All three features auto-load with preset dramatic data instantly.
 
 ```
-https://your-domain.vercel.app/?demo=true
+https://solis-app-sigma.vercel.app/?demo=true
 ```
 
 Includes: CRITICAL foreign-authority nonce threat, Ghost Run 3-step simulation ($43.72/yr yield), Kamino position at HF 1.03 near liquidation.
@@ -219,7 +219,7 @@ HELIUS_API_KEY=              # Solana RPC (primary)
 # Required for execution features
 SAKURA_AGENT_PRIVATE_KEY=    # Agent keypair as JSON number array (64 bytes)
 SAKURA_FEE_WALLET=           # Fee collection wallet (base58)
-NEXT_PUBLIC_BASE_URL=        # https://your-domain.vercel.app
+NEXT_PUBLIC_BASE_URL=        # https://solis-app-sigma.vercel.app
 
 # Optional (Redis for distributed rate limiting + replay protection)
 UPSTASH_REDIS_REST_URL=
