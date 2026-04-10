@@ -39,7 +39,7 @@ export default function NonceGuardian({ isDemo = false }: { isDemo?: boolean }) 
   useEffect(() => {
     if (isDemo) {
       setInputAddr(DEMO_WALLET);
-      scan(DEMO_WALLET);
+      // Pre-fill only — user clicks 掃描 to trigger
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemo]);

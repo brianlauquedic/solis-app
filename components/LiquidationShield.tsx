@@ -97,7 +97,7 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
   useEffect(() => {
     if (isDemo) {
       setInputAddr(DEMO_WALLET);
-      scan(DEMO_WALLET);
+      // Pre-fill only — user clicks 掃描倉位 to trigger
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemo]);

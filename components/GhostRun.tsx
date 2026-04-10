@@ -78,7 +78,7 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
   useEffect(() => {
     if (isDemo) {
       setStrategy(DEMO_STRATEGY);
-      runSimulation(DEMO_STRATEGY, DEMO_WALLET);
+      // Pre-fill only — user clicks 幽靈執行模擬 to trigger
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDemo]);
