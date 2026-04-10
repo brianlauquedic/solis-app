@@ -10,7 +10,8 @@
  * Writes on-chain execution proof via Solana Memo Program.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { createSigningAgent } from "@/lib/agent";
+import { Connection } from "@solana/web3.js";
+import { createSigningAgent, RPC_URL } from "@/lib/agent";
 import type { StrategyStep } from "@/lib/ghost-run";
 import { getWalletLimiter, checkWalletLimitMemory } from "@/lib/redis";
 
@@ -72,6 +73,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Agent not configured (SAKURA_AGENT_PRIVATE_KEY missing)" }, { status: 500 });
   }
 
+  const conn = new Connection(RPC_URL, "confirmed");
   const signatures: string[] = [];
   const errors: string[] = [];
   const unsignedSwapTxs: Array<{ stepIdx: number; token: string; swapTransaction: string }> = [];
@@ -89,6 +91,7 @@ export async function POST(req: NextRequest) {
           stakeWithJup: (amount: number) => Promise<string>
         }).stakeWithJup(step.inputAmount);
         sig = result;
+        if (sig) await conn.confirmTransaction(sig, "confirmed");
       } else if (step.type === "stake" && step.outputToken === "jitoSOL") {
         if (step.inputAmount > MAX_STAKE_SOL_PER_STEP) throw new Error(`Stake amount exceeds per-step limit of ${MAX_STAKE_SOL_PER_STEP} SOL`);
         // Jito liquid stake via Jupiter
@@ -96,6 +99,7 @@ export async function POST(req: NextRequest) {
           stakeWithJup: (amount: number, validator?: string) => Promise<string>
         }).stakeWithJup(step.inputAmount, "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn");
         sig = result;
+        if (sig) await conn.confirmTransaction(sig, "confirmed");
       } else if (step.type === "lend") {
         if (step.inputAmount > MAX_LEND_AMOUNT_PER_STEP) throw new Error(`Lend amount exceeds per-step limit of ${MAX_LEND_AMOUNT_PER_STEP}`);
         const result = await (agent as unknown as {
@@ -107,6 +111,7 @@ export async function POST(req: NextRequest) {
           step.inputAmount
         );
         sig = result;
+        if (sig) await conn.confirmTransaction(sig, "confirmed");
       } else if (step.type === "swap") {
         const { Connection, PublicKey, VersionedTransaction } = await import("@solana/web3.js");
         const { RPC_URL } = await import("@/lib/agent");

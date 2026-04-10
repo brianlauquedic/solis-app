@@ -8,7 +8,7 @@
  * Flow:
  *  1. Claude parses NL input → structured StrategyStep[]
  *  2. For swap steps: Jupiter Quote API → VersionedTransaction → simulateTransaction
- *  3. For stake/lend steps: protocol REST APIs + simulateTransaction for gas
+ *  3. For stake/lend steps: Kamino REST API (real APY) + simulateTransaction for gas
  *  4. Return precise token deltas, gas costs, conflict detection
  *  5. On user confirm: SAK executes stakeWithJup / lendAsset / trade
  */
@@ -221,50 +221,82 @@ async function simulateStakeStep(
   };
 }
 
+// ── Kamino real APY fetcher ───────────────────────────────────────────────────
+
+const KAMINO_MAIN_MARKET = "7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF";
+
+/**
+ * Fetch the real supply APY for a token from Kamino's public REST API.
+ * Returns null on any failure — caller falls back to inflation-based estimate.
+ */
+async function fetchKaminoSupplyApy(token: string): Promise<number | null> {
+  try {
+    const res = await fetch(
+      `https://api.kamino.finance/v2/kamino-market/${KAMINO_MAIN_MARKET}/reserves`,
+      { signal: AbortSignal.timeout(3_000) }
+    );
+    if (!res.ok) return null;
+    const reserves = await res.json() as Array<{
+      symbol?: string;
+      supplyInterestAPY?: number;
+      supplyApy?: number;
+      apy?: number;
+    }>;
+    const sym = token.toUpperCase();
+    const match = reserves.find(r =>
+      r.symbol?.toUpperCase() === sym ||
+      r.symbol?.toUpperCase().startsWith(sym)
+    );
+    if (!match) return null;
+    const apy = match.supplyInterestAPY ?? match.supplyApy ?? match.apy;
+    if (typeof apy === "number" && apy > 0 && apy < 100) return +apy.toFixed(2);
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Simulate a Kamino lending deposit.
- * Uses Kamino's public API for kToken estimate + simulateTransaction for gas.
+ * Uses Kamino's public REST API for real supply APY + simulateTransaction for gas.
  */
 async function simulateLendStep(
   step: StrategyStep,
   walletAddress: string,
   conn: Connection
 ): Promise<StepSimulation> {
-  // Derive lending APY from Solana native getInflationRate — the on-chain risk-free rate
-  // Kamino USDC supply APY = driven by borrower demand. Tracks broader DeFi rates.
-  //   Relationship: USDC lending APY ≈ 1.5–2× staking yield (empirically observed on Kamino)
-  //   Because: borrowers pay ~staking yield to use capital, lenders receive utilization-weighted portion
-  // SOL lending APY: same capital competition as staking, SOL lend APY ≈ staking yield
-  //   Relationship: SOL lending APY ≈ inflation.validator × (1 - commission)
-  //   (borrowers are rational — won't pay more to borrow SOL than they'd earn staking it)
-  let apy = 8.1; // calibrated fallback (validated against Kamino dashboard Apr 2026)
+  // ── APY: Real Kamino API → inflation fallback ────────────────────────────────
+  // Primary: Kamino's public REST API returns live supply APY per reserve.
+  // Fallback: derive from Solana getInflationRate (empirical relationship).
+  let apy = 8.1; // hardcoded last-resort fallback (Kamino USDC Apr 2026)
   let solPrice = 170;
   try {
-    const [inflation, agentPrice] = await Promise.allSettled([
-      conn.getInflationRate(),
+    const [kaminoApy, agentPrice, inflation] = await Promise.allSettled([
+      fetchKaminoSupplyApy(step.inputToken),
       (async () => {
         const agent = (await import("./agent")).createReadOnlyAgent();
         return (agent.methods as Record<string, (...args: unknown[]) => Promise<number>>)
           .fetchPrice("So11111111111111111111111111111111111111112");
       })(),
+      conn.getInflationRate(),
     ]);
 
-    if (inflation.status === "fulfilled") {
-      const validatorInflation = inflation.value.validator; // e.g. 0.04608 = 4.608%
-      const netStakingYield = validatorInflation * 0.93 * 100; // 7% avg commission
-      if (step.inputToken === "USDC" || step.inputToken === "USDT") {
-        // Stablecoin supply APY driven by borrow demand; empirically 1.6–1.8× staking yield
-        apy = +(netStakingYield * 1.7).toFixed(2);
-      } else {
-        // SOL lending APY ≈ staking yield (rational market equilibrium)
-        apy = +(netStakingYield).toFixed(2);
-      }
+    if (kaminoApy.status === "fulfilled" && kaminoApy.value !== null) {
+      // ✅ Real Kamino supply APY from protocol REST API
+      apy = kaminoApy.value;
+    } else if (inflation.status === "fulfilled") {
+      // ⚠️ Fallback: inflation-based estimate
+      const validatorInflation = inflation.value.validator;
+      const netStakingYield = validatorInflation * 0.93 * 100;
+      apy = step.inputToken === "USDC" || step.inputToken === "USDT"
+        ? +(netStakingYield * 1.7).toFixed(2)
+        : +(netStakingYield).toFixed(2);
     }
 
     if (agentPrice.status === "fulfilled" && typeof agentPrice.value === "number" && agentPrice.value > 0) {
       solPrice = agentPrice.value;
     }
-  } catch { /* use calibrated fallback */ }
+  } catch { /* use hardcoded fallback */ }
 
   // For lending, output amount ≈ input amount (kTokens track underlying value 1:1 initially)
   const outputAmount = step.inputAmount;
