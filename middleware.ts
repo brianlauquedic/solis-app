@@ -242,13 +242,17 @@ export async function middleware(req: NextRequest) {
   // ── Layers 4-7: API-only ───────────────────────────────────────
   if (pathname.startsWith("/api/")) {
 
+    // /api/mcp is designed for programmatic access by AI agents (Claude Desktop,
+    // Cursor, VS Code, etc.) — skip bot UA and fingerprint checks for this path.
+    const isMcpEndpoint = pathname.startsWith("/api/mcp");
+
     // Layer 4: Known bot UA
-    if (BOT_UA_PATTERNS.some(p => p.test(ua))) {
+    if (!isMcpEndpoint && BOT_UA_PATTERNS.some(p => p.test(ua))) {
       return jsonBlock(403, "Forbidden");
     }
 
     // Layer 5: Header fingerprint scoring
-    if (headerFingerprintScore(req) >= FINGERPRINT_BLOCK_SCORE) {
+    if (!isMcpEndpoint && headerFingerprintScore(req) >= FINGERPRINT_BLOCK_SCORE) {
       return jsonBlock(403, "Forbidden");
     }
 
