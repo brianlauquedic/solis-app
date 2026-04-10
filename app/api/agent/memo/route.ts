@@ -29,7 +29,16 @@ export async function POST(req: NextRequest) {
   let memoPayload: string;
   try {
     const body = await req.json();
-    memoPayload = body.memoPayload as string;
+    // Internal-only endpoint: require secret if configured.
+    // Set INTERNAL_API_SECRET in Vercel env vars to restrict to server-side callers only.
+    const configuredSecret = process.env.INTERNAL_API_SECRET;
+    if (configuredSecret) {
+      const provided = req.headers.get("x-internal-secret");
+      if (provided !== configuredSecret) {
+        return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+      }
+    }
+    memoPayload = (body.message ?? body.memoPayload) as string;
     if (!memoPayload || typeof memoPayload !== "string") {
       return NextResponse.json({ error: "memoPayload required" }, { status: 400 });
     }

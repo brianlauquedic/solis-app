@@ -41,8 +41,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Validate method allowlist (prevent abuse of dangerous RPC methods)
+  // [SECURITY FIX L-1] Also reject requests with missing/undefined method —
+  // previously `rpc.method && !ALLOWED` was falsy for undefined, letting through
+  // malformed requests that would consume Helius API quota.
   const rpc = body as { method?: string };
-  if (rpc.method && !ALLOWED_METHODS.has(rpc.method)) {
+  if (!rpc.method || !ALLOWED_METHODS.has(rpc.method)) {
     return NextResponse.json(
       { jsonrpc: "2.0", id: null, error: { code: -32601, message: "Method not allowed" } },
       { status: 403 }
@@ -61,9 +64,11 @@ export async function POST(req: NextRequest) {
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "RPC proxy error";
+    // [SECURITY FIX H-1] Never return raw error — err.message can contain
+    // the Helius RPC URL with the embedded API key in the query string.
+    console.error("[rpc] proxy error:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { jsonrpc: "2.0", id: null, error: { code: -32603, message: msg } },
+      { jsonrpc: "2.0", id: null, error: { code: -32603, message: "Internal RPC error" } },
       { status: 500 }
     );
   }

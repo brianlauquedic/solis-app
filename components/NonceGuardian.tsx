@@ -454,7 +454,7 @@ export default function NonceGuardian() {
               }}>
                 {result.proof.sha256}
               </div>
-              {result.proof.explorerUrl && (
+              {result.proof.explorerUrl ? (
                 <a
                   href={result.proof.explorerUrl}
                   target="_blank"
@@ -468,6 +468,14 @@ export default function NonceGuardian() {
                 >
                   {t("nonceSolscanLink")}
                 </a>
+              ) : (
+                <div style={{
+                  fontSize: 11, color: "#FF9F0A",
+                  background: "rgba(255,159,10,0.08)", border: "1px solid rgba(255,159,10,0.3)",
+                  borderRadius: 6, padding: "5px 12px", display: "inline-block",
+                }}>
+                  ⚠️ SHA-256 雜湊已計算，但本次鏈上寫入失敗（網路問題）。雜湊仍可本地驗證。
+                </div>
               )}
               <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.7 }}>
                 {result.proof.message}

@@ -1,5 +1,5 @@
 /**
- * Sakura — Anti-Crawler & Rate-Limit Middleware (v2)
+ * Sakura — Anti-Crawler & Rate-Limit Middleware (v3)
  *
  * Layered defense in execution order:
  *   1. Banned IP instant block (honeypot triggered)
@@ -7,18 +7,30 @@
  *   3. Suspicious request pattern detection (injection, traversal, anomalies)
  *   4. Known bot/crawler User-Agent block (32+ patterns)
  *   5. Header fingerprint anomaly scoring (missing browser headers)
- *   6. Tight per-endpoint rate limits for expensive AI routes
- *   7. General sliding-window rate limit (60 req/min, 15/5s burst)
+ *   6. Tight per-endpoint rate limits — Redis (distributed) or in-memory fallback
+ *   7. General sliding-window rate limit — Redis (distributed) or in-memory fallback
  *   8. Short UA block for page routes (headless browsers)
  *   9. Security response headers on all responses
+ *
+ * Redis mode (set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN):
+ *   → Rate limits are shared across ALL Vercel function instances.
+ *   → Sybil / multi-instance bypass is closed.
+ *   → bannedIps and replay Sets are still in-memory (per-instance), but
+ *     rate limiting — the critical DoS/abuse defence — is now distributed.
+ *
+ * Fallback mode (env vars not set):
+ *   → In-memory Maps/Sets as before. Works for dev and single-instance demo.
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { getDistributedLimiter, getGeneralLimiter } from "@/lib/redis";
 
-// ── 1. Banned IP set (honeypot-triggered, session-scoped) ────────
+// ── 1. Banned IP set (honeypot-triggered, session-scoped) ─────────
+// In-memory: bans persist within one instance. Acceptable — most scanners
+// hit the same instance in a session. Distributed ban list needs Redis + KV.
 const bannedIps = new Set<string>();
 
-// ── Bot User-Agent patterns ──────────────────────────────────────
+// ── Bot User-Agent patterns ───────────────────────────────────────
 const BOT_UA_PATTERNS = [
   /bot/i, /crawl/i, /spider/i, /scraper/i,
   /slurp/i, /baidu/i, /yandex/i, /sogou/i,
@@ -32,11 +44,11 @@ const BOT_UA_PATTERNS = [
   /gptbot/i, /chatgpt/i, /openai/i, /anthropic-ai/i, /claude-web/i,
   /ccbot/i, /common-crawl/i, /dataprovider/i,
   /semrush/i, /ahrefs/i, /mj12bot/i, /dotbot/i,
-  /nmap/i, /masscan/i, /zgrab/i, /nuclei/i,           // scanners
-  /dataforseo/i, /serpstat/i, /majestic/i,             // SEO tools
+  /nmap/i, /masscan/i, /zgrab/i, /nuclei/i,
+  /dataforseo/i, /serpstat/i, /majestic/i,
 ];
 
-// ── Header fingerprint scoring ───────────────────────────────────
+// ── Header fingerprint scoring ────────────────────────────────────
 const FINGERPRINT_BLOCK_SCORE = 60;
 
 function headerFingerprintScore(req: NextRequest): number {
@@ -46,30 +58,25 @@ function headerFingerprintScore(req: NextRequest): number {
   const lng = req.headers.get("accept-language") ?? "";
   const enc = req.headers.get("accept-encoding") ?? "";
 
-  // Missing Accept-Language: strong bot signal
   if (!lng) score += 30;
-  // Missing Accept header
   if (!acc) score += 20;
-  // Accept present but neither text/html nor wildcard (raw API client)
   if (acc && !acc.includes("text/html") && !acc.includes("*/*")) score += 10;
-  // Missing Accept-Encoding
   if (!enc) score += 15;
-  // Non-browser runtime UA prefix
   if (/^(python|node|ruby|php|go|java|rust|dart)/i.test(ua)) score += 40;
-  // Very short or empty UA (already caught elsewhere, layered defense)
   if (ua.length > 0 && ua.length < 20) score += 20;
-  // Suspicious X-Forwarded-For with >4 hops (deep proxy chain)
   const fwd = req.headers.get("x-forwarded-for") ?? "";
   if (fwd.split(",").length > 4) score += 15;
 
   return score;
 }
 
-// ── Suspicious request patterns ──────────────────────────────────
+// ── Suspicious request patterns ───────────────────────────────────
 
 function isSuspiciousRequest(req: NextRequest, pathname: string): boolean {
-  // Path traversal
-  if (pathname.includes("..") || pathname.includes("%2e%2e")) return true;
+  // Path traversal — ../, ..\, %2e%2e, %2E%2E, double-encoded, mixed
+  if (/\.\.(\/|\\|%2[fF]|%5[cC])/.test(pathname)) return true;
+  if (/%252[eE]%252[eE]/.test(pathname)) return true;
+  if (pathname.includes("%2e%2e") || pathname.includes("%2E%2E")) return true;
   // Null bytes
   if (pathname.includes("\0") || pathname.includes("%00")) return true;
   // SQL/NoSQL injection probes
@@ -77,76 +84,43 @@ function isSuspiciousRequest(req: NextRequest, pathname: string): boolean {
   if (/(\bUNION\b|\bSELECT\b|\bDROP TABLE\b|;\s*DROP|--\s)/i.test(raw)) return true;
   // XSS probes
   if (/<script|javascript:|onerror=/i.test(raw)) return true;
-  // Excessively long query string (scraper pagination abuse)
+  // Excessively long query string
   if (req.nextUrl.search.length > 2000) return true;
-  // JSON content-type on GET (scripted client quirk)
+  // JSON content-type on GET
   const ct = req.headers.get("content-type") ?? "";
   if (req.method === "GET" && ct.includes("application/json")) return true;
-  // Cross-origin POST to API (referer from unrelated domain)
+  // Cross-origin POST: block if EITHER header is present and wrong
   const referer = req.headers.get("referer") ?? "";
   const origin  = req.headers.get("origin") ?? "";
   const host    = req.nextUrl.hostname;
-  if (
-    req.method === "POST" &&
-    pathname.startsWith("/api/") &&
-    referer && !referer.includes(host) &&
-    origin  && !origin.includes(host)
-  ) return true;
+  const originWrong  = origin  && !origin.includes(host);
+  const refererWrong = referer && !referer.includes(host);
+  if (req.method === "POST" && pathname.startsWith("/api/") && (originWrong || refererWrong)) return true;
 
   return false;
 }
 
-// ── Per-endpoint tight rate limits (expensive AI routes) ─────────
+// ── Per-endpoint config ───────────────────────────────────────────
 interface EndpointLimit {
   path: string;
-  rpm: number;       // max requests per minute
-  burst: number;     // max requests in burstWindowMs
+  rpm: number;
+  burst: number;
   burstWindowMs: number;
 }
 
 const AI_ENDPOINT_LIMITS: EndpointLimit[] = [
-  { path: "/api/agent/loop",    rpm: 6,  burst: 2, burstWindowMs: 10_000 },
-  { path: "/api/analyze",       rpm: 10, burst: 3, burstWindowMs: 10_000 },
-  { path: "/api/token/premium", rpm: 5,  burst: 2, burstWindowMs: 10_000 },
-  { path: "/api/defi-chat",     rpm: 10, burst: 3, burstWindowMs: 10_000 },
-  { path: "/api/mcp",           rpm: 20, burst: 5, burstWindowMs: 5_000  },
+  { path: "/api/agent/loop",                   rpm: 6,  burst: 2, burstWindowMs: 10_000 },
+  { path: "/api/analyze",                      rpm: 10, burst: 3, burstWindowMs: 10_000 },
+  { path: "/api/token/premium",                rpm: 5,  burst: 2, burstWindowMs: 10_000 },
+  { path: "/api/defi-chat",                    rpm: 10, burst: 3, burstWindowMs: 10_000 },
+  { path: "/api/mcp",                          rpm: 20, burst: 5, burstWindowMs:  5_000 },
+  { path: "/api/ghost-run/simulate",           rpm: 4,  burst: 2, burstWindowMs: 15_000 },
+  { path: "/api/ghost-run/execute",            rpm: 4,  burst: 2, burstWindowMs: 15_000 },
+  { path: "/api/liquidation-shield/monitor",   rpm: 3,  burst: 1, burstWindowMs: 30_000 },
+  { path: "/api/liquidation-shield/rescue",    rpm: 3,  burst: 1, burstWindowMs: 30_000 },
+  { path: "/api/nonce-guardian",               rpm: 6,  burst: 2, burstWindowMs: 10_000 },
+  { path: "/api/rpc",                          rpm: 30, burst: 5, burstWindowMs: 10_000 },
 ];
-
-// windowKey: `${endpoint.path}:${ip}` → timestamps[]
-const aiEndpointWindows = new Map<string, number[]>();
-
-function checkEndpointLimit(
-  pathname: string,
-  ip: string
-): { blocked: boolean; retryAfter?: number } {
-  const rule = AI_ENDPOINT_LIMITS.find(r => pathname.startsWith(r.path));
-  if (!rule) return { blocked: false };
-
-  const windowKey = `${rule.path}:${ip}`;
-  const now        = Date.now();
-  const minCutoff  = now - 60_000;
-  const burstCutoff = now - rule.burstWindowMs;
-
-  const ts = (aiEndpointWindows.get(windowKey) ?? []).filter(t => t > minCutoff);
-  ts.push(now);
-  aiEndpointWindows.set(windowKey, ts);
-
-  const burst = ts.filter(t => t > burstCutoff).length;
-  if (burst > rule.burst) {
-    return { blocked: true, retryAfter: Math.ceil(rule.burstWindowMs / 1000) };
-  }
-  if (ts.length > rule.rpm) {
-    return { blocked: true, retryAfter: 60 };
-  }
-  return { blocked: false };
-}
-
-// ── General sliding-window rate limiter ──────────────────────────
-const ipWindows = new Map<string, number[]>();
-
-const WINDOW_MS   = 60_000;
-const MAX_API_RPM = 60;
-const MAX_BURST   = 15;
 
 const API_RATE_LIMITED = [
   "/api/analyze",
@@ -157,65 +131,78 @@ const API_RATE_LIMITED = [
   "/api/yield",
   "/api/wallet",
   "/api/mcp",
+  "/api/ghost-run",
+  "/api/liquidation-shield",
+  "/api/nonce-guardian",
+  "/api/rpc",
 ];
 
-function checkRateLimit(ip: string): { blocked: boolean; retryAfter?: number } {
+const MAX_API_RPM = 60;
+const MAX_BURST   = 15;
+
+// ── In-memory fallback rate limiters (used when Redis is not configured) ──
+const aiEndpointWindows = new Map<string, number[]>();
+const ipWindows         = new Map<string, number[]>();
+
+function checkEndpointLimitMemory(
+  pathname: string, ip: string
+): { blocked: boolean; retryAfter?: number } {
+  const rule = AI_ENDPOINT_LIMITS.find(r => pathname.startsWith(r.path));
+  if (!rule) return { blocked: false };
+
+  const windowKey  = `${rule.path}:${ip}`;
   const now        = Date.now();
-  const windowStart = now - WINDOW_MS;
-  const burstStart  = now - 5_000;
+  const minCutoff  = now - 60_000;
+  const burstCutoff = now - rule.burstWindowMs;
 
-  const timestamps = (ipWindows.get(ip) ?? []).filter(t => t > windowStart);
-  timestamps.push(now);
-  ipWindows.set(ip, timestamps);
+  const ts = (aiEndpointWindows.get(windowKey) ?? []).filter(t => t > minCutoff);
+  ts.push(now);
+  aiEndpointWindows.set(windowKey, ts);
 
-  const burst = timestamps.filter(t => t > burstStart).length;
-  if (burst > MAX_BURST)       return { blocked: true, retryAfter: 5  };
-  if (timestamps.length > MAX_API_RPM) return { blocked: true, retryAfter: 60 };
+  if (ts.filter(t => t > burstCutoff).length > rule.burst)
+    return { blocked: true, retryAfter: Math.ceil(rule.burstWindowMs / 1000) };
+  if (ts.length > rule.rpm)
+    return { blocked: true, retryAfter: 60 };
   return { blocked: false };
 }
 
-// ── Lazy cleanup (every 5 minutes) ───────────────────────────────
+function checkGeneralLimitMemory(ip: string): { blocked: boolean; retryAfter?: number } {
+  const now        = Date.now();
+  const windowStart = now - 60_000;
+  const burstStart  = now - 5_000;
+
+  const ts = (ipWindows.get(ip) ?? []).filter(t => t > windowStart);
+  ts.push(now);
+  ipWindows.set(ip, ts);
+
+  if (ts.filter(t => t > burstStart).length > MAX_BURST) return { blocked: true, retryAfter: 5 };
+  if (ts.length > MAX_API_RPM)                            return { blocked: true, retryAfter: 60 };
+  return { blocked: false };
+}
+
+// ── Lazy cleanup (every 5 minutes, in-memory only) ────────────────
 let lastCleanup = Date.now();
 function maybeCleanup() {
   const now = Date.now();
   if (now - lastCleanup < 300_000) return;
   lastCleanup = now;
-
-  const generalCutoff   = now - WINDOW_MS;
-  const endpointCutoff  = now - 60_000;
-
-  for (const [key, ts] of ipWindows.entries()) {
-    const fresh = ts.filter(t => t > generalCutoff);
-    if (fresh.length === 0) ipWindows.delete(key);
-    else ipWindows.set(key, fresh);
-  }
-  for (const [key, ts] of aiEndpointWindows.entries()) {
-    const fresh = ts.filter(t => t > endpointCutoff);
-    if (fresh.length === 0) aiEndpointWindows.delete(key);
-    else aiEndpointWindows.set(key, fresh);
-  }
-  // Note: bannedIps is intentionally NOT pruned — bans persist for the
-  // lifetime of the server process (clears on redeploy)
+  const gc = now - 60_000;
+  for (const [k, ts] of ipWindows)         { const f = ts.filter(t => t > gc); f.length ? ipWindows.set(k, f) : ipWindows.delete(k); }
+  for (const [k, ts] of aiEndpointWindows) { const f = ts.filter(t => t > gc); f.length ? aiEndpointWindows.set(k, f) : aiEndpointWindows.delete(k); }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
+// ── JSON error helper ─────────────────────────────────────────────
 
 function jsonBlock(status: number, message: string, extra?: Record<string, string>): NextResponse {
-  return new NextResponse(
-    JSON.stringify({ error: message }),
-    {
-      status,
-      headers: {
-        "Content-Type": "application/json",
-        ...extra,
-      },
-    }
-  );
+  return new NextResponse(JSON.stringify({ error: message }), {
+    status,
+    headers: { "Content-Type": "application/json", ...extra },
+  });
 }
 
-// ── Middleware ────────────────────────────────────────────────────
+// ── Middleware (async — required for Redis await) ─────────────────
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const ua = req.headers.get("user-agent") ?? "";
   const ip =
@@ -223,12 +210,12 @@ export function middleware(req: NextRequest) {
     (req.headers.get("x-real-ip") ?? "").trim() ||
     "unknown";
 
-  // ── Layer 1: Banned IP instant block ────────────────────────────
+  // ── Layer 1: Banned IP instant block ──────────────────────────
   if (ip !== "unknown" && bannedIps.has(ip)) {
     return new NextResponse(null, { status: 403 });
   }
 
-  // ── Layer 2: Honeypot paths — ban IP, silent 404 ────────────────
+  // ── Layer 2: Honeypot paths — ban IP, silent 404 ──────────────
   if (
     pathname.startsWith("/api/_") ||
     pathname === "/robots-probe.txt" ||
@@ -246,13 +233,13 @@ export function middleware(req: NextRequest) {
 
   maybeCleanup();
 
-  // ── Layer 3: Suspicious request patterns ────────────────────────
+  // ── Layer 3: Suspicious request patterns ──────────────────────
   if (isSuspiciousRequest(req, pathname)) {
     if (ip !== "unknown") bannedIps.add(ip);
     return jsonBlock(400, "Bad request");
   }
 
-  // ── Layers 4-7 apply only to API routes ─────────────────────────
+  // ── Layers 4-7: API-only ───────────────────────────────────────
   if (pathname.startsWith("/api/")) {
 
     // Layer 4: Known bot UA
@@ -260,52 +247,82 @@ export function middleware(req: NextRequest) {
       return jsonBlock(403, "Forbidden");
     }
 
-    // Layer 5: Header fingerprint scoring (API calls from scripts)
-    const fpScore = headerFingerprintScore(req);
-    if (fpScore >= FINGERPRINT_BLOCK_SCORE) {
+    // Layer 5: Header fingerprint scoring
+    if (headerFingerprintScore(req) >= FINGERPRINT_BLOCK_SCORE) {
       return jsonBlock(403, "Forbidden");
     }
 
-    // Layer 6: Tight per-endpoint limits for expensive AI routes
-    const endpointCheck = checkEndpointLimit(pathname, ip);
-    if (endpointCheck.blocked) {
-      return jsonBlock(429, "Too many requests", {
-        "Retry-After": String(endpointCheck.retryAfter ?? 10),
-        "X-RateLimit-Scope": "endpoint",
-      });
+    // Layer 6: Per-endpoint rate limit ─────────────────────────
+    const rule = AI_ENDPOINT_LIMITS.find(r => pathname.startsWith(r.path));
+    if (rule) {
+      const distributedLimiter = getDistributedLimiter(rule.path, rule.rpm);
+      if (distributedLimiter) {
+        // ✅ Redis mode: shared across all Vercel instances
+        const { success, reset } = await distributedLimiter.limit(`${rule.path}:${ip}`);
+        if (!success) {
+          return jsonBlock(429, "Too many requests", {
+            "Retry-After": String(Math.max(1, Math.ceil((reset - Date.now()) / 1000))),
+            "X-RateLimit-Scope": "endpoint",
+            "X-RateLimit-Mode": "distributed",
+          });
+        }
+      } else {
+        // ⚠️ Fallback: in-memory (per-instance only)
+        const { blocked, retryAfter } = checkEndpointLimitMemory(pathname, ip);
+        if (blocked) {
+          return jsonBlock(429, "Too many requests", {
+            "Retry-After": String(retryAfter ?? 10),
+            "X-RateLimit-Scope": "endpoint",
+            "X-RateLimit-Mode": "memory",
+          });
+        }
+      }
     }
 
-    // Layer 7: General API rate limit
-    const isRateLimited = API_RATE_LIMITED.some(p => pathname.startsWith(p));
-    if (isRateLimited) {
-      const { blocked, retryAfter } = checkRateLimit(ip);
-      if (blocked) {
-        return jsonBlock(429, "Too many requests", {
-          "Retry-After": String(retryAfter ?? 60),
-          "X-RateLimit-Limit": String(MAX_API_RPM),
-          "X-RateLimit-Scope": "global",
-        });
+    // Layer 7: General API rate limit ──────────────────────────
+    if (API_RATE_LIMITED.some(p => pathname.startsWith(p))) {
+      const generalLimiter = getGeneralLimiter(MAX_API_RPM);
+      if (generalLimiter) {
+        // ✅ Redis mode
+        const { success } = await generalLimiter.limit(ip);
+        if (!success) {
+          return jsonBlock(429, "Too many requests", {
+            "Retry-After": "60",
+            "X-RateLimit-Limit": String(MAX_API_RPM),
+            "X-RateLimit-Scope": "global",
+            "X-RateLimit-Mode": "distributed",
+          });
+        }
+      } else {
+        // ⚠️ Fallback: in-memory
+        const { blocked, retryAfter } = checkGeneralLimitMemory(ip);
+        if (blocked) {
+          return jsonBlock(429, "Too many requests", {
+            "Retry-After": String(retryAfter ?? 60),
+            "X-RateLimit-Limit": String(MAX_API_RPM),
+            "X-RateLimit-Scope": "global",
+            "X-RateLimit-Mode": "memory",
+          });
+        }
       }
     }
   }
 
-  // ── Layer 8: Short/empty UA on page routes ───────────────────────
+  // ── Layer 8: Short/empty UA on page routes ─────────────────────
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/_next/")) {
     if (ua.length < 10) {
       return new NextResponse("Forbidden", { status: 403 });
     }
   }
 
-  // ── Layer 9: Security response headers ──────────────────────────
+  // ── Layer 9: Security response headers ────────────────────────
   const response = NextResponse.next();
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set(
-    "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=()"
-  );
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  response.headers.set("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   response.headers.set(
     "Content-Security-Policy",
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https: wss:;"

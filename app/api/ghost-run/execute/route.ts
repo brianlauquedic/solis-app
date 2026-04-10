@@ -12,19 +12,59 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSigningAgent } from "@/lib/agent";
 import type { StrategyStep } from "@/lib/ghost-run";
+import { getWalletLimiter, checkWalletLimitMemory } from "@/lib/redis";
 
 export const maxDuration = 120;
 
 const SAKURA_FEE_WALLET = process.env.SAKURA_FEE_WALLET ?? "";
 const PLATFORM_FEE_BPS = 30; // 0.3% — competitive vs Phantom (0.85%)
 
+// Prevent platform wallet drain: cap per-step amounts on server-signed operations.
+// stake/lend use the platform signing agent's wallet — limits bound the financial exposure.
+const MAX_STAKE_SOL_PER_STEP  = 5;    // max 5 SOL per stake (platform wallet limit)
+const MAX_LEND_AMOUNT_PER_STEP = 500; // max $500 equivalent per lend step
+
 export async function POST(req: NextRequest) {
   let body: { steps?: StrategyStep[]; wallet?: string } = {};
   try { body = await req.json(); } catch { /* ok */ }
 
   const { steps, wallet } = body;
+  // Validate wallet address format
   if (!steps?.length || !wallet) {
     return NextResponse.json({ error: "Missing steps or wallet" }, { status: 400 });
+  }
+  // Validate step count (prevent cost amplification)
+  if (steps.length > 10) {
+    return NextResponse.json({ error: "Maximum 10 steps per execution" }, { status: 400 });
+  }
+  // Validate wallet is valid base58 (44 chars for base58-encoded 32-byte pubkey)
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(wallet)) {
+    return NextResponse.json({ error: "Invalid wallet address format" }, { status: 400 });
+  }
+
+  // ── Per-wallet hourly rate limit (Sybil / platform wallet drain defense) ──
+  // stake and lend steps use the PLATFORM signing wallet — multiple IPs with the
+  // same economic target can rotate around per-IP limits. Wallet-keyed Redis limit
+  // ensures 10 executions/hour per wallet across ALL Vercel instances.
+  {
+    const walletLimiter = getWalletLimiter("ghost-run-execute", 10);
+    if (walletLimiter) {
+      const { success, reset } = await walletLimiter.limit(wallet);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded. Max 10 executions per hour per wallet." },
+          { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((reset - Date.now()) / 1000))), "X-RateLimit-Scope": "wallet", "X-RateLimit-Mode": "distributed" } }
+        );
+      }
+    } else {
+      const { blocked, retryAfter } = checkWalletLimitMemory("ghost-run-execute", wallet, 10);
+      if (blocked) {
+        return NextResponse.json(
+          { error: "Rate limit exceeded. Max 10 executions per hour per wallet." },
+          { status: 429, headers: { "Retry-After": String(retryAfter ?? 3600), "X-RateLimit-Scope": "wallet", "X-RateLimit-Mode": "memory" } }
+        );
+      }
+    }
   }
 
   const agent = createSigningAgent();
@@ -34,24 +74,30 @@ export async function POST(req: NextRequest) {
 
   const signatures: string[] = [];
   const errors: string[] = [];
+  const unsignedSwapTxs: Array<{ stepIdx: number; token: string; swapTransaction: string }> = [];
+  let platformFeeInjected = false; // tracks whether 0.3% fee was actually embedded
 
-  for (const step of steps) {
+  for (let stepIdx = 0; stepIdx < steps.length; stepIdx++) {
+    const step = steps[stepIdx];
     try {
       let sig: string | undefined;
 
       if (step.type === "stake" && step.outputToken === "mSOL") {
+        if (step.inputAmount > MAX_STAKE_SOL_PER_STEP) throw new Error(`Stake amount exceeds per-step limit of ${MAX_STAKE_SOL_PER_STEP} SOL`);
         // Marinade liquid stake via Jupiter
         const result = await (agent as unknown as {
           stakeWithJup: (amount: number) => Promise<string>
         }).stakeWithJup(step.inputAmount);
         sig = result;
       } else if (step.type === "stake" && step.outputToken === "jitoSOL") {
+        if (step.inputAmount > MAX_STAKE_SOL_PER_STEP) throw new Error(`Stake amount exceeds per-step limit of ${MAX_STAKE_SOL_PER_STEP} SOL`);
         // Jito liquid stake via Jupiter
         const result = await (agent as unknown as {
           stakeWithJup: (amount: number, validator?: string) => Promise<string>
         }).stakeWithJup(step.inputAmount, "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn");
         sig = result;
       } else if (step.type === "lend") {
+        if (step.inputAmount > MAX_LEND_AMOUNT_PER_STEP) throw new Error(`Lend amount exceeds per-step limit of ${MAX_LEND_AMOUNT_PER_STEP}`);
         const result = await (agent as unknown as {
           lendAsset: (assetMint: string, amount: number) => Promise<string>
         }).lendAsset(
@@ -102,6 +148,7 @@ export async function POST(req: NextRequest) {
         if (feeAccount && SAKURA_FEE_WALLET) {
           swapBody.platformFeeBps = PLATFORM_FEE_BPS; // 0.3%
           swapBody.feeAccount = feeAccount;
+          platformFeeInjected = true;
         }
 
         const swapRes = await fetch("https://quote-api.jup.ag/v6/swap", {
@@ -112,10 +159,16 @@ export async function POST(req: NextRequest) {
         if (!swapRes.ok) throw new Error("Jupiter swap build failed");
         const { swapTransaction } = await swapRes.json();
 
-        const txBuf = Buffer.from(swapTransaction, "base64");
-        const tx = VersionedTransaction.deserialize(txBuf);
-        sig = await conn.sendRawTransaction(tx.serialize(), { skipPreflight: false });
-        await conn.confirmTransaction(sig, "confirmed");
+        // ── Return unsigned transaction for frontend wallet signing ──────
+        // Jupiter swap transactions MUST be signed by the user's private key.
+        // The platform cannot sign on behalf of the user (non-custodial).
+        // Frontend receives swapTransaction and signs via wallet adapter.
+        unsignedSwapTxs.push({
+          stepIdx,
+          token: `${step.inputToken}→${step.outputToken}`,
+          swapTransaction, // base64-encoded unsigned VersionedTransaction
+        });
+        // Do NOT call sendRawTransaction here — user must sign first
       }
 
       if (sig) signatures.push(sig);
@@ -138,24 +191,41 @@ export async function POST(req: NextRequest) {
         ts: new Date().toISOString(),
       });
 
-      const memoRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/agent/memo`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: proofText }),
-      }).catch(() => null);
+      const execBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      if (execBaseUrl) {
+        const execMemoHeaders: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (process.env.INTERNAL_API_SECRET) {
+          execMemoHeaders["x-internal-secret"] = process.env.INTERNAL_API_SECRET;
+        }
+        const memoRes = await fetch(`${execBaseUrl}/api/agent/memo`, {
+          method: "POST",
+          headers: execMemoHeaders,
+          body: JSON.stringify({ memoPayload: proofText }),
+        }).catch(() => null);
 
-      if (memoRes?.ok) {
-        const memoData = await memoRes.json();
-        memoSig = memoData.signature ?? null;
+        if (memoRes?.ok) {
+          const memoData = await memoRes.json();
+          memoSig = memoData.txSignature ?? memoData.signature ?? null;
+        }
       }
     } catch { /* memo is optional */ }
   }
 
+  const hasSwaps = unsignedSwapTxs.length > 0;
   return NextResponse.json({
     success: errors.length === 0,
     signatures,
+    unsignedSwapTxs,
+    requiresUserSignature: hasSwaps,
     memoSig,
-    platformFee: `${PLATFORM_FEE_BPS / 100}% collected to Sakura fee wallet`,
+    platformFeeInjected,
+    platformFee: hasSwaps
+      ? (platformFeeInjected
+          ? `${PLATFORM_FEE_BPS / 100}% 平台費已嵌入 Jupiter 兌換交易`
+          : "⚠️ 平台費未能嵌入（費錢包未配置），本次兌換免費")
+      : "無兌換步驟，不收平台費",
     errors,
   });
 }

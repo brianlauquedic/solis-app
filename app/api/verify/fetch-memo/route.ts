@@ -95,7 +95,9 @@ export async function GET(req: NextRequest) {
       feePayer: tx.transaction.message.accountKeys[0]?.pubkey?.toString() ?? null,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Fetch failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // Never expose raw error messages — log server-side only to prevent
+    // leaking internal RPC URLs (which may contain API keys) or stack traces.
+    console.error("[verify/fetch-memo] error:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: "transaction_fetch_failed" }, { status: 500 });
   }
 }

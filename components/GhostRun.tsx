@@ -8,13 +8,33 @@ import type { StrategyStep, GhostRunResult, StepSimulation } from "@/lib/ghost-r
 interface SimulateResponse {
   steps: StrategyStep[];
   result: GhostRunResult;
+  aiAnalysis: string | null;
+}
+
+interface UnsignedSwapTx {
+  stepIdx: number;
+  token: string;         // e.g. "SOL→USDC"
+  swapTransaction: string; // base64-encoded VersionedTransaction from Jupiter
 }
 
 interface ExecuteResponse {
   success: boolean;
   signatures: string[];
+  unsignedSwapTxs: UnsignedSwapTx[];   // swap steps: user must sign
+  requiresUserSignature: boolean;
   memoSig: string | null;
+  platformFeeInjected: boolean;
+  platformFee: string;
   errors: string[];
+}
+
+import type { SolanaWalletProvider } from "@/types/phantom";
+
+function getWalletProvider(): SolanaWalletProvider | null {
+  if (typeof window === "undefined") return null;
+  if (window.solana?.isPhantom) return window.solana;
+  if (window.okxwallet?.solana) return window.okxwallet.solana;
+  return null;
 }
 
 export default function GhostRun() {
@@ -29,8 +49,11 @@ export default function GhostRun() {
   const [strategy, setStrategy] = useState("");
   const [loading, setLoading] = useState(false);
   const [executing, setExecuting] = useState(false);
+  const [signingSwap, setSigningSwap] = useState(false);
   const [simResult, setSimResult] = useState<SimulateResponse | null>(null);
   const [execResult, setExecResult] = useState<ExecuteResponse | null>(null);
+  const [swapSigs, setSwapSigs] = useState<string[]>([]);
+  const [auditChain, setAuditChain] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function runSimulation() {
@@ -42,6 +65,8 @@ export default function GhostRun() {
     setError(null);
     setSimResult(null);
     setExecResult(null);
+    setSwapSigs([]);
+    setAuditChain(null);
 
     try {
       const res = await fetch("/api/ghost-run/simulate", {
@@ -66,7 +91,11 @@ export default function GhostRun() {
     if (!simResult || !walletAddress) return;
     setExecuting(true);
     setExecResult(null);
+    setSwapSigs([]);
+    setError(null);
+
     try {
+      // ── Step 1: Execute stake/lend steps via platform wallet ───────────────
       const res = await fetch("/api/ghost-run/execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,10 +103,74 @@ export default function GhostRun() {
       });
       const data: ExecuteResponse = await res.json();
       setExecResult(data);
+
+      // ── Step 2: Sign swap transactions via user's Phantom/OKX wallet ───────
+      // Swap txs are non-custodial — only the user's private key can sign them.
+      // Jupiter builds the VersionedTransaction; we pass it to the wallet adapter.
+      if (data.unsignedSwapTxs && data.unsignedSwapTxs.length > 0) {
+        setSigningSwap(true);
+        const provider = getWalletProvider();
+        if (!provider) {
+          setError("請連接 Phantom 或 OKX 錢包以簽署兌換交易");
+          return;
+        }
+
+        const { VersionedTransaction } = await import("@solana/web3.js");
+        const collectedSigs: string[] = [];
+
+        for (const unsignedTx of data.unsignedSwapTxs) {
+          // Decode base64 → Uint8Array → VersionedTransaction
+          const txBytes = Uint8Array.from(
+            atob(unsignedTx.swapTransaction),
+            c => c.charCodeAt(0)
+          );
+          const vTx = VersionedTransaction.deserialize(txBytes);
+
+          // Sign and broadcast — wallet handles gas and submission
+          const result = await provider.signAndSendTransaction(vTx);
+          const sig = typeof result === "string" ? result : result.signature;
+          collectedSigs.push(sig);
+        }
+
+        setSwapSigs(collectedSigs);
+
+        // Merge swap sigs into execResult for display
+        setExecResult(prev => prev ? {
+          ...prev,
+          signatures: [...prev.signatures, ...collectedSigs],
+          success: prev.errors.length === 0,
+        } : prev);
+
+        // ── Step 3: Post swap signatures to audit endpoint ────────────────
+        // Platform Memo only records stake/lend TXs. Swap sigs are signed
+        // non-custodially and must be posted back to complete the audit chain.
+        try {
+          const auditRes = await fetch("/api/ghost-run/audit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              swapSigs: collectedSigs,
+              wallet: walletAddress,
+              executeMemoSig: data.memoSig ?? undefined,
+            }),
+          });
+          if (auditRes.ok) {
+            const auditData = await auditRes.json() as { auditChain?: string | null };
+            if (auditData.auditChain) setAuditChain(auditData.auditChain);
+          }
+        } catch { /* audit is non-critical */ }
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "執行失敗");
+      const msg = err instanceof Error ? err.message : "執行失敗";
+      // Friendly messages for wallet rejections
+      if (msg.includes("User rejected") || msg.includes("user_rejected") || msg.includes("rejected")) {
+        setError("用戶取消了簽名請求");
+      } else {
+        setError(msg);
+      }
     } finally {
       setExecuting(false);
+      setSigningSwap(false);
     }
   }
 
@@ -91,6 +184,13 @@ export default function GhostRun() {
     stake: "#34C759",
     lend: "#FF9F0A",
   };
+
+  // Determine button label based on execution phase
+  function getExecButtonLabel() {
+    if (signingSwap) return "⏳ 等待錢包簽名兌換…";
+    if (executing) return t("ghostExecuting");
+    return t("ghostConfirmBtn");
+  }
 
   return (
     <div>
@@ -217,6 +317,16 @@ export default function GhostRun() {
                   <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
                     via {sim.step.protocol}
                   </span>
+                  {/* Swap indicator: requires wallet signature */}
+                  {sim.step.type === "swap" && (
+                    <span style={{
+                      fontSize: 10, color: "#7C6FFF",
+                      background: "rgba(124,111,255,0.1)", border: "1px solid rgba(124,111,255,0.3)",
+                      borderRadius: 4, padding: "2px 6px", fontFamily: "var(--font-mono)",
+                    }}>
+                      🔑 需要錢包簽名
+                    </span>
+                  )}
                 </div>
                 <span style={{
                   fontSize: 11, borderRadius: 4, padding: "3px 8px",
@@ -281,6 +391,12 @@ export default function GhostRun() {
                 總 Gas: {(simResult.result.totalGasSol * 1e6).toFixed(1)} μSOL (~$
                 {(simResult.result.totalGasSol * 170 * 1000).toFixed(3)})
               </div>
+              {/* Show swap fee note if any swap steps exist */}
+              {simResult.steps.some(s => s.type === "swap") && (
+                <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>
+                  兌換步驟含 0.3% 平台費（由 Jupiter 自動收取）
+                </div>
+              )}
               {simResult.result.warnings.map((w, i) => (
                 <div key={i} style={{ fontSize: 12, color: "#FF9F0A", marginTop: 4 }}>{w}</div>
               ))}
@@ -297,17 +413,17 @@ export default function GhostRun() {
           {simResult.result.canExecute && !execResult && (
             <button
               onClick={executeStrategy}
-              disabled={executing}
+              disabled={executing || signingSwap}
               style={{
                 width: "100%", padding: "14px",
-                background: executing ? "var(--border)" : "linear-gradient(135deg, #7C6FFF, #5A4FD1)",
+                background: (executing || signingSwap) ? "var(--border)" : "linear-gradient(135deg, #7C6FFF, #5A4FD1)",
                 border: "none", borderRadius: 10,
                 fontSize: 14, fontWeight: 600, color: "#fff",
-                cursor: executing ? "not-allowed" : "pointer",
+                cursor: (executing || signingSwap) ? "not-allowed" : "pointer",
                 letterSpacing: "0.05em",
               }}
             >
-              {executing ? t("ghostExecuting") : t("ghostConfirmBtn")}
+              {getExecButtonLabel()}
             </button>
           )}
 
@@ -321,19 +437,59 @@ export default function GhostRun() {
               <div style={{ fontSize: 15, fontWeight: 600, color: execResult.success ? "var(--green)" : "#FF4444", marginBottom: 10 }}>
                 {execResult.success ? t("ghostSuccessMsg") : t("ghostPartialMsg")}
               </div>
-              {execResult.signatures.map((sig, i) => (
+
+              {/* Platform-signed txs (stake/lend) */}
+              {execResult.signatures.filter(s => !swapSigs.includes(s)).map((sig, i) => (
                 <div key={i} style={{ fontSize: 12, color: "var(--text-muted)", fontFamily: "var(--font-mono)", marginBottom: 4 }}>
-                  TX {i + 1}: {sig.slice(0, 20)}…
+                  Platform TX {i + 1}: {sig.slice(0, 20)}…
                 </div>
               ))}
+
+              {/* User-signed swap txs */}
+              {swapSigs.map((sig, i) => (
+                <div key={i} style={{ fontSize: 12, color: "#7C6FFF", fontFamily: "var(--font-mono)", marginBottom: 4 }}>
+                  Swap TX {i + 1} (你簽名): {sig.slice(0, 20)}…
+                </div>
+              ))}
+
               {execResult.memoSig && (
                 <div style={{ fontSize: 12, color: "var(--accent)", marginTop: 8, fontFamily: "var(--font-mono)" }}>
                   ✦ 鏈上執行憑證: {execResult.memoSig.slice(0, 20)}…
                 </div>
               )}
+              {auditChain && (
+                <div style={{ fontSize: 12, color: "var(--accent)", marginTop: 4, fontFamily: "var(--font-mono)" }}>
+                  ✦ 完整審計鏈: {auditChain}
+                </div>
+              )}
+              {execResult.platformFee && (
+                <div style={{
+                  fontSize: 11, marginTop: 6,
+                  color: execResult.platformFeeInjected === false && execResult.requiresUserSignature
+                    ? "#FF9F0A"
+                    : "var(--text-muted)",
+                }}>
+                  {execResult.platformFee}
+                </div>
+              )}
               {execResult.errors.map((e, i) => (
                 <div key={i} style={{ fontSize: 12, color: "#FF4444", marginTop: 4 }}>{e}</div>
               ))}
+            </div>
+          )}
+          {/* AI Strategy Analysis */}
+          {simResult.aiAnalysis && (
+            <div style={{
+              background: "var(--bg-card)", border: "1px solid var(--border)",
+              borderTop: "2px solid #7C6FFF",
+              borderRadius: 10, padding: "18px 20px", marginBottom: 16,
+            }}>
+              <div style={{ fontSize: 10, color: "#7C6FFF", letterSpacing: "0.12em", fontFamily: "var(--font-mono)", fontWeight: 600, marginBottom: 12 }}>
+                ✦ AI STRATEGY ANALYSIS
+              </div>
+              <div style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 2.0, whiteSpace: "pre-wrap" }}>
+                {simResult.aiAnalysis}
+              </div>
             </div>
           )}
         </div>

@@ -6,12 +6,22 @@
  *
  * 1. Claude parses NL strategy → StrategyStep[]
  * 2. simulateStrategy() — Jupiter Quote API + simulateTransaction (real Solana state)
- * 3. Returns precise token deltas, gas costs, APY from live APIs
+ * 3. Agentic AI analysis — SAK fetchPrice (Jupiter) + native RPC balance/stake checks
+ * 4. Returns precise token deltas, gas costs, APY, feasibility analysis, AI insights
+ *
+ * SAK/Solana native tools used here:
+ *  - getBalance + getParsedTokenAccountsByOwner  (pre-flight balance check)
+ *  - SAK fetchPrice via Jupiter Price V2          (live token USD prices)
+ *  - getProgramAccounts (StakeProgram)            (total portfolio picture)
+ *  - simulateTransaction                          (inside simulateStrategy in lib/ghost-run.ts)
  */
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { simulateStrategy } from "@/lib/ghost-run";
 import type { StrategyStep } from "@/lib/ghost-run";
+import { createReadOnlyAgent, RPC_URL } from "@/lib/agent";
+import { getWalletLimiter, checkWalletLimitMemory } from "@/lib/redis";
 
 export const maxDuration = 60;
 
@@ -32,6 +42,18 @@ Supported tokens: SOL, USDC, USDT, mSOL, jitoSOL, bSOL
 Protocols for stake: Marinade (→mSOL), Jito (→jitoSOL), BlazeStake (→bSOL)
 Protocols for lend: Kamino`;
 
+const TOKEN_MINT_MAP: Record<string, string> = {
+  SOL:     "So11111111111111111111111111111111111111112",
+  USDC:    "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  USDT:    "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+  mSOL:    "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+  jitoSOL: "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
+  bSOL:    "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1",
+};
+const TOKEN_PRICE_FALLBACK: Record<string, number> = {
+  SOL: 170, USDC: 1, USDT: 1, mSOL: 178, jitoSOL: 178, bSOL: 176,
+};
+
 export async function POST(req: NextRequest) {
   let body: { strategy?: string; wallet?: string } = {};
   try { body = await req.json(); } catch { /* ok */ }
@@ -40,8 +62,41 @@ export async function POST(req: NextRequest) {
   if (!strategy || !wallet) {
     return NextResponse.json({ error: "Missing strategy or wallet" }, { status: 400 });
   }
+  // Prevent cost amplification: limit strategy length
+  if (strategy.length > 2000) {
+    return NextResponse.json({ error: "策略描述過長（最多 2000 字符）" }, { status: 400 });
+  }
+  // Validate wallet is a valid base58 Solana address
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(wallet)) {
+    return NextResponse.json({ error: "無效的錢包地址格式" }, { status: 400 });
+  }
 
-  // Step 1: Parse NL strategy with Claude
+  // ── Per-wallet hourly rate limit (Sybil defense) ───────────────────────────
+  // IP-based middleware limits alone can be bypassed with rotating IPs.
+  // This wallet-keyed limit is shared across ALL Vercel instances via Redis.
+  // Limit: 20 simulations/hour per wallet (generous for legitimate use).
+  {
+    const walletLimiter = getWalletLimiter("ghost-run-simulate", 20);
+    if (walletLimiter) {
+      const { success, reset } = await walletLimiter.limit(wallet);
+      if (!success) {
+        return NextResponse.json(
+          { error: "每個錢包每小時最多 20 次模擬。請稍後再試。" },
+          { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((reset - Date.now()) / 1000))), "X-RateLimit-Scope": "wallet", "X-RateLimit-Mode": "distributed" } }
+        );
+      }
+    } else {
+      // In-memory fallback
+      const { blocked, retryAfter } = checkWalletLimitMemory("ghost-run-simulate", wallet, 20);
+      if (blocked) {
+        return NextResponse.json(
+          { error: "每個錢包每小時最多 20 次模擬。請稍後再試。" },
+          { status: 429, headers: { "Retry-After": String(retryAfter ?? 3600), "X-RateLimit-Scope": "wallet", "X-RateLimit-Mode": "memory" } }
+        );
+      }
+    }
+  }
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json({
@@ -52,6 +107,7 @@ export async function POST(req: NextRequest) {
   const client = new Anthropic({ apiKey });
   let steps: StrategyStep[] = [];
 
+  // ── Step 1: Parse NL strategy with Claude ──────────────────────────
   try {
     const msg = await client.messages.create({
       model: "claude-sonnet-4-6",
@@ -59,14 +115,15 @@ export async function POST(req: NextRequest) {
       system: PARSE_SYSTEM,
       messages: [{ role: "user", content: strategy }],
     });
-
     const text = msg.content[0].type === "text" ? msg.content[0].text.trim() : "[]";
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     steps = jsonMatch ? (JSON.parse(jsonMatch[0]) as StrategyStep[]) : [];
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[ghost-run/simulate] Claude error:", err);
-    return NextResponse.json({ error: `Claude API 錯誤: ${msg}` }, { status: 500 });
+    // [SECURITY FIX M-2] Never return raw Claude/Anthropic error messages.
+    // err.message can contain internal model names, account quota details, or
+    // API key hints. Log server-side only, return a generic client message.
+    console.error("[ghost-run/simulate] Claude parse error:", err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: "策略分析服務暫時不可用，請稍後再試。" }, { status: 500 });
   }
 
   if (steps.length === 0) {
@@ -75,13 +132,306 @@ export async function POST(req: NextRequest) {
     }, { status: 400 });
   }
 
-  // Step 2: Simulate — Jupiter Quote API + simulateTransaction (real Solana state)
+  // ── [SECURITY FIX H-2] Validate Claude-parsed steps before execution ───────
+  // Claude's output is untrusted structured data. Malicious strategy strings could
+  // cause Claude to emit steps with negative amounts, Infinity, unknown tokens, etc.
+  // Strictly allowlist all fields before passing to simulateStrategy().
+  const VALID_STEP_TYPES  = new Set(["swap", "stake", "lend"]);
+  const VALID_TOKENS      = new Set(["SOL", "USDC", "USDT", "mSOL", "jitoSOL", "bSOL"]);
+  const MAX_STEP_AMOUNT   = 10_000; // sanity cap per step ($10k+ is unrealistic for a sim)
+
+  steps = steps.filter(s =>
+    VALID_STEP_TYPES.has(s.type) &&
+    VALID_TOKENS.has(s.inputToken) &&
+    VALID_TOKENS.has(s.outputToken) &&
+    typeof s.inputAmount === "number" &&
+    Number.isFinite(s.inputAmount) &&
+    s.inputAmount > 0 &&
+    s.inputAmount <= MAX_STEP_AMOUNT
+  );
+
+  if (steps.length === 0) {
+    return NextResponse.json({
+      error: "策略中的操作步驟無效。支持的代幣：SOL / USDC / USDT / mSOL / jitoSOL / bSOL，操作類型：stake / lend / swap。",
+    }, { status: 400 });
+  }
+
+  // Cap at 10 steps even if Claude hallucinated more
+  if (steps.length > 10) steps = steps.slice(0, 10);
+
+  // ── Step 2: Simulate — Jupiter Quote API + simulateTransaction ─────
+  let result;
   try {
-    const result = await simulateStrategy(steps, wallet);
-    return NextResponse.json({ steps, result });
+    result = await simulateStrategy(steps, wallet);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("[ghost-run/simulate] simulation error:", err);
     return NextResponse.json({ error: `Simulation failed: ${msg}` }, { status: 500 });
   }
+
+  // ── Step 3: Agentic AI analysis — SAK + Solana native tools ────────
+  let aiAnalysis: string | null = null;
+  try {
+    const conn = new Connection(RPC_URL, "confirmed");
+    const agent = createReadOnlyAgent();
+
+    // ── SAK Tool definitions ──────────────────────────────────────────
+    const sakTools: Anthropic.Tool[] = [
+      {
+        name: "check_wallet_balances",
+        description: "Check exact SOL and SPL token balances using Solana native getBalance + getParsedTokenAccountsByOwner. Verifies if wallet can fund each strategy step and flags any shortfall.",
+        input_schema: {
+          type: "object" as const,
+          properties: { wallet: { type: "string", description: "Solana wallet address (base58)" } },
+          required: ["wallet"],
+        },
+      },
+      {
+        name: "get_token_price",
+        description: "Get live USD price for any Solana token using SAK TokenPlugin fetchPrice (Jupiter Price V2 aggregator — Solana native). Use this for SOL, mSOL, jitoSOL, bSOL, USDC to calculate exact USD input/output values.",
+        input_schema: {
+          type: "object" as const,
+          properties: {
+            token: { type: "string", description: "Token symbol: SOL, USDC, USDT, mSOL, jitoSOL, bSOL" },
+          },
+          required: ["token"],
+        },
+      },
+      {
+        name: "get_stake_positions",
+        description: "Get all native SOL staking positions for the wallet using getProgramAccounts on Stake Program (memcmp offset 44 = withdrawer authority). Provides full liquidity and asset picture.",
+        input_schema: {
+          type: "object" as const,
+          properties: { wallet: { type: "string", description: "Wallet address to scan for stake accounts" } },
+          required: ["wallet"],
+        },
+      },
+      {
+        name: "get_inflation_rate",
+        description: "Get current Solana network inflation rate using native getInflationRate RPC. Critical for staking analysis: compares staking APY vs inflation to show the REAL yield. E.g. staking APY 7.2% - inflation 4.7% = real yield +2.5%.",
+        input_schema: {
+          type: "object" as const,
+          properties: {},
+          required: [],
+        },
+      },
+      {
+        name: "get_lst_market_depth",
+        description: "Get total supply of a Liquid Staking Token (mSOL, jitoSOL, bSOL) using Solana native getTokenSupply. Confirms protocol health — billions staked = deep liquidity. Low supply = risk of illiquidity.",
+        input_schema: {
+          type: "object" as const,
+          properties: {
+            token: { type: "string", description: "LST token symbol: mSOL, jitoSOL, or bSOL" },
+          },
+          required: ["token"],
+        },
+      },
+    ];
+
+    // ── SAK Tool executor (Solana native, no external APIs) ───────────
+    async function executeGhostTool(name: string, input: Record<string, unknown>): Promise<unknown> {
+      try {
+        switch (name) {
+
+          case "check_wallet_balances": {
+            const w = input.wallet as string;
+            const { TOKEN_PROGRAM_ID } = await import("@solana/spl-token");
+            const [lamports, tokenAccounts] = await Promise.all([
+              conn.getBalance(new PublicKey(w)),
+              conn.getParsedTokenAccountsByOwner(new PublicKey(w), { programId: TOKEN_PROGRAM_ID }),
+            ]);
+            const solAmount = lamports / 1e9;
+            const tokens = tokenAccounts.value
+              .map(ta => {
+                const info = ta.account.data.parsed?.info;
+                const mintAddr = info?.mint as string ?? "";
+                return {
+                  symbol: Object.entries(TOKEN_MINT_MAP).find(([, m]) => m === mintAddr)?.[0] ?? mintAddr.slice(0, 8),
+                  amount: (info?.tokenAmount?.uiAmount as number) ?? 0,
+                };
+              })
+              .filter(t => t.amount > 0);
+
+            // Check feasibility per step
+            const feasibility = steps.map(step => {
+              if (step.inputToken === "SOL") {
+                const feasible = solAmount >= step.inputAmount;
+                return { step: `${step.type} ${step.inputAmount} SOL`, feasible, available: +solAmount.toFixed(4), shortfall: feasible ? 0 : +(step.inputAmount - solAmount).toFixed(4) };
+              }
+              const tokenBal = tokens.find(t => t.symbol === step.inputToken);
+              const avail = tokenBal?.amount ?? 0;
+              const feasible = avail >= step.inputAmount;
+              return { step: `${step.type} ${step.inputAmount} ${step.inputToken}`, feasible, available: +avail.toFixed(4), shortfall: feasible ? 0 : +(step.inputAmount - avail).toFixed(4) };
+            });
+
+            return { solAmount: +solAmount.toFixed(4), tokenBalances: tokens, feasibility, allFeasible: feasibility.every(f => f.feasible) };
+          }
+
+          case "get_token_price": {
+            const token = input.token as string;
+            const mint = TOKEN_MINT_MAP[token] ?? TOKEN_MINT_MAP["SOL"];
+            try {
+              // SAK fetchPrice uses Jupiter Price V2 API (Solana native aggregator)
+              const price = await (agent.methods as Record<string, (...args: unknown[]) => Promise<number>>)
+                .fetchPrice(mint);
+              return { token, priceUsd: price, source: "Jupiter Price V2 (Solana native)" };
+            } catch {
+              return { token, priceUsd: TOKEN_PRICE_FALLBACK[token] ?? 1, source: "fallback" };
+            }
+          }
+
+          case "get_stake_positions": {
+            const w = input.wallet as string;
+            const stakeProgram = new PublicKey("Stake11111111111111111111111111111111111111");
+            const stakeAccounts = await conn.getProgramAccounts(stakeProgram, {
+              filters: [{ memcmp: { offset: 44, bytes: w } }],
+            });
+            const totalStakedSol = stakeAccounts.reduce((sum, sa) => sum + sa.account.lamports / 1e9, 0);
+            return {
+              count: stakeAccounts.length,
+              totalStakedSol: +totalStakedSol.toFixed(4),
+              positions: stakeAccounts.slice(0, 5).map(sa => ({
+                address: sa.pubkey.toString().slice(0, 12),
+                sol: +(sa.account.lamports / 1e9).toFixed(4),
+              })),
+              note: "Native staked SOL is illiquid but part of total portfolio value",
+            };
+          }
+
+          case "get_inflation_rate": {
+            // Solana native getInflationRate — compares staking APY vs network inflation
+            const inflation = await conn.getInflationRate();
+            return {
+              total: +(inflation.total * 100).toFixed(3),
+              validator: +(inflation.validator * 100).toFixed(3),
+              foundation: +(inflation.foundation * 100).toFixed(3),
+              epoch: inflation.epoch,
+              note: "Staking APY must beat total inflation to generate real positive yield",
+              realYieldExample: "If staking APY is 7.2% and total inflation is 4.7%, real yield ≈ +2.5%",
+            };
+          }
+
+          case "get_lst_market_depth": {
+            // Solana native getTokenSupply — checks LST protocol total supply (market depth)
+            const lstMints: Record<string, string> = {
+              mSOL:    "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So",
+              jitoSOL: "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn",
+              bSOL:    "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1",
+            };
+            const token = input.token as string;
+            const mint = lstMints[token];
+            if (!mint) return { error: `Unknown LST token: ${token}` };
+            const supplyInfo = await conn.getTokenSupply(new PublicKey(mint));
+            const supplyAmount = supplyInfo.value.uiAmount ?? 0;
+            return {
+              token,
+              mint: mint.slice(0, 12),
+              totalSupply: +supplyAmount.toFixed(0),
+              totalSupplyLabel: supplyAmount >= 1e6 ? `${(supplyAmount / 1e6).toFixed(2)}M` : `${(supplyAmount / 1e3).toFixed(1)}K`,
+              liquidityAssessment: supplyAmount >= 1_000_000
+                ? "DEEP — >1M tokens staked, excellent liquidity"
+                : supplyAmount >= 100_000
+                ? "GOOD — 100K–1M tokens staked"
+                : "SHALLOW — <100K tokens, exit liquidity risk",
+            };
+          }
+
+          default:
+            return { error: `Unknown tool: ${name}` };
+        }
+      } catch (err) {
+        return { error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
+    // ── Agentic loop: Claude autonomously calls SAK tools ─────────────
+    const simulationSummary = result.steps.map(s => ({
+      type: s.step.type,
+      input: `${s.step.inputAmount} ${s.step.inputToken}`,
+      output: `${s.outputAmount.toFixed(4)} ${s.step.outputToken}`,
+      apy: s.estimatedApy != null ? `${s.estimatedApy.toFixed(1)}%` : null,
+      annualYieldUsd: s.annualUsdYield != null ? `$${s.annualUsdYield.toFixed(2)}` : null,
+      gasSol: s.gasSol.toFixed(7),
+      success: s.success,
+      error: s.error ?? null,
+    }));
+
+    const agentMessages: Anthropic.MessageParam[] = [
+      {
+        role: "user",
+        content: `You are a Solana DeFi strategy advisor. Analyze this strategy for wallet ${wallet.slice(0, 8)}...
+
+STRATEGY INPUT: "${strategy}"
+
+SIMULATION RESULTS (from Solana simulateTransaction):
+${JSON.stringify(simulationSummary, null, 2)}
+
+canExecute: ${result.canExecute}
+totalGasSol: ${result.totalGasSol.toFixed(7)} SOL
+warnings: ${result.warnings.join("; ") || "none"}
+
+YOUR TASK — Use tools in this order:
+1. check_wallet_balances — verify wallet can fund each step
+2. get_token_price — get prices for each input AND output token (exact USD values)
+3. get_stake_positions — full portfolio picture including staked SOL
+4. get_inflation_rate — get current Solana inflation to calculate REAL staking yield
+5. get_lst_market_depth — for any stake step, verify the LST protocol depth (mSOL/jitoSOL)
+
+Then write a strategy analysis in Traditional Chinese (繁體中文):
+- ✅/⚠️ 資金可行性：餘額是否足夠執行每個步驟
+- 💰 投入總值 vs 預期產出總值（精確 USD）
+- 📈 預計年化收益（總額 USD）+ 若有質押：名義 APY vs 通脹 → 實際收益
+- 🏦 LST 協議深度（mSOL/jitoSOL 總供應量）→ 流動性評估
+- ⚡ Gas 費用（USD）
+- 🏛️ 整體資產狀況（可用 SOL + 代幣 + 質押 SOL）
+- 🎯 策略效率評分（1-10）及理由
+- ⚠️ 主要風險提示`,
+      },
+    ];
+
+    let agentResponse = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1400,
+      tools: sakTools,
+      messages: agentMessages,
+    });
+
+    let iterations = 0;
+    while (agentResponse.stop_reason === "tool_use" && iterations < 6) {
+      iterations++;
+      const toolUseBlocks = agentResponse.content.filter(b => b.type === "tool_use");
+      agentMessages.push({ role: "assistant", content: agentResponse.content });
+
+      const toolResults = await Promise.all(
+        toolUseBlocks.map(async (block) => {
+          if (block.type !== "tool_use") return null;
+          const toolResult = await executeGhostTool(block.name, block.input as Record<string, unknown>);
+          return {
+            type: "tool_result" as const,
+            tool_use_id: block.id,
+            content: JSON.stringify(toolResult),
+          };
+        })
+      );
+
+      agentMessages.push({
+        role: "user",
+        content: toolResults.filter(Boolean) as Anthropic.ToolResultBlockParam[],
+      });
+
+      agentResponse = await client.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1400,
+        tools: sakTools,
+        messages: agentMessages,
+      });
+    }
+
+    const textBlock = agentResponse.content.find(b => b.type === "text");
+    aiAnalysis = textBlock?.type === "text" ? textBlock.text : null;
+  } catch (err) {
+    console.error("[ghost-run/simulate] agentic analysis error:", err);
+  }
+
+  return NextResponse.json({ steps, result, aiAnalysis });
 }
