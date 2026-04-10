@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useLang } from "@/contexts/LanguageContext";
 import type { StrategyStep, GhostRunResult, StepSimulation } from "@/lib/ghost-run";
@@ -75,6 +75,17 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
   const [auditChain, setAuditChain] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Fix 1: Partial swap execution recovery
+  const [pendingSwapTxs, setPendingSwapTxs] = useState<UnsignedSwapTx[]>([]);
+  const [retryingSwaps, setRetryingSwaps] = useState(false);
+
+  // Fix 3: AbortController for cancelling in-flight fetches on unmount
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, []);
+
   useEffect(() => {
     if (isDemo) {
       setStrategy(DEMO_STRATEGY);
@@ -95,9 +106,15 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
     setExecResult(null);
     setSwapSigs([]);
     setAuditChain(null);
+    setPendingSwapTxs([]);
+
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
 
     try {
       const res = await fetch("/api/ghost-run/simulate", {
+        signal,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(isDemo
@@ -117,6 +134,71 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
     }
   }
 
+  // Fix 1: Retry only the remaining unsigned swap transactions
+  async function retryPendingSwaps() {
+    if (pendingSwapTxs.length === 0) return;
+    const provider = getWalletProvider();
+    if (!provider) {
+      setError("請連接 Phantom 或 OKX 錢包以簽署兌換交易");
+      return;
+    }
+
+    setRetryingSwaps(true);
+    setError(null);
+
+    const { VersionedTransaction } = await import("@solana/web3.js");
+    const newSigs: string[] = [];
+    const stillPending: UnsignedSwapTx[] = [];
+
+    for (const unsignedTx of pendingSwapTxs) {
+      try {
+        const txBytes = Uint8Array.from(
+          atob(unsignedTx.swapTransaction),
+          c => c.charCodeAt(0)
+        );
+        const vTx = VersionedTransaction.deserialize(txBytes);
+        const result = await provider.signAndSendTransaction(vTx);
+        const sig = typeof result === "string" ? result : result?.signature;
+        if (sig) newSigs.push(sig);
+      } catch (swapErr) {
+        const swapMsg = swapErr instanceof Error ? swapErr.message : "Swap 簽名失敗";
+        if (swapMsg.includes("rejected") || swapMsg.includes("User rejected")) {
+          setError(`用戶取消了兌換簽名`);
+          stillPending.push(unsignedTx, ...pendingSwapTxs.slice(pendingSwapTxs.indexOf(unsignedTx) + 1));
+          break;
+        }
+        setError(`兌換交易失敗：${swapMsg}`);
+        stillPending.push(unsignedTx);
+        console.error("[GhostRun] Swap retry error:", swapErr);
+      }
+    }
+
+    if (newSigs.length > 0) {
+      setSwapSigs(prev => [...prev, ...newSigs]);
+      setExecResult(prev => prev ? {
+        ...prev,
+        signatures: [...prev.signatures, ...newSigs],
+        success: prev.errors.length === 0 && stillPending.length === 0,
+      } : prev);
+
+      // Post new swap sigs to audit
+      try {
+        await fetch("/api/ghost-run/audit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            swapSigs: newSigs,
+            wallet: walletAddress,
+            executeMemoSig: execResult?.memoSig ?? undefined,
+          }),
+        });
+      } catch { /* audit is non-critical */ }
+    }
+
+    setPendingSwapTxs(stillPending);
+    setRetryingSwaps(false);
+  }
+
   async function executeStrategy() {
     if (!simResult) return;
     if (!walletAddress) {
@@ -124,7 +206,9 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
       setExecuting(true);
       setExecResult(null);
       setError(null);
+      if (abortRef.current?.signal.aborted) { setExecuting(false); return; }
       await new Promise(r => setTimeout(r, 2000));
+      if (abortRef.current?.signal.aborted) { setExecuting(false); return; }
       setExecResult({
         success: true,
         signatures: simResult.steps.map(() => "DEMO_SIG_" + Math.random().toString(36).slice(2, 10).toUpperCase()),
@@ -142,10 +226,16 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
     setExecResult(null);
     setSwapSigs([]);
     setError(null);
+    setPendingSwapTxs([]);
+
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
 
     try {
       // ── Step 1: Execute stake/lend steps via platform wallet ───────────────
       const res = await fetch("/api/ghost-run/execute", {
+        signal,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ steps: simResult.steps, wallet: walletAddress }),
@@ -199,11 +289,18 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
 
         setSwapSigs(collectedSigs);
 
+        // Fix 1: Track remaining unsigned swaps for partial recovery
+        const completedCount = collectedSigs.length;
+        const remaining = data.unsignedSwapTxs.slice(completedCount);
+        if (remaining.length > 0) {
+          setPendingSwapTxs(remaining);
+        }
+
         // Merge swap sigs into execResult for display
         setExecResult(prev => prev ? {
           ...prev,
           signatures: [...prev.signatures, ...collectedSigs],
-          success: prev.errors.length === 0,
+          success: prev.errors.length === 0 && remaining.length === 0,
         } : prev);
 
         // ── Step 3: Post swap signatures to audit endpoint ────────────────
@@ -211,6 +308,7 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
         // non-custodially and must be posted back to complete the audit chain.
         try {
           const auditRes = await fetch("/api/ghost-run/audit", {
+            signal,
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -635,6 +733,32 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
               {execResult.errors.map((e, i) => (
                 <div key={i} style={{ fontSize: 12, color: "#FF4444", marginTop: 4 }}>{e}</div>
               ))}
+
+              {/* Fix 1: Partial swap completion — retry remaining swaps */}
+              {pendingSwapTxs.length > 0 && (
+                <div style={{
+                  marginTop: 12, padding: "12px 14px",
+                  background: "rgba(255,159,10,0.08)", border: "1px solid rgba(255,159,10,0.3)",
+                  borderRadius: 8,
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#FF9F0A", marginBottom: 8 }}>
+                    部分完成 — 已完成 {swapSigs.length}/{swapSigs.length + pendingSwapTxs.length} 筆兌換，{pendingSwapTxs.length} 筆待重試
+                  </div>
+                  <button
+                    onClick={retryPendingSwaps}
+                    disabled={retryingSwaps}
+                    style={{
+                      background: retryingSwaps ? "var(--border)" : "#FF9F0A",
+                      border: "none", borderRadius: 8, padding: "8px 18px",
+                      fontSize: 12, fontWeight: 600, color: retryingSwaps ? "var(--text-muted)" : "#000",
+                      cursor: retryingSwaps ? "not-allowed" : "pointer",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {retryingSwaps ? "⏳ 重試中…" : `🔄 重試剩餘兌換 (${pendingSwapTxs.length} 筆)`}
+                  </button>
+                </div>
+              )}
             </div>
           )}
           {/* AI Strategy Analysis */}

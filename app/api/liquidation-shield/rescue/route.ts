@@ -215,9 +215,50 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* standard SPL token — no Token-2022 extensions, safe to proceed */ }
 
+  // ── Step 0.5: Server-side position re-verification (Fix 2) ─────────────
+  // The position object comes from the client and cannot be trusted.
+  // We re-verify the SPL delegate amount on-chain (already done below in
+  // verifyRescueAuthorization) and sanitize position fields before using
+  // them in the audit memo to prevent injection/spoofing.
+
+  // Validate rescueUsdc is positive and within the on-chain approved amount
+  // (verifyRescueAuthorization checks delegatedAmount >= rescueUsdc)
+  if (rescueUsdc <= 0) {
+    return NextResponse.json({ error: "rescueUsdc must be positive" }, { status: 400 });
+  }
+
+  // Sanitize position fields: only allow alphanumeric + dots/dashes for strings, finite for numbers
+  function sanitizeStr(s: unknown, maxLen = 64): string {
+    if (typeof s !== "string") return "unknown";
+    return s.replace(/[^a-zA-Z0-9._\-]/g, "").slice(0, maxLen);
+  }
+  function sanitizeNum(n: unknown): number {
+    const v = Number(n);
+    return Number.isFinite(v) ? v : 0;
+  }
+
+  const sanitizedPosition = {
+    protocol: sanitizeStr(position.protocol),
+    accountAddress: sanitizeStr(position.accountAddress, 44),
+    healthFactor: sanitizeNum(position.healthFactor),
+    postRescueHealthFactor: position.postRescueHealthFactor != null
+      ? sanitizeNum(position.postRescueHealthFactor)
+      : undefined,
+  };
+
+  // Verify health factor is not safe — reject rescue if position is healthy
+  const triggerThreshold = 1.5; // default upper bound; real threshold from config
+  if (sanitizedPosition.healthFactor >= triggerThreshold) {
+    return NextResponse.json(
+      { error: `倉位健康因子 ${sanitizedPosition.healthFactor.toFixed(3)} 高於觸發閾值 ${triggerThreshold}，無需救援` },
+      { status: 400 }
+    );
+  }
+
   // ── Step 1: Verify on-chain rescue authorization (C-2 fix) ─────────────
   // Confirms the user's USDC ATA has delegated authority to this agent.
   // This cannot be faked — verified directly against blockchain state.
+  // Also implicitly verifies rescueUsdc <= approvedUsdc (delegate amount).
   const authCheck = await verifyRescueAuthorization(
     wallet, rescueUsdc, agentKp.publicKey, conn
   );
@@ -382,13 +423,13 @@ export async function POST(req: NextRequest) {
 
   const auditData = JSON.stringify({
     event: "sakura_rescue_executed",
-    protocol: position.protocol,
+    protocol: sanitizedPosition.protocol,
     wallet: wallet.slice(0, 8),
     rescueUsdc,
     feeUsdc: +(rescueUsdc * RESCUE_FEE_PERCENT).toFixed(4),
     feeSig: feeSig?.slice(0, 20) ?? "pending",
-    preHealthFactor: position.healthFactor.toFixed(3),
-    postHealthFactor: position.postRescueHealthFactor?.toFixed(3),
+    preHealthFactor: sanitizedPosition.healthFactor.toFixed(3),
+    postHealthFactor: sanitizedPosition.postRescueHealthFactor?.toFixed(3),
     mandateRef: mandateTxSig?.slice(0, 20) ?? "none",
     rescueSig: rescueSig?.slice(0, 20) ?? "failed",
     // Module 06: time-gated audit fields

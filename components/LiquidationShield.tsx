@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useLang } from "@/contexts/LanguageContext";
 import type { TranslationKey } from "@/lib/i18n";
@@ -88,6 +88,13 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
   const [rescueResults, setRescueResults] = useState<Record<number, RescueResponse>>({});
   const [error, setError] = useState<string | null>(null);
 
+  // Fix 3: AbortController for cancelling in-flight fetches on unmount
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, []);
+
   // ── SPL Approve authorization state ──────────────────────────────
   const [approveState, setApproveState] = useState<"idle" | "approving" | "approved" | "error">("idle");
   const [approveError, setApproveError] = useState<string | null>(null);
@@ -114,8 +121,14 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
     setApproveError(null);
     setApproveSig(null);
     setApproveTs(null);
+
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
+
     try {
       const res = await fetch("/api/liquidation-shield/monitor", {
+        signal,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(isDemo
@@ -218,7 +231,9 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
     if (!walletAddress) {
       // Demo mode: simulate rescue execution
       setRescuingIdx(idx);
+      if (abortRef.current?.signal.aborted) { setRescuingIdx(null); return; }
       await new Promise(r => setTimeout(r, 2000));
+      if (abortRef.current?.signal.aborted) { setRescuingIdx(null); return; }
       setRescueResults(prev => ({
         ...prev,
         [idx]: {
@@ -240,8 +255,14 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
       return;
     }
     setRescuingIdx(idx);
+
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
+
     try {
       const res = await fetch("/api/liquidation-shield/rescue", {
+        signal,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useWallet } from "@/contexts/WalletContext";
 import { useLang } from "@/contexts/LanguageContext";
 import { tpl } from "@/lib/i18n";
@@ -31,6 +31,13 @@ export default function NonceGuardian({ isDemo = false }: { isDemo?: boolean }) 
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Fix 3: AbortController for cancelling in-flight fetches on unmount
+  const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    return () => { abortRef.current?.abort(); };
+  }, []);
+
   // x402 payment state
   const [payState, setPayState] = useState<PaymentState>("idle");
   const [payChallenge, setPayChallenge] = useState<{ recipient: string; amount: number } | null>(null);
@@ -57,8 +64,13 @@ export default function NonceGuardian({ isDemo = false }: { isDemo?: boolean }) 
     setPayChallenge(null);
     setPayError(null);
 
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
+
     try {
       const res = await fetch("/api/nonce-guardian", {
+        signal,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(isDemo ? { wallet: addr, demo: true } : { wallet: addr }),
