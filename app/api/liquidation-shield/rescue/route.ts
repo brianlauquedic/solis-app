@@ -400,7 +400,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // Use absolute URL to avoid relative path failure in serverless environments
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`;
     if (baseUrl) {
       const internalHeaders: Record<string, string> = {
         "Content-Type": "application/json",

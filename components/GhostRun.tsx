@@ -190,7 +190,10 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
               setError(`用戶取消了第 ${collectedSigs.length + 1} 筆兌換簽名`);
               break;
             }
+            // Show non-rejection errors to user (gas insufficient, blockhash expired, etc.)
+            setError(`兌換交易 ${collectedSigs.length + 1} 失敗：${swapMsg}`);
             console.error("[GhostRun] Swap signing error:", swapErr);
+            break;
           }
         }
 

@@ -198,7 +198,7 @@ export async function POST(req: NextRequest) {
         ts: new Date().toISOString(),
       });
 
-      const execBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+      const execBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`;
       if (execBaseUrl) {
         const execMemoHeaders: Record<string, string> = {
           "Content-Type": "application/json",

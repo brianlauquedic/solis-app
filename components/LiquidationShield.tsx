@@ -170,7 +170,8 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
       // 2. Build SPL Token approve + Memo mandate TX via server API
       //    Server calls buildRescueApproveTransaction() from lib/liquidation-shield.ts
       //    (includes rescue_mandate Memo for on-chain audit trail)
-      const approveUsdc = parseFloat(maxUsdc) || 1000;
+      // Include 1% fee buffer so fee TX doesn't exhaust delegate allowance
+      const approveUsdc = Math.ceil((parseFloat(maxUsdc) || 1000) * 1.01 * 100) / 100;
       const buildRes = await fetch("/api/liquidation-shield/rescue", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -251,6 +252,10 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
           mandateTs: approveTs ?? undefined, // Module 06: mandate timestamp for time-window audit
         }),
       });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error((d as { error?: string }).error ?? `救援失敗 HTTP ${res.status}`);
+      }
       const data: RescueResponse = await res.json();
       setRescueResults(prev => ({ ...prev, [idx]: data }));
     } catch (err) {
@@ -701,7 +706,7 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
                         ) : (
                           <button
                             onClick={() => executeRescue(sim, i)}
-                            disabled={rescuingIdx === i}
+                            disabled={rescuingIdx !== null}
                             style={{
                               background: rescuingIdx === i ? "var(--border)" : "#FF4444",
                               border: "none", borderRadius: 8, padding: "8px 18px",
