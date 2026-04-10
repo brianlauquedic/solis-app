@@ -118,7 +118,26 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
   }
 
   async function executeStrategy() {
-    if (!simResult || !walletAddress) return;
+    if (!simResult) return;
+    if (!walletAddress) {
+      // Demo mode: simulate execution
+      setExecuting(true);
+      setExecResult(null);
+      setError(null);
+      await new Promise(r => setTimeout(r, 2000));
+      setExecResult({
+        success: true,
+        signatures: simResult.steps.map(() => "DEMO_SIG_" + Math.random().toString(36).slice(2, 10).toUpperCase()),
+        errors: [],
+        memoSig: "DEMO_MEMO_" + Math.random().toString(36).slice(2, 8).toUpperCase(),
+        unsignedSwapTxs: [],
+        requiresUserSignature: false,
+        platformFeeInjected: true,
+        platformFee: "0.3% Jupiter fee (included)",
+      });
+      setExecuting(false);
+      return;
+    }
     setExecuting(true);
     setExecResult(null);
     setSwapSigs([]);

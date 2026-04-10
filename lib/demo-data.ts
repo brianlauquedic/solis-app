@@ -68,6 +68,58 @@ export const DEMO_NONCE_RESULT = {
 
 export const DEMO_GHOST_STRATEGY = "質押 2 SOL 到 Marinade，把 150 USDC 存入 Kamino，然後用 0.5 SOL 換成 JitoSOL";
 
+// Demo result for "質押 1 SOL 到 Marinade，獲得 mSOL"
+export const DEMO_GHOST_RESULT_MARINADE = {
+  steps: [{ type: "stake" as const, inputToken: "SOL", inputAmount: 1, outputToken: "mSOL", description: "質押 1 SOL 到 Marinade" }],
+  result: {
+    steps: [{
+      step: { type: "stake" as const, inputToken: "SOL", inputAmount: 1, outputToken: "mSOL", protocol: "Marinade", description: "質押 1 SOL 到 Marinade" },
+      success: true, outputAmount: 0.9931, gasSol: 0.000025, estimatedApy: 7.24, annualUsdYield: 12.09,
+      pdaSeedDescription: "Marinade stake account PDA: [marinade_state, validator_list, stake_account]",
+    }],
+    totalGasSol: 0.000025, canExecute: true, warnings: [], priorityFeeUsed: 12500, conditionalOrder: null,
+  },
+  aiAnalysis: `✅ **策略分析：單步操作，預期年化收益 $12.09**\n\n**Marinade Stake（1 SOL → 0.9931 mSOL）**\nAPY 7.24%，預期年化收益 $12.09。mSOL 為液態質押代幣，可繼續用於 DeFi 借貸或流動性挖礦，不影響質押收益。\n\n總 Gas 費用：0.000025 SOL（$0.0039），極低成本。`,
+};
+
+// Demo result for "把 50 USDC 存入 Kamino 賺取收益"
+export const DEMO_GHOST_RESULT_KAMINO = {
+  steps: [{ type: "lend" as const, inputToken: "USDC", inputAmount: 50, outputToken: "kUSDC", description: "存入 50 USDC 到 Kamino" }],
+  result: {
+    steps: [{
+      step: { type: "lend" as const, inputToken: "USDC", inputAmount: 50, outputToken: "kUSDC", protocol: "Kamino", description: "存入 50 USDC 到 Kamino" },
+      success: true, outputAmount: 49.96, gasSol: 0.000025, estimatedApy: 8.15, annualUsdYield: 4.08,
+      pdaSeedDescription: "Kamino obligation PDA: [lending_market, owner, seed1, seed2]",
+    }],
+    totalGasSol: 0.000025, canExecute: true, warnings: [], priorityFeeUsed: 12500, conditionalOrder: null,
+  },
+  aiAnalysis: `✅ **策略分析：穩健收益存款，預期年化收益 $4.08**\n\n**Kamino Lend（50 USDC → 49.96 kUSDC）**\nAPY 8.15%，預期年化收益 $4.08。Kamino 主市場 USDC 池 utilization rate 74%，收益穩定。無清算風險（純存款操作）。\n\n總 Gas 費用：0.000025 SOL（$0.0039），極低成本。`,
+};
+
+// Demo result for "質押 2 SOL 到 Jito，並把 100 USDC 存入 Kamino"
+export const DEMO_GHOST_RESULT_JITO = {
+  steps: [
+    { type: "stake" as const, inputToken: "SOL", inputAmount: 2, outputToken: "JitoSOL", description: "質押 2 SOL 到 Jito" },
+    { type: "lend" as const, inputToken: "USDC", inputAmount: 100, outputToken: "kUSDC", description: "存入 100 USDC 到 Kamino" },
+  ],
+  result: {
+    steps: [
+      {
+        step: { type: "stake" as const, inputToken: "SOL", inputAmount: 2, outputToken: "JitoSOL", protocol: "Jito", description: "質押 2 SOL 到 Jito" },
+        success: true, outputAmount: 1.9847, gasSol: 0.000025, estimatedApy: 8.92, annualUsdYield: 27.92,
+        pdaSeedDescription: "Jito stake pool PDA: [stake_pool, validator_list, reserve_stake]",
+      },
+      {
+        step: { type: "lend" as const, inputToken: "USDC", inputAmount: 100, outputToken: "kUSDC", protocol: "Kamino", description: "存入 100 USDC 到 Kamino" },
+        success: true, outputAmount: 99.91, gasSol: 0.000025, estimatedApy: 8.15, annualUsdYield: 8.15,
+        pdaSeedDescription: "Kamino obligation PDA: [lending_market, owner, seed1, seed2]",
+      },
+    ],
+    totalGasSol: 0.000050, canExecute: true, warnings: [], priorityFeeUsed: 12500, conditionalOrder: null,
+  },
+  aiAnalysis: `✅ **策略分析：雙步操作，預期年化收益 $36.07**\n\n**第一步 — Jito Stake（2 SOL → 1.9847 JitoSOL）**\nAPY 8.92%（含 MEV 收益分成），預期年化收益 $27.92。Jito 是 Solana 最大的 MEV 質押協議，TVL $2.1B。\n\n**第二步 — Kamino Lend（100 USDC → 99.91 kUSDC）**\nAPY 8.15%，預期年化收益 $8.15。兩步操作無資金衝突，可按順序執行。\n\n總 Gas 費用：0.000050 SOL（$0.0078），極低成本。\n預計年化總收益：**$36.07 USD**`,
+};
+
 export const DEMO_GHOST_RESULT = {
   steps: [
     {

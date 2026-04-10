@@ -23,7 +23,7 @@ import type { StrategyStep } from "@/lib/ghost-run";
 import { createReadOnlyAgent, RPC_URL } from "@/lib/agent";
 import { getConnection } from "@/lib/rpc";
 import { getWalletLimiter, checkWalletLimitMemory, trackUsage } from "@/lib/redis";
-import { DEMO_GHOST_RESULT, DEMO_GHOST_STRATEGY } from "@/lib/demo-data";
+import { DEMO_GHOST_RESULT, DEMO_GHOST_STRATEGY, DEMO_GHOST_RESULT_MARINADE, DEMO_GHOST_RESULT_KAMINO, DEMO_GHOST_RESULT_JITO } from "@/lib/demo-data";
 
 export const maxDuration = 60;
 
@@ -137,10 +137,16 @@ export async function POST(req: NextRequest) {
 
   // ── Demo mode: return preset data instantly ───────────────────────
   if (body.demo === true) {
+    const s = (body.strategy ?? "").toLowerCase();
+    const demoData =
+      s.includes("jito") && s.includes("kamino") ? DEMO_GHOST_RESULT_JITO :
+      s.includes("marinade") && !s.includes("usdc") ? DEMO_GHOST_RESULT_MARINADE :
+      s.includes("kamino") && !s.includes("sol") ? DEMO_GHOST_RESULT_KAMINO :
+      DEMO_GHOST_RESULT;
     return NextResponse.json({
-      steps: DEMO_GHOST_RESULT.steps,
-      result: DEMO_GHOST_RESULT.result,
-      aiAnalysis: DEMO_GHOST_RESULT.aiAnalysis,
+      steps: demoData.steps,
+      result: demoData.result,
+      aiAnalysis: demoData.aiAnalysis,
     });
   }
 
