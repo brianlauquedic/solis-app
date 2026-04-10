@@ -213,7 +213,30 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
 
   // ── Step 2: Execute rescue (requires prior SPL approve) ───────────
   async function executeRescue(sim: RescueSimulation, idx: number) {
-    if (!walletAddress) return;
+    if (!walletAddress) {
+      // Demo mode: simulate rescue execution
+      setRescuingIdx(idx);
+      await new Promise(r => setTimeout(r, 2000));
+      setRescueResults(prev => ({
+        ...prev,
+        [idx]: {
+          success: true,
+          rescueSig: "DEMO_RESCUE_" + Math.random().toString(36).slice(2, 10).toUpperCase(),
+          feeSig: "DEMO_FEE_" + Math.random().toString(36).slice(2, 8).toUpperCase(),
+          feeUsdc: sim.rescueUsdc * 0.01,
+          feeCollected: true,
+          memoSig: "DEMO_MEMO_" + Math.random().toString(36).slice(2, 8).toUpperCase(),
+          auditChain: null,
+          mandateTs: approveSig ?? null,
+          executionTs: new Date().toISOString(),
+          timeWindowSec: 42,
+          tokenExtensionWarning: null,
+          error: null,
+        },
+      }));
+      setRescuingIdx(null);
+      return;
+    }
     setRescuingIdx(idx);
     try {
       const res = await fetch("/api/liquidation-shield/rescue", {
