@@ -53,10 +53,6 @@
   padding: 0;
 }
 
-html {
-  overflow-x: hidden; /* prevent horizontal scroll on mobile */
-}
-
 body {
   background: var(--bg-base);
   color: var(--text-primary);
@@ -65,8 +61,8 @@ body {
   line-height: 1.85;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden; /* lock horizontal scroll */
-  max-width: 100vw;
+  overflow-x: clip; /* block page-level horizontal scroll; child overflow-x:auto still works */
+  width: 100%;
 }
 
 /* ── 等幅数字 Monospace numbers ── */
