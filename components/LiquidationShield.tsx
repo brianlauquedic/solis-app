@@ -209,7 +209,7 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
       const buildRes = await fetch("/api/liquidation-shield/rescue", { signal,
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallet: walletAddress, approveUsdc }),
+        body: JSON.stringify({ wallet: walletAddress, approveUsdc, lang }),
       });
       if (!buildRes.ok) throw new Error(t("shieldBuildTxFailed"));
       const { serializedTx, blockhash, lastValidBlockHeight } = await buildRes.json() as {
@@ -301,6 +301,7 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
           mandateTxSig: approveSig ?? undefined,
           mandateTs: approveTs ?? undefined, // Module 06: mandate timestamp for time-window audit
           triggerHF: parseFloat(triggerHF) || 1.05, // Bug 1 fix: pass client threshold to server
+          lang, // i18n: server returns error messages in user's language
         }),
       });
       if (!res.ok) {

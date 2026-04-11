@@ -23,6 +23,75 @@ import type { LendingPosition } from "@/lib/liquidation-shield";
 
 export const maxDuration = 120;
 
+// ── Server-side i18n for rescue error messages ─────────────────────────────────
+// Rescue API errors are displayed directly in the frontend. Without translation
+// they always show Chinese regardless of user language setting.
+type RescueLang = "zh" | "en" | "ja";
+
+const rescueErrors: Record<string, Record<RescueLang, string>> = {
+  buildApproveFailed: {
+    zh: "構建授權交易失敗",
+    en: "Failed to build approve transaction",
+    ja: "承認トランザクションの構築に失敗しました",
+  },
+  usdcAccountMissing: {
+    zh: "USDC 帳戶不存在，請先建立 USDC 帳戶並執行救援授權",
+    en: "USDC account not found. Please create a USDC account and authorize rescue first.",
+    ja: "USDCアカウントが見つかりません。先にUSDCアカウントを作成し、救援を承認してください。",
+  },
+  notAuthorized: {
+    zh: "尚未授權 Sakura 救援代理。請先在 Liquidation Shield 頁面執行授權操作。",
+    en: "Sakura rescue agent not authorized. Please authorize on the Liquidation Shield page first.",
+    ja: "Sakura救援エージェントが未承認です。先にLiquidation Shieldページで承認してください。",
+  },
+  insufficientAllowance: {
+    zh: "預授權金額 ${approved} USDC 不足救援所需 ${needed} USDC。請提高授權上限。",
+    en: "Approved amount ${approved} USDC insufficient for rescue ${needed} USDC. Please increase allowance.",
+    ja: "承認額 ${approved} USDC が救援必要額 ${needed} USDC に不足しています。承認上限を引き上げてください。",
+  },
+  authVerifyFailed: {
+    zh: "授權驗證失敗",
+    en: "Authorization verification failed",
+    ja: "承認検証に失敗しました",
+  },
+  rescueAmountRange: {
+    zh: "救援金額必須介於 ${min} 至 $1,000,000 USDC 之間",
+    en: "Rescue amount must be between ${min} and $1,000,000 USDC",
+    ja: "救援額は ${min}〜$1,000,000 USDCの範囲である必要があります",
+  },
+  tokenFreezeWarning: {
+    zh: "⚠️ Token-2022 凍結授權偵測：USDC mint 擁有 freezeAuthority (${addr}…)，救援交易可能被凍結。",
+    en: "⚠️ Token-2022 freeze authority detected: USDC mint has freezeAuthority (${addr}…), rescue TX may be frozen.",
+    ja: "⚠️ Token-2022凍結権限検出：USDCミントにfreezeAuthority (${addr}…) があり、救援TXが凍結される可能性があります。",
+  },
+  tokenNotInitialized: {
+    zh: "Token-2022 程序：USDC mint 未初始化或已暫停，無法執行救援。",
+    en: "Token-2022: USDC mint not initialized or paused, cannot execute rescue.",
+    ja: "Token-2022: USDCミントが未初期化または停止中のため、救援を実行できません。",
+  },
+  healthAboveThreshold: {
+    zh: "倉位健康因子 ${hf} 高於觸發閾值 ${threshold}，無需救援",
+    en: "Position health factor ${hf} above trigger threshold ${threshold}, rescue not needed",
+    ja: "ポジション健全性因子 ${hf} がトリガー閾値 ${threshold} を上回っています。救援不要です",
+  },
+  simFailed: {
+    zh: "救援模擬失敗：${err}。交易未發送，無 gas 消耗。",
+    en: "Rescue simulation failed: ${err}. No TX sent, no gas consumed.",
+    ja: "救援シミュレーション失敗：${err}。TXは送信されず、gasは消費されていません。",
+  },
+};
+
+function rt(key: string, lang: RescueLang, vars?: Record<string, string>): string {
+  const tpl = rescueErrors[key]?.[lang] ?? rescueErrors[key]?.en ?? key;
+  if (!vars) return tpl;
+  return tpl.replace(/\$\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+}
+
+function parseLang(v: unknown): RescueLang {
+  if (v === "en" || v === "ja" || v === "zh") return v;
+  return "zh";
+}
+
 // ── GET: return agent pubkey for frontend SPL approve ──────────────────────────
 // Frontend needs the agent's public key to build createApproveInstruction.
 // Only the PUBLIC key is returned — private key never leaves the server.
@@ -47,9 +116,10 @@ export async function GET() {
 // Uses buildRescueApproveTransaction() from lib — single source of truth for
 // approve + Memo mandate TX construction. Returns serialized unsigned TX.
 export async function PUT(req: NextRequest) {
-  let body: { wallet?: string; approveUsdc?: number } = {};
+  let body: { wallet?: string; approveUsdc?: number; lang?: string } = {};
   try { body = await req.json(); } catch { /* ok */ }
   const { wallet, approveUsdc } = body;
+  const lang = parseLang(body.lang);
   if (!wallet || !approveUsdc || approveUsdc <= 0) {
     return NextResponse.json({ error: "Missing wallet or approveUsdc" }, { status: 400 });
   }
@@ -65,7 +135,7 @@ export async function PUT(req: NextRequest) {
     const serializedTx = Buffer.from(tx.serialize({ requireAllSignatures: false })).toString("base64");
     return NextResponse.json({ serializedTx, blockhash, lastValidBlockHeight });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "構建授權交易失敗";
+    const msg = err instanceof Error ? err.message : rt("buildApproveFailed", lang);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
@@ -86,7 +156,8 @@ async function verifyRescueAuthorization(
   wallet: string,
   rescueUsdc: number,
   agentPubkey: PublicKey,
-  conn: Connection
+  conn: Connection,
+  lang: RescueLang = "zh"
 ): Promise<{ authorized: boolean; error?: string }> {
   try {
     const { getAssociatedTokenAddressSync } = await import("@solana/spl-token");
@@ -100,29 +171,30 @@ async function verifyRescueAuthorization(
     })?.parsed?.info;
 
     if (!info) {
-      return { authorized: false, error: "USDC 帳戶不存在，請先建立 USDC 帳戶並執行救援授權" };
+      return { authorized: false, error: rt("usdcAccountMissing", lang) };
     }
 
     if (!info.delegate || info.delegate !== agentPubkey.toString()) {
-      return {
-        authorized: false,
-        error: "尚未授權 Sakura 救援代理。請先在 Liquidation Shield 頁面執行授權操作。",
-      };
+      return { authorized: false, error: rt("notAuthorized", lang) };
     }
 
     const delegatedAmount = info.delegatedAmount?.uiAmount ?? 0;
     if (delegatedAmount < rescueUsdc) {
       return {
         authorized: false,
-        error: `預授權金額 $${delegatedAmount.toFixed(2)} USDC 不足救援所需 $${rescueUsdc} USDC。請提高授權上限。`,
+        error: rt("insufficientAllowance", lang, {
+          approved: `$${delegatedAmount.toFixed(2)}`,
+          needed: `$${rescueUsdc}`,
+        }),
       };
     }
 
     return { authorized: true };
   } catch (err) {
+    const detail = err instanceof Error ? `: ${err.message}` : "";
     return {
       authorized: false,
-      error: err instanceof Error ? `授權驗證失敗: ${err.message}` : "授權驗證失敗",
+      error: rt("authVerifyFailed", lang) + detail,
     };
   }
 }
@@ -135,10 +207,12 @@ export async function POST(req: NextRequest) {
     mandateTxSig?: string;
     mandateTs?: string; // Module 06: ISO timestamp of when SPL approve mandate was set
     triggerHF?: number; // Bug 1 fix: client-specified trigger threshold
+    lang?: string;      // i18n: server-side error message language
   } = {};
   try { body = await req.json(); } catch { /* ok */ }
 
   const { wallet, position, rescueUsdc, mandateTxSig, mandateTs, triggerHF: clientTriggerHF } = body;
+  const lang = parseLang(body.lang);
 
   // ── CSRF protection: verify Origin matches our app ─────────────────────
   const origin = req.headers.get("origin");
@@ -160,7 +234,7 @@ export async function POST(req: NextRequest) {
   const MINIMUM_RESCUE_USDC = 1.0;
   if (!Number.isFinite(rescueUsdc) || rescueUsdc < MINIMUM_RESCUE_USDC || rescueUsdc > 1_000_000) {
     return NextResponse.json(
-      { error: `救援金額必須介於 $${MINIMUM_RESCUE_USDC} 至 $1,000,000 USDC 之間` },
+      { error: rt("rescueAmountRange", lang, { min: `$${MINIMUM_RESCUE_USDC}` }) },
       { status: 400 }
     );
   }
@@ -201,7 +275,7 @@ export async function POST(req: NextRequest) {
     if (mint2022Info) {
       // USDC is using Token-2022 — check freeze authority (Module 09 global pause pattern)
       if (mint2022Info.freezeAuthority) {
-        tokenExtensionWarning = `⚠️ Token-2022 凍結授權偵測：USDC mint 擁有 freezeAuthority (${mint2022Info.freezeAuthority.toString().slice(0, 12)}…)，救援交易可能被凍結。`;
+        tokenExtensionWarning = rt("tokenFreezeWarning", lang, { addr: mint2022Info.freezeAuthority.toString().slice(0, 12) });
       }
       // Check if mint is frozen (supply = 0 after freeze)
       if (!mint2022Info.isInitialized) {
@@ -210,7 +284,7 @@ export async function POST(req: NextRequest) {
           feeCollected: false, memoSig: null, auditChain: null,
           mandateTs: mandateTs ?? null, executionTs: new Date().toISOString(),
           timeWindowSec: null,
-          error: "Token-2022 程序：USDC mint 未初始化或已暫停，無法執行救援。",
+          error: rt("tokenNotInitialized", lang),
         }, { status: 503 });
       }
     }
@@ -254,7 +328,10 @@ export async function POST(req: NextRequest) {
     : 1.5; // fallback if client doesn't send or sends invalid value
   if (sanitizedPosition.healthFactor >= triggerThreshold) {
     return NextResponse.json(
-      { error: `倉位健康因子 ${sanitizedPosition.healthFactor.toFixed(3)} 高於觸發閾值 ${triggerThreshold}，無需救援` },
+      { error: rt("healthAboveThreshold", lang, {
+          hf: sanitizedPosition.healthFactor.toFixed(3),
+          threshold: String(triggerThreshold),
+        }) },
       { status: 400 }
     );
   }
@@ -264,7 +341,7 @@ export async function POST(req: NextRequest) {
   // This cannot be faked — verified directly against blockchain state.
   // Also implicitly verifies rescueUsdc <= approvedUsdc (delegate amount).
   const authCheck = await verifyRescueAuthorization(
-    wallet, rescueUsdc, agentKp.publicKey, conn
+    wallet, rescueUsdc, agentKp.publicKey, conn, lang
   );
   if (!authCheck.authorized) {
     return NextResponse.json(
@@ -338,7 +415,7 @@ export async function POST(req: NextRequest) {
         feeCollected: false, memoSig: null, auditChain: null,
         mandateTs: mandateTs ?? null, executionTs: new Date().toISOString(),
         timeWindowSec: null, tokenExtensionWarning,
-        error: `救援模擬失敗：${simErrMsg}。交易未發送，無 gas 消耗。`,
+        error: rt("simFailed", lang, { err: simErrMsg }),
       }, { status: 422 });
     }
   } catch (simErr) {
