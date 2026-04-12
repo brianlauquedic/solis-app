@@ -16,6 +16,8 @@ interface WalletCtx {
   disconnect: () => void;
   showLanding: boolean;
   setShowLanding: (v: boolean) => void;
+  isDemo: boolean;
+  setIsDemo: (v: boolean) => void;
   /** Returns the active Solana provider (Phantom or OKX) */
   getProvider: () => SolanaWalletProvider | null;
 }
@@ -31,6 +33,8 @@ const WalletContext = createContext<WalletCtx>({
   disconnect: () => {},
   showLanding: false,
   setShowLanding: () => {},
+  isDemo: false,
+  setIsDemo: () => {},
   getProvider: () => null,
 });
 
@@ -57,6 +61,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return (localStorage.getItem("sakura_wallet_provider") as WalletProviderType) ?? null;
   });
   const [showLanding, setShowLanding] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     // Check immediately, then retry at 300ms and 1500ms (slow extension load)
@@ -157,6 +162,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       disconnect,
       showLanding,
       setShowLanding,
+      isDemo,
+      setIsDemo,
       getProvider,
     }}>
       {children}

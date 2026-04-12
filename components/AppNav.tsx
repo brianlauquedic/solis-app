@@ -20,7 +20,7 @@ export default function AppNav() {
   const {
     walletAddress, shortAddr, walletLoading,
     phantomAvailable, okxAvailable,
-    connect, disconnect, setShowLanding,
+    connect, disconnect, setShowLanding, setIsDemo,
   } = useWallet();
   const { isDayMode, toggleDayMode, timeBg } = useTheme();
 
@@ -38,7 +38,7 @@ export default function AppNav() {
       {/* Left: Logo */}
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <button
-          onClick={() => { setShowLanding(true); router.push("/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+          onClick={() => { setIsDemo(false); setShowLanding(true); window.history.pushState({}, "", "/"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
           style={{
             display: "flex", alignItems: "center", gap: 10,
             background: "none", border: "none", padding: 0, cursor: "pointer",

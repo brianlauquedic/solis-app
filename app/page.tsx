@@ -20,17 +20,16 @@ const TABS: { id: Tab; icon: string; label: string }[] = [
 ];
 
 function AppContent() {
-  const { walletAddress, shortAddr, disconnect, showLanding, setShowLanding, activeProvider } = useWallet();
+  const { walletAddress, shortAddr, disconnect, showLanding, setShowLanding, activeProvider, isDemo, setIsDemo } = useWallet();
   const { isDayMode, timeBg } = useTheme();
   const { t } = useLang();
   const [activeTab, setActiveTab] = useState<Tab>("nonce");
-  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     // Bug 5 fix: case-insensitive demo param (?demo=TRUE, ?demo=True, etc.)
     setIsDemo(params.get("demo")?.toLowerCase() === "true");
-  }, []);
+  }, [setIsDemo]);
 
   const showApp = (!!walletAddress && !showLanding) || isDemo;
 
