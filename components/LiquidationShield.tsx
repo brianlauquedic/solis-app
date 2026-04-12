@@ -181,6 +181,7 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
           ? { wallet: addr, demo: true, lang: lang as Lang }
           : {
               wallet: addr,
+              lang: lang as Lang,
               config: {
                 approvedUsdc: parseFloat(maxUsdc) || 1000,
                 triggerThreshold: parseFloat(triggerHF) || 1.05,

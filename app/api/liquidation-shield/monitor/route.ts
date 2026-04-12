@@ -25,6 +25,59 @@ import { getWalletLimiter, checkWalletLimitMemory, trackUsage } from "@/lib/redi
 import { getDemoShieldResult } from "@/lib/demo-data";
 import type { Lang } from "@/lib/demo-data";
 
+// ── Server-side i18n for monitor error/label messages ──────────────────────
+type MonLang = "zh" | "en" | "ja";
+function parseMonLang(v: unknown): MonLang {
+  if (v === "en" || v === "ja" || v === "zh") return v;
+  return "zh";
+}
+const monI18n: Record<string, Record<MonLang, string>> = {
+  rateLimit: {
+    zh: "每個錢包每小時最多 12 次監控掃描。請稍後再試。",
+    en: "Maximum 12 monitor scans per wallet per hour. Please try again later.",
+    ja: "ウォレットあたり1時間に最大12回のスキャンです。後でもう一度お試しください。",
+  },
+  collateral: { zh: "抵押品", en: "Collateral", ja: "担保" },
+  debt: { zh: "借款", en: "Debt", ja: "借入" },
+  mintWarning: {
+    zh: "⚠️ 非官方 token 偵測（${tokens}）— 請謹慎確認此倉位來源",
+    en: "⚠️ Unofficial token detected (${tokens}) — please verify position source carefully",
+    ja: "⚠️ 非公式トークン検出（${tokens}）— ポジションの出所を慎重に確認してください",
+  },
+};
+function mt(key: string, lang: MonLang, vars?: Record<string, string>): string {
+  const tpl = monI18n[key]?.[lang] ?? monI18n[key]?.zh ?? key;
+  if (!vars) return tpl;
+  return tpl.replace(/\$\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+}
+
+// AI prompt output language directive
+const SHIELD_AI_DIRECTIVE: Record<MonLang, string> = {
+  zh: "Then write a comprehensive risk analysis in Traditional Chinese (繁體中文):",
+  en: "Then write a comprehensive risk analysis in English:",
+  ja: "Then write a comprehensive risk analysis in Japanese (日本語):",
+};
+const SHIELD_AI_TEMPLATE: Record<MonLang, string> = {
+  zh: `- 🔴/🟡/🟢 整體風險等級（危急/警告/安全）+ 理由
+- 💰 最需關注倉位（若有）+ 距離清算還差多少
+- 💵 救援可行性：USDC 餘額 vs 需要救援金額
+- 🏦 完整資產快照（可用 SOL + USDC + 質押 SOL）
+- ⚡ 行動緊迫性：用戶最後活躍時間 → 是否需要自動救援
+- 🛡️ 具體建議（1-3 條優先行動）`,
+  en: `- 🔴/🟡/🟢 Overall risk level (critical/warning/safe) + reasoning
+- 💰 Most concerning position (if any) + distance to liquidation
+- 💵 Rescue feasibility: USDC balance vs required rescue amount
+- 🏦 Full asset snapshot (available SOL + USDC + staked SOL)
+- ⚡ Action urgency: last user activity → is automatic rescue needed?
+- 🛡️ Specific recommendations (1-3 priority actions)`,
+  ja: `- 🔴/🟡/🟢 総合リスクレベル（危機的/警告/安全）+ 理由
+- 💰 最も懸念されるポジション（ある場合）+ 清算までの距離
+- 💵 救援実行可能性：USDC残高 vs 必要救援額
+- 🏦 完全資産スナップショット（利用可能 SOL + USDC + ステーク SOL）
+- ⚡ 行動緊急度：最終活動時間 → 自動救援は必要か？
+- 🛡️ 具体的な提案（1-3つの優先アクション）`,
+};
+
 /**
  * Sanitize on-chain token symbol for safe insertion into AI prompts.
  * Token symbols come from the blockchain — an attacker could create a reserve
@@ -58,18 +111,18 @@ const OFFICIAL_TOKEN_SYMBOLS = new Set([
  * Check if a position uses only known official token symbols.
  * Returns null if valid, warning string if suspicious.
  */
-function validatePositionMints(collateralToken: string, debtToken: string): string | null {
+function validatePositionMints(collateralToken: string, debtToken: string, lang: MonLang = "zh"): string | null {
   const unknownTokens: string[] = [];
   if (!OFFICIAL_TOKEN_SYMBOLS.has(collateralToken.toUpperCase()) &&
       !OFFICIAL_TOKEN_SYMBOLS.has(collateralToken)) {
-    unknownTokens.push(`抵押品: ${collateralToken}`);
+    unknownTokens.push(`${mt("collateral", lang)}: ${collateralToken}`);
   }
   if (!OFFICIAL_TOKEN_SYMBOLS.has(debtToken.toUpperCase()) &&
       !OFFICIAL_TOKEN_SYMBOLS.has(debtToken)) {
-    unknownTokens.push(`借款: ${debtToken}`);
+    unknownTokens.push(`${mt("debt", lang)}: ${debtToken}`);
   }
   return unknownTokens.length > 0
-    ? `⚠️ 非官方 token 偵測（${unknownTokens.join(", ")}）— 請謹慎確認此倉位來源`
+    ? mt("mintWarning", lang, { tokens: unknownTokens.join(", ") })
     : null;
 }
 
@@ -106,6 +159,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { wallet, config: userConfig } = body;
+  const monLang = parseMonLang(body.lang);
   if (!wallet || wallet.length < 32) {
     return NextResponse.json({ error: "Invalid wallet address" }, { status: 400 });
   }
@@ -124,7 +178,7 @@ export async function POST(req: NextRequest) {
       const { success, reset } = await walletLimiter.limit(wallet);
       if (!success) {
         return NextResponse.json(
-          { error: "每個錢包每小時最多 12 次監控掃描。請稍後再試。" },
+          { error: mt("rateLimit", monLang) },
           { status: 429, headers: { "Retry-After": String(Math.max(1, Math.ceil((reset - Date.now()) / 1000))), "X-RateLimit-Scope": "wallet", "X-RateLimit-Mode": "distributed" } }
         );
       }
@@ -132,7 +186,7 @@ export async function POST(req: NextRequest) {
       const { blocked, retryAfter } = checkWalletLimitMemory("ls-monitor", wallet, 12);
       if (blocked) {
         return NextResponse.json(
-          { error: "每個錢包每小時最多 12 次監控掃描。請稍後再試。" },
+          { error: mt("rateLimit", monLang) },
           { status: 429, headers: { "Retry-After": String(retryAfter ?? 3600), "X-RateLimit-Scope": "wallet", "X-RateLimit-Mode": "memory" } }
         );
       }
@@ -171,7 +225,7 @@ export async function POST(req: NextRequest) {
   // A rogue market could expose fake "USDC" with a different mint — this catches it.
   const mintWarnings: string[] = [];
   for (const pos of monitorResult.positions) {
-    const warning = validatePositionMints(pos.collateralToken, pos.debtToken);
+    const warning = validatePositionMints(pos.collateralToken, pos.debtToken, monLang);
     if (warning) {
       mintWarnings.push(`[${pos.protocol}/${pos.accountAddress.slice(0, 8)}] ${warning}`);
     }
@@ -393,21 +447,21 @@ export async function POST(req: NextRequest) {
     // ── Agentic loop: Claude autonomously investigates with SAK tools ──
     const positionSummary = monitorResult.positions
       .map(p =>
-        `  • ${p.protocol.toUpperCase()} | 健康因子: ${p.healthFactor.toFixed(3)} | ` +
-        `抵押: $${p.collateralUsd.toFixed(0)} ${sanitizeForPrompt(p.collateralToken)} | ` +
-        `借款: $${p.debtUsd.toFixed(0)} ${sanitizeForPrompt(p.debtToken)}`
+        `  • ${p.protocol.toUpperCase()} | HF: ${p.healthFactor.toFixed(3)} | ` +
+        `${mt("collateral", monLang)}: $${p.collateralUsd.toFixed(0)} ${sanitizeForPrompt(p.collateralToken)} | ` +
+        `${mt("debt", monLang)}: $${p.debtUsd.toFixed(0)} ${sanitizeForPrompt(p.debtToken)}`
       )
       .join("\n");
 
     const atRiskSummary = monitorResult.atRisk.length > 0
-      ? `⚠️ 高風險倉位 (HF < ${config.triggerThreshold}):\n` + monitorResult.atRisk
-          .map(p => `  🔴 ${sanitizeForPrompt(p.protocol, 16).toUpperCase()} HF: ${p.healthFactor.toFixed(3)}, 建議還款 $${p.rescueAmountUsdc?.toFixed(0) ?? "?"} USDC`)
+      ? `⚠️ At-risk (HF < ${config.triggerThreshold}):\n` + monitorResult.atRisk
+          .map(p => `  🔴 ${sanitizeForPrompt(p.protocol, 16).toUpperCase()} HF: ${p.healthFactor.toFixed(3)}, repay $${p.rescueAmountUsdc?.toFixed(0) ?? "?"} USDC`)
           .join("\n")
-      : "✅ 所有倉位健康因子安全 (無觸發救援)";
+      : "✅ All positions healthy (no rescue needed)";
 
     const rescueSummary = rescueSimulations.length > 0
-      ? `救援模擬:\n` + rescueSimulations.map(r => JSON.stringify(r)).join("\n")
-      : "無救援模擬（倉位安全）";
+      ? `Rescue simulations:\n` + rescueSimulations.map(r => JSON.stringify(r)).join("\n")
+      : "No rescue simulations (positions safe)";
 
     const agentMessages: Anthropic.MessageParam[] = [
       {
@@ -422,9 +476,9 @@ ${atRiskSummary}
 ${rescueSummary}
 
 SHIELD CONFIG:
-- 預授權救援上限: $${config.approvedUsdc} USDC
-- 觸發閾值: 健康因子 < ${config.triggerThreshold}
-- 目標恢復健康因子: ${config.targetHealthFactor}
+- Approved rescue limit: $${config.approvedUsdc} USDC
+- Trigger threshold: HF < ${config.triggerThreshold}
+- Target recovery HF: ${config.targetHealthFactor}
 
 CONTEXT: Solana DeFi borrowing TVL is ~$4B. When SOL drops 10%, health factors can fall below 1.0 within minutes. Liquidation penalty is 5-10%, meaning users lose that % of their collateral instantly.
 
@@ -436,13 +490,8 @@ YOUR TASK — Use all 6 tools:
 5. get_lending_activity — is this an active user or absent? (affects urgency)
 6. get_network_context — current epoch info: epoch end = SOL price volatility window
 
-Then write a comprehensive risk analysis in Traditional Chinese (繁體中文):
-- 🔴/🟡/🟢 整體風險等級（危急/警告/安全）+ 理由
-- 💰 最需關注倉位（若有）+ 距離清算還差多少
-- 💵 救援可行性：USDC 餘額 vs 需要救援金額
-- 🏦 完整資產快照（可用 SOL + USDC + 質押 SOL）
-- ⚡ 行動緊迫性：用戶最後活躍時間 → 是否需要自動救援
-- 🛡️ 具體建議（1-3 條優先行動）`,
+${SHIELD_AI_DIRECTIVE[monLang]}
+${SHIELD_AI_TEMPLATE[monLang]}`,
       },
     ];
 

@@ -541,8 +541,8 @@ YOUR TASK: Use the available tools to conduct a thorough investigation:
 6. Check for staking positions that may also be at risk
 7. If nonce account shows recent activity, inspect a transaction to understand the attack pattern
 
-Then write a comprehensive security report in Traditional Chinese (繁體中文) that includes:
-- 🔴 Risk level: 低/中/高/極高
+Then write a comprehensive security report in ${lang === "en" ? "English" : lang === "ja" ? "Japanese (日本語)" : "Traditional Chinese (繁體中文)"} that includes:
+- 🔴 Risk level: ${lang === "en" ? "Low/Medium/High/Extreme" : lang === "ja" ? "低/中/高/極高" : "低/中/高/極高"}
 - 💰 Exact USD amount at risk
 - ⚡ Threat urgency (based on nonce account activity)
 - 🎯 Specific attack scenario for this wallet

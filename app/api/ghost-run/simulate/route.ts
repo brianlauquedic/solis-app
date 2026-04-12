@@ -28,13 +28,85 @@ import type { Lang } from "@/lib/demo-data";
 
 export const maxDuration = 60;
 
+// ── Server-side i18n for real-mode error messages & labels ─────────────────
+type SimLang = "zh" | "en" | "ja";
+function parseSimLang(v: unknown): SimLang {
+  if (v === "en" || v === "ja" || v === "zh") return v;
+  return "zh";
+}
+const simI18n: Record<string, Record<SimLang, string>> = {
+  noApiKey: {
+    zh: "未配置 ANTHROPIC_API_KEY — 請在 Vercel 環境變數中添加此 key",
+    en: "ANTHROPIC_API_KEY not configured — please add it in Vercel environment variables",
+    ja: "ANTHROPIC_API_KEY が未設定です — Vercel 環境変数に追加してください",
+  },
+  parseFailed: {
+    zh: "無法解析策略。請描述如：「質押 2 SOL 到 Marinade」或「把 50 USDC 存入 Kamino」",
+    en: "Could not parse strategy. Try something like: \"Stake 2 SOL on Marinade\" or \"Lend 50 USDC on Kamino\"",
+    ja: "戦略を解析できません。例：「2 SOL を Marinade にステーク」「50 USDC を Kamino に預入」",
+  },
+  invalidSteps: {
+    zh: "策略中的操作步驟無效。支持的代幣：SOL / USDC / USDT / mSOL / jitoSOL / bSOL，操作類型：stake / lend / swap。",
+    en: "Invalid strategy steps. Supported tokens: SOL / USDC / USDT / mSOL / jitoSOL / bSOL. Step types: stake / lend / swap.",
+    ja: "戦略のステップが無効です。対応トークン：SOL / USDC / USDT / mSOL / jitoSOL / bSOL、操作種別：stake / lend / swap。",
+  },
+  condBelow: {
+    zh: "當 ${token} 價格跌破 $${price} 時自動執行",
+    en: "Auto-execute when ${token} drops below $${price}",
+    ja: "${token} が $${price} を下回ったら自動実行",
+  },
+  condAbove: {
+    zh: "當 ${token} 價格突破 $${price} 時自動執行",
+    en: "Auto-execute when ${token} rises above $${price}",
+    ja: "${token} が $${price} を上回ったら自動実行",
+  },
+};
+function st(key: string, lang: SimLang, vars?: Record<string, string>): string {
+  const tpl = simI18n[key]?.[lang] ?? simI18n[key]?.zh ?? key;
+  if (!vars) return tpl;
+  return tpl.replace(/\$\{(\w+)\}/g, (_, k) => vars[k] ?? "");
+}
+
+// AI prompt output language directive per lang
+const AI_LANG_DIRECTIVE: Record<SimLang, string> = {
+  zh: "Then write a strategy analysis in Traditional Chinese (繁體中文):",
+  en: "Then write a strategy analysis in English:",
+  ja: "Then write a strategy analysis in Japanese (日本語):",
+};
+const AI_ANALYSIS_TEMPLATE: Record<SimLang, string> = {
+  zh: `- ✅/⚠️ 資金可行性：餘額是否足夠執行每個步驟
+- 💰 投入總值 vs 預期產出總值（精確 USD）
+- 📈 預計年化收益（總額 USD）+ 若有質押：名義 APY vs 通脹 → 實際收益
+- 🏦 LST 協議深度（mSOL/jitoSOL 總供應量）→ 流動性評估
+- ⚡ Gas 費用（USD）
+- 🏛️ 整體資產狀況（可用 SOL + 代幣 + 質押 SOL）
+- 🎯 策略效率評分（1-10）及理由
+- ⚠️ 主要風險提示`,
+  en: `- ✅/⚠️ Funding feasibility: is the balance sufficient for each step?
+- 💰 Total input value vs expected output value (precise USD)
+- 📈 Estimated annual yield (total USD) + if staking: nominal APY vs inflation → real yield
+- 🏦 LST protocol depth (mSOL/jitoSOL total supply) → liquidity assessment
+- ⚡ Gas cost (USD)
+- 🏛️ Overall asset status (available SOL + tokens + staked SOL)
+- 🎯 Strategy efficiency score (1-10) with reasoning
+- ⚠️ Key risk warnings`,
+  ja: `- ✅/⚠️ 資金実行可能性：各ステップに残高は十分か？
+- 💰 投入総額 vs 予想産出総額（正確な USD）
+- 📈 予想年間収益（合計 USD）+ ステーキングの場合：名目 APY vs インフレ → 実質収益
+- 🏦 LST プロトコル深度（mSOL/jitoSOL 総供給量）→ 流動性評価
+- ⚡ ガス代（USD）
+- 🏛️ 全体資産状況（利用可能 SOL + トークン + ステーク SOL）
+- 🎯 戦略効率スコア（1-10）と理由
+- ⚠️ 主要リスク警告`,
+};
+
 // ── Module 07: Conditional Order detection (Escrow pattern) ──────────────────
 // Detects trigger conditions in strategy text (e.g. "当SOL跌到$120时执行").
 // Returns a ConditionalOrder describing the on-chain escrow PDA that would
 // hold the strategy until the condition is met (no extra latency — regex only).
 import type { ConditionalOrder } from "@/lib/ghost-run";
 
-function detectConditionalOrder(strategy: string, steps: StrategyStep[]): ConditionalOrder | null {
+function detectConditionalOrder(strategy: string, steps: StrategyStep[], _simLang: SimLang = "zh"): ConditionalOrder | null {
   const stepSummary = steps.map(s => `${s.type}:${s.inputToken}→${s.outputToken}`).join("+");
 
   // Price-below patterns (zh + en)
@@ -55,7 +127,7 @@ function detectConditionalOrder(strategy: string, steps: StrategyStep[]): Condit
           triggerType: "price_below",
           watchToken: token,
           triggerPriceUsd: price,
-          conditionLabel: `當 ${token} 價格跌破 $${price} 時自動執行`,
+          conditionLabel: st("condBelow", _simLang, { token, price: String(price) }),
           escrowMemoTemplate: JSON.stringify({
             event: "sakura_conditional_order_set",
             condition: `${token}_BELOW_${price}`,
@@ -86,7 +158,7 @@ function detectConditionalOrder(strategy: string, steps: StrategyStep[]): Condit
           triggerType: "price_above",
           watchToken: token,
           triggerPriceUsd: price,
-          conditionLabel: `當 ${token} 價格突破 $${price} 時自動執行`,
+          conditionLabel: st("condAbove", _simLang, { token, price: String(price) }),
           escrowMemoTemplate: JSON.stringify({
             event: "sakura_conditional_order_set",
             condition: `${token}_ABOVE_${price}`,
@@ -190,6 +262,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { strategy, wallet } = body;
+  const simLang = parseSimLang(body.lang);
   if (!strategy || !wallet) {
     return NextResponse.json({ error: "Missing strategy or wallet" }, { status: 400 });
   }
@@ -233,7 +306,7 @@ export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return NextResponse.json({
-      error: "未配置 ANTHROPIC_API_KEY — 請在 Vercel 環境變數中添加此 key",
+      error: st("noApiKey", simLang),
     }, { status: 500 });
   }
 
@@ -261,7 +334,7 @@ export async function POST(req: NextRequest) {
 
   if (steps.length === 0) {
     return NextResponse.json({
-      error: "無法解析策略。請描述如：「質押 2 SOL 到 Marinade」或「把 50 USDC 存入 Kamino」",
+      error: st("parseFailed", simLang),
     }, { status: 400 });
   }
 
@@ -285,7 +358,7 @@ export async function POST(req: NextRequest) {
 
   if (steps.length === 0) {
     return NextResponse.json({
-      error: "策略中的操作步驟無效。支持的代幣：SOL / USDC / USDT / mSOL / jitoSOL / bSOL，操作類型：stake / lend / swap。",
+      error: st("invalidSteps", simLang),
     }, { status: 400 });
   }
 
@@ -304,7 +377,7 @@ export async function POST(req: NextRequest) {
 
   // ── Module 07+10: Conditional order detection + live price distance ──
   // Regex detection (zero latency) + Jupiter price fetch for distance calc.
-  const conditionalOrder = detectConditionalOrder(strategy, steps);
+  const conditionalOrder = detectConditionalOrder(strategy, steps, simLang);
   if (conditionalOrder) {
     // Fetch live price to calculate trigger distance (Module 10: use price feed)
     try {
@@ -548,15 +621,8 @@ YOUR TASK — Use tools in this order:
 4. get_inflation_rate — get current Solana inflation to calculate REAL staking yield
 5. get_lst_market_depth — for any stake step, verify the LST protocol depth (mSOL/jitoSOL)
 
-Then write a strategy analysis in Traditional Chinese (繁體中文):
-- ✅/⚠️ 資金可行性：餘額是否足夠執行每個步驟
-- 💰 投入總值 vs 預期產出總值（精確 USD）
-- 📈 預計年化收益（總額 USD）+ 若有質押：名義 APY vs 通脹 → 實際收益
-- 🏦 LST 協議深度（mSOL/jitoSOL 總供應量）→ 流動性評估
-- ⚡ Gas 費用（USD）
-- 🏛️ 整體資產狀況（可用 SOL + 代幣 + 質押 SOL）
-- 🎯 策略效率評分（1-10）及理由
-- ⚠️ 主要風險提示`,
+${AI_LANG_DIRECTIVE[simLang]}
+${AI_ANALYSIS_TEMPLATE[simLang]}`,
       },
     ];
 

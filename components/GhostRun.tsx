@@ -157,7 +157,7 @@ export default function GhostRun({ isDemo = false }: { isDemo?: boolean }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(isDemo
           ? { strategy: text, wallet, demo: true, lang: lang as Lang }
-          : { strategy: text, wallet }),
+          : { strategy: text, wallet, lang: lang as Lang }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
