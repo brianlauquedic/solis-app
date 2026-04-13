@@ -1,18 +1,18 @@
 import { ImageResponse } from "next/og";
 import { getRun } from "@/lib/run-store";
-import fs from "fs";
-import path from "path";
 
 export const runtime = "nodejs";
 export const alt = "Ghost Run · Proof-of-Simulation Report";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Pre-resized 120×160 version of logo-bijin.png (24KB vs 984KB original)
-function getLogoBase64(): string | null {
+// Next.js official pattern: new URL('./file', import.meta.url) bundles the
+// file into the serverless function — works on Vercel, local, and edge.
+async function getLogoBase64(): Promise<string | null> {
   try {
-    const p = path.join(process.cwd(), "public", "logo-bijin-small.png");
-    return `data:image/png;base64,${fs.readFileSync(p).toString("base64")}`;
+    const buf = await fetch(new URL("./logo-bijin-small.png", import.meta.url))
+      .then(r => r.arrayBuffer());
+    return `data:image/png;base64,${Buffer.from(buf).toString("base64")}`;
   } catch {
     return null;
   }
@@ -28,7 +28,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
     ? new Date(run.ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : "";
 
-  const logoSrc = getLogoBase64();
+  const logoSrc = await getLogoBase64();
 
   return new ImageResponse(
     (
