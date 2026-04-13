@@ -7,7 +7,9 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sakuraaai.com";
+  // Must use www.sakuraaai.com — sakuraaai.com 307-redirects to www and
+  // Twitter/Facebook crawlers do NOT follow redirects when fetching og:image.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.sakuraaai.com";
   const ogImageUrl = `${siteUrl}/api/og/run/${id}`;
 
   return {
