@@ -6,6 +6,8 @@ export const alt = "Ghost Run · Proof-of-Simulation Report";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+const LOGO_URL = "https://www.sakuraaai.com/logo-bijin.png";
+
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const run = await getRun(id).catch(() => null);
@@ -15,14 +17,6 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const ts = run
     ? new Date(run.ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
     : "";
-
-  // Fetch the logo from public URL (avoids embedding 984KB file as base64)
-  let logoData: ArrayBuffer | null = null;
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://sakuraaai.com";
-    const res = await fetch(`${baseUrl}/logo-bijin.png`, { signal: AbortSignal.timeout(3000) });
-    if (res.ok) logoData = await res.arrayBuffer();
-  } catch { /* fallback to initials */ }
 
   return new ImageResponse(
     (
@@ -51,24 +45,21 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         {/* Top: Logo + badge */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            {/* WaBijin avatar */}
+            {/* WaBijin avatar — direct URL, ImageResponse fetches internally */}
             <div style={{
-              width: 58, height: 58, borderRadius: 14,
+              width: 60, height: 60, borderRadius: 14,
               overflow: "hidden", flexShrink: 0,
               border: "2px solid rgba(139,92,246,0.6)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              background: "linear-gradient(135deg, #1E1340, #0F0A1E)",
+              display: "flex",
             }}>
-              {logoData ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`data:image/png;base64,${Buffer.from(logoData).toString("base64")}`}
-                  width={58} height={58} alt="Sakura"
-                  style={{ objectFit: "cover", objectPosition: "top" }}
-                />
-              ) : (
-                <span style={{ fontSize: 32, lineHeight: 1 }}>🌸</span>
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={LOGO_URL}
+                width={60}
+                height={60}
+                alt="Sakura"
+                style={{ objectFit: "cover", objectPosition: "center top" }}
+              />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
               <span style={{ fontSize: 24, fontWeight: 700, color: "#F1F5F9", letterSpacing: 1 }}>
@@ -92,9 +83,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
 
         {/* Middle */}
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <div style={{
-            fontSize: 12, fontWeight: 700, color: "#8B5CF6", letterSpacing: 3,
-          }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: "#8B5CF6", letterSpacing: 3 }}>
             ⛩️ PROOF-OF-SIMULATION · ONCHAIN COMMITMENT
           </div>
           <div style={{
