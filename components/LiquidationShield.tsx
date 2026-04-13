@@ -956,6 +956,41 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
                             {t("shieldAuditChain")}: {rescueRes.auditChain}
                           </div>
                         )}
+
+                        {/* ── Plan 4: Hash Chain Audit Trail ── */}
+                        {rescueRes.hashChain && (
+                          <div style={{
+                            marginTop: 12,
+                            background: "rgba(139,92,246,0.06)",
+                            border: "1px solid rgba(139,92,246,0.25)",
+                            borderLeft: "3px solid #8B5CF6",
+                            borderRadius: 8, padding: "10px 14px",
+                          }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#8B5CF6", fontFamily: "var(--font-mono)", marginBottom: 8 }}>
+                              🔗 HASH CHAIN · {t("shieldHashChainTitle")}
+                            </div>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontFamily: "var(--font-mono)" }}>
+                                <span style={{ color: "var(--text-muted)" }}>mandate_hash</span>
+                                <span style={{ color: "#A78BFA" }}>{rescueRes.hashChain.mandateHash}</span>
+                              </div>
+                              <div style={{ textAlign: "center", fontSize: 10, color: "var(--text-muted)" }}>↓</div>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontFamily: "var(--font-mono)" }}>
+                                <span style={{ color: "var(--text-muted)" }}>execution_hash</span>
+                                <span style={{ color: "#A78BFA" }}>{rescueRes.hashChain.executionHash}</span>
+                              </div>
+                              <div style={{ textAlign: "center", fontSize: 10, color: "var(--text-muted)" }}>↓</div>
+                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontFamily: "var(--font-mono)" }}>
+                                <span style={{ color: "var(--text-muted)", fontWeight: 700 }}>chain_proof</span>
+                                <span style={{ color: "#8B5CF6", fontWeight: 700 }}>{rescueRes.hashChain.chainProof}</span>
+                              </div>
+                            </div>
+                            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.5 }}>
+                              {t("shieldHashChainDesc")}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Module 09: Token-2022 extension warning */}
                         {rescueRes.tokenExtensionWarning && (
                           <div style={{ fontSize: 11, color: "#FF9F0A", marginTop: 4 }}>

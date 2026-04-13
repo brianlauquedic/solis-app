@@ -979,6 +979,9 @@ export const translations = {
   // ── Plan summary (from rebalance API) ────────────────────────────
   summaryOpportunities: { zh: "發現 {n} 個優化機會，可將年化收益提升至 +${yield}", en: "Found {n} optimization {op} — projected annual yield +${yield}", ja: "{n}件の最適化機会を発見 — 年間収益予測 +${yield}" },
   summaryLowBalance:    { zh: "當前餘額較少，建議先積累更多 SOL/USDC", en: "Low balance — consider building up more SOL/USDC first", ja: "残高が少ないです。まずSOL/USDCを積み立てることをお勧めします" },
+  // ── Hash Chain Audit Trail (Plan 4) ─────────────────────────────
+  shieldHashChainTitle: { zh: "不可篡改審計鏈", en: "Tamper-Evident Audit Chain", ja: "改ざん不可監査チェーン" },
+  shieldHashChainDesc:  { zh: "mandate_hash → execution_hash → chain_proof 三層 SHA-256 密碼學鏈，鏈上可驗證授權與執行的因果關係。", en: "Three-layer SHA-256 chain linking the SPL approve mandate to the rescue execution — verifiable on-chain.", ja: "SPL承認マンデートから救済実行までを結ぶ3層SHA-256チェーン — オンチェーンで検証可能。" },
   // ── Safety Pulse Panel ───────────────────────────────────────────
   pulseTitle:         { zh: "Solana DeFi 安全脈衝", en: "Solana DeFi Safety Pulse", ja: "Solana DeFi セーフティパルス" },
   pulseScanning:      { zh: "掃描 Kamino · MarginFi · Solend 中…", en: "Scanning Kamino · MarginFi · Solend...", ja: "Kamino · MarginFi · Solend をスキャン中…" },
