@@ -1,4 +1,5 @@
 User-agent: *
+Allow: /api/og/
 Disallow: /api/
 Disallow: /api/_*
 
