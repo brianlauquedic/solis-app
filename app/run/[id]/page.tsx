@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import type { StoredRun } from "@/lib/run-store";
 
@@ -52,8 +52,8 @@ export default function RunPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Language: use stored run lang, fallback to browser lang
-  const lang: RunLang = (() => {
+  // Language: derive from run.lang (re-computed when run loads)
+  const lang: RunLang = useMemo(() => {
     if (run?.lang === "en" || run?.lang === "ja" || run?.lang === "zh") return run.lang as RunLang;
     if (typeof navigator !== "undefined") {
       const bl = navigator.language.toLowerCase();
@@ -61,7 +61,7 @@ export default function RunPage() {
       if (bl.startsWith("zh")) return "zh";
     }
     return "en";
-  })();
+  }, [run]);
 
   const shareUrl = `https://www.sakuraaai.com/run/${id}`;
   const twitterText = run ? encodeURIComponent(

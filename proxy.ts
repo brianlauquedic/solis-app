@@ -248,8 +248,9 @@ export async function proxy(req: NextRequest) {
 
     // /api/og/ generates Open Graph images fetched by social media crawlers
     // (Twitter, Facebook, Slack, Discord, etc.) — must be publicly accessible.
-    // Skip ALL bot/fingerprint/rate-limit checks for OG image routes.
-    if (pathname.startsWith("/api/og/")) {
+    // /api/run/ serves run report data — also needed by crawlers reading og:image.
+    // Skip ALL bot/fingerprint/rate-limit checks for these routes.
+    if (pathname.startsWith("/api/og/") || pathname.startsWith("/api/run/")) {
       return NextResponse.next();
     }
 
