@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import type { StoredRun } from "@/lib/run-store";
+import { useLang } from "@/contexts/LanguageContext";
 
 // ── Inline i18n for standalone report page (no app context available) ──
 type RunLang = "zh" | "en" | "ja";
@@ -52,16 +53,9 @@ export default function RunPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Language: derive from run.lang (re-computed when run loads)
-  const lang: RunLang = useMemo(() => {
-    if (run?.lang === "en" || run?.lang === "ja" || run?.lang === "zh") return run.lang as RunLang;
-    if (typeof navigator !== "undefined") {
-      const bl = navigator.language.toLowerCase();
-      if (bl.startsWith("ja")) return "ja";
-      if (bl.startsWith("zh")) return "zh";
-    }
-    return "en";
-  }, [run]);
+  // Language: app language switcher takes priority, then run.lang fallback
+  const { lang: appLang } = useLang();
+  const lang: RunLang = appLang as RunLang;
 
   const shareUrl = `https://www.sakuraaai.com/run/${id}`;
   const twitterText = run ? encodeURIComponent(
