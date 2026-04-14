@@ -93,9 +93,8 @@ function parseLang(v: unknown): RescueLang {
   return "zh";
 }
 
-function sha256Short(input: string): string {
-  return crypto.createHash("sha256").update(input).digest("hex").slice(0, 16);
-}
+// Full SHA-256 cryptographic proof — see lib/crypto-proof.ts
+import { mandateHash as computeMandateHash, executionHash as computeExecutionHash, chainProof as computeChainProof } from "@/lib/crypto-proof";
 
 // ── GET: return agent pubkey for frontend SPL approve ──────────────────────────
 // Frontend needs the agent's public key to build createApproveInstruction.
@@ -507,23 +506,34 @@ export async function POST(req: NextRequest) {
     ? Math.round((Date.now() - new Date(mandateTs).getTime()) / 1000)
     : null;
 
-  // Hash chain: each step references the previous step's hash
-  // mandate_hash = sha256(mandateTxSig + mandateTs) → ties to the SPL approve TX
-  // execution_hash = sha256(rescueSig + executionTs) → ties to the rescue TX
-  // chain_proof = sha256(mandate_hash + execution_hash) → ties both together
-  const mandateHash = sha256Short((mandateTxSig ?? "no_mandate") + (mandateTs ?? "no_ts"));
-  const executionContent = [
+  // ── Cryptographic Hash Chain (full SHA-256, publicly verifiable) ──────────
+  // Every hash input is canonical and recorded in the Memo — anyone can recompute.
+  // mandate_hash = SHA-256("MANDATE|{txSig}|{ts}|{maxUsdc}|{agentPubkey}")
+  // execution_hash = SHA-256("EXECUTION|{protocol}|{wallet8}|{usdc}|{ts}|{sig}|{mandateHash}")
+  // chain_proof = SHA-256("CHAIN|{mandateHash}|{executionHash}")
+  const mResult = computeMandateHash(
+    mandateTxSig ?? "no_mandate",
+    mandateTs ?? "no_ts",
+    rescueUsdc,
+    agentKp.publicKey.toString(),
+  );
+  const eResult = computeExecutionHash(
     sanitizedPosition.protocol,
     wallet.slice(0, 8),
-    rescueUsdc.toString(),
+    rescueUsdc,
     executionTs,
     rescueSig ?? "failed",
-  ].join("|");
-  const executionHash = sha256Short(executionContent);
-  const chainProof = sha256Short(mandateHash + executionHash);
+    mResult.hash,
+  );
+  const cpResult = computeChainProof(mResult.hash, eResult.hash);
+
+  const mandateHashVal = mResult.hash;
+  const executionHashVal = eResult.hash;
+  const chainProofVal = cpResult.hash;
 
   const auditData = JSON.stringify({
     event: "sakura_rescue_executed",
+    version: 2,
     protocol: sanitizedPosition.protocol,
     wallet: wallet.slice(0, 8),
     rescueUsdc,
@@ -533,15 +543,19 @@ export async function POST(req: NextRequest) {
     postHealthFactor: sanitizedPosition.postRescueHealthFactor?.toFixed(3),
     mandateRef: mandateTxSig?.slice(0, 20) ?? "none",
     rescueSig: rescueSig?.slice(0, 20) ?? "failed",
-    // Hash chain fields (Plan 4: inspired by zERC20 Hash Chain architecture)
-    mandate_hash: mandateHash,
-    execution_hash: executionHash,
-    chain_proof: chainProof,
+    // Cryptographic Hash Chain v2 — full SHA-256, canonical inputs included
+    // Anyone can verify: sha256(mandate_input) === mandate_hash, etc.
+    mandate_hash: mandateHashVal,
+    mandate_input: mResult.input,
+    execution_hash: executionHashVal,
+    execution_input: eResult.input,
+    chain_proof: chainProofVal,
+    chain_input: cpResult.input,
     // Module 06: time-gated audit fields
     mandateTs: mandateTs ?? null,
     executionTs,
     timeWindowSec,
-    module: "06_hash_chain_audit",
+    module: "06_hash_chain_v2",
   });
 
   try {
@@ -578,10 +592,13 @@ export async function POST(req: NextRequest) {
       ? `${mandateTxSig.slice(0, 12)}… → ${memoSig?.slice(0, 12) ?? "?"}…`
       : null,
     hashChain: {
-      mandateHash,
-      executionHash,
-      chainProof,
-      description: "mandate_hash → execution_hash → chain_proof (SHA-256, tamper-evident)",
+      mandateHash: mandateHashVal,
+      mandateInput: mResult.input,
+      executionHash: executionHashVal,
+      executionInput: eResult.input,
+      chainProof: chainProofVal,
+      chainInput: cpResult.input,
+      description: "Full SHA-256 hash chain — recompute any hash from its canonical input to verify",
     },
     // Module 06: time-gated audit metadata
     mandateTs: mandateTs ?? null,

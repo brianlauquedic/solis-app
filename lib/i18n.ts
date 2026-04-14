@@ -988,8 +988,9 @@ export const translations = {
   ghostShareX:        { zh: "𝕏 分享到 X", en: "𝕏 Share on X", ja: "𝕏 Xでシェア" },
   ghostCopyLink:      { zh: "📋 複製連結", en: "📋 Copy Link", ja: "📋 リンクをコピー" },
   // ── Hash Chain Audit Trail (Plan 4) ─────────────────────────────
-  shieldHashChainTitle: { zh: "不可篡改審計鏈", en: "Tamper-Evident Audit Chain", ja: "改ざん不可監査チェーン" },
-  shieldHashChainDesc:  { zh: "mandate_hash → execution_hash → chain_proof 三層 SHA-256 密碼學鏈，鏈上可驗證授權與執行的因果關係。", en: "Three-layer SHA-256 chain linking the SPL approve mandate to the rescue execution — verifiable on-chain.", ja: "SPL承認マンデートから救済実行までを結ぶ3層SHA-256チェーン — オンチェーンで検証可能。" },
+  shieldHashChainTitle: { zh: "密碼學可驗證審計鏈", en: "Cryptographically Verifiable Audit Chain", ja: "暗号学的検証可能監査チェーン" },
+  shieldHashChainDesc:  { zh: "完整 SHA-256 哈希鏈 — 每個哈希的規範輸入均已記錄。任何人可從輸入重新計算哈希，獨立驗證授權→執行的因果完整性。", en: "Full SHA-256 hash chain — every hash's canonical input is recorded. Anyone can recompute from inputs to independently verify the mandate→execution causal integrity.", ja: "完全SHA-256ハッシュチェーン — 各ハッシュの正規入力を記録。誰でも入力から再計算し、マンデート→実行の因果完全性を独立検証可能。" },
+  shieldHashChainVerify: { zh: "驗證", en: "Verify", ja: "検証" },
   // ── Safety Pulse Panel ───────────────────────────────────────────
   pulseTitle:         { zh: "Solana DeFi 安全脈衝", en: "Solana DeFi Safety Pulse", ja: "Solana DeFi セーフティパルス" },
   pulseScanning:      { zh: "掃描 Kamino · MarginFi · Solend 中…", en: "Scanning Kamino · MarginFi · Solend...", ja: "Kamino · MarginFi · Solend をスキャン中…" },

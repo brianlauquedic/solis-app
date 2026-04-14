@@ -695,22 +695,25 @@ ${AI_ANALYSIS_TEMPLATE[simLang]}`,
     console.error("[ghost-run/simulate] agentic analysis error:", err);
   }
 
-  // ── Proof-of-Simulation: write pre-commitment Memo to Solana chain ───────────
-  // This creates a cryptographic pre-commitment: "I knew the simulation result BEFORE executing."
-  const crypto = await import("crypto");
-  const strategyHash = crypto.createHash("sha256").update(strategy).digest("hex").slice(0, 16);
-  const resultHash = crypto.createHash("sha256").update(JSON.stringify(result)).digest("hex").slice(0, 16);
-  const commitmentId = "GR-" + crypto.createHash("sha256").update(strategy + wallet + Date.now()).digest("hex").slice(0, 8);
+  // ── Proof-of-Simulation: cryptographic pre-commitment (full SHA-256) ─────────
+  // Creates a verifiable pre-commitment: "I knew the simulation result BEFORE executing."
+  // All inputs are canonical and recorded in the Memo — anyone can recompute.
+  const { commitmentHash } = await import("@/lib/crypto-proof");
+  const commitTs = new Date().toISOString();
+  const commitResult = commitmentHash(strategy, JSON.stringify(result), wallet.slice(0, 8), commitTs);
+  const commitmentId = commitResult.commitmentId;
 
   const commitmentPayload = JSON.stringify({
     event: "ghost_run_commitment",
+    version: 2,
     commitment_id: commitmentId,
-    strategy_hash: strategyHash,
-    sim_result_hash: resultHash,
+    strategy_hash: commitResult.strategyHash,
+    sim_result_hash: commitResult.resultHash,
+    commit_input: commitResult.commitInput,
     wallet: wallet.slice(0, 8),
     steps: steps.length,
     can_execute: result.canExecute,
-    ts: new Date().toISOString(),
+    ts: commitTs,
   });
 
   let commitmentMemoSig: string | null = null;

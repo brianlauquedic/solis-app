@@ -31,8 +31,11 @@ interface RescueResponse {
   auditChain: string | null;
   hashChain?: {
     mandateHash: string;
+    mandateInput?: string;
     executionHash: string;
+    executionInput?: string;
     chainProof: string;
+    chainInput?: string;
     description: string;
   };
   // Module 06: time-gated audit fields
@@ -337,9 +340,21 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
       setRescuingIdx(idx);
       await new Promise(r => setTimeout(r, 2000));
       if (demoSignal.aborted) { setRescuingIdx(null); return; }
-      const demoMandateH = "m" + Math.random().toString(16).slice(2, 10);
-      const demoExecH    = "e" + Math.random().toString(16).slice(2, 10);
-      const demoProof    = "p" + Math.random().toString(16).slice(2, 10);
+      // Demo: realistic full SHA-256 hashes (64 hex chars each)
+      const demoMandateInput = `MANDATE|DEMO_TX_${Math.random().toString(36).slice(2,8)}|${new Date().toISOString()}|${sim.rescueUsdc}|DemoAgent`;
+      const demoExecInput = `EXECUTION|${sim.position.protocol}|demo...w|${sim.rescueUsdc}|${new Date().toISOString()}|DEMO_SIG|DEMO_MH`;
+      const demoChainInput = "CHAIN|DEMO_MH|DEMO_EH";
+      // Use crypto.subtle for client-side SHA-256
+      const enc = new TextEncoder();
+      const [mBuf, eBuf, cBuf] = await Promise.all([
+        crypto.subtle.digest("SHA-256", enc.encode(demoMandateInput)),
+        crypto.subtle.digest("SHA-256", enc.encode(demoExecInput)),
+        crypto.subtle.digest("SHA-256", enc.encode(demoChainInput)),
+      ]);
+      const hex = (buf: ArrayBuffer) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+      const demoMandateH = hex(mBuf);
+      const demoExecH = hex(eBuf);
+      const demoProof = hex(cBuf);
       setRescueResults(prev => ({
         ...prev,
         [idx]: {
@@ -352,9 +367,12 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
           auditChain: "DEMO_MANDATE… → DEMO_EXEC…",
           hashChain: {
             mandateHash: demoMandateH,
+            mandateInput: demoMandateInput,
             executionHash: demoExecH,
+            executionInput: demoExecInput,
             chainProof: demoProof,
-            description: "mandate_hash → execution_hash → chain_proof (SHA-256, tamper-evident)",
+            chainInput: demoChainInput,
+            description: "Full SHA-256 hash chain — recompute any hash from its canonical input to verify",
           },
           mandateTs: approveTs ?? null,
           executionTs: new Date().toISOString(),
@@ -966,35 +984,76 @@ export default function LiquidationShield({ isDemo = false }: { isDemo?: boolean
                           </div>
                         )}
 
-                        {/* ── Plan 4: Hash Chain Audit Trail ── */}
+                        {/* ── Cryptographic Hash Chain v2 (full SHA-256) ── */}
                         {rescueRes.hashChain && (
                           <div style={{
                             marginTop: 12,
                             background: "rgba(139,92,246,0.06)",
                             border: "1px solid rgba(139,92,246,0.25)",
                             borderLeft: "3px solid #8B5CF6",
-                            borderRadius: 8, padding: "10px 14px",
+                            borderRadius: 8, padding: "12px 14px",
                           }}>
-                            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#8B5CF6", fontFamily: "var(--font-mono)", marginBottom: 8 }}>
-                              🔗 HASH CHAIN · {t("shieldHashChainTitle")}
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "#8B5CF6", fontFamily: "var(--font-mono)" }}>
+                                🔗 HASH CHAIN · {t("shieldHashChainTitle")}
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  const hc = rescueRes.hashChain;
+                                  if (!hc?.mandateInput || !hc?.executionInput || !hc?.chainInput) return;
+                                  try {
+                                    const enc = new TextEncoder();
+                                    const hex = (buf: ArrayBuffer) => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+                                    const [mH, eH, cH] = await Promise.all([
+                                      crypto.subtle.digest("SHA-256", enc.encode(hc.mandateInput)).then(hex),
+                                      crypto.subtle.digest("SHA-256", enc.encode(hc.executionInput)).then(hex),
+                                      crypto.subtle.digest("SHA-256", enc.encode(hc.chainInput)).then(hex),
+                                    ]);
+                                    const mOk = mH === hc.mandateHash;
+                                    const eOk = eH === hc.executionHash;
+                                    const cOk = cH === hc.chainProof;
+                                    alert(mOk && eOk && cOk
+                                      ? "✅ Hash Chain Verified!\n\nAll 3 hashes recomputed from canonical inputs and match perfectly."
+                                      : `❌ Verification Failed\nmandate: ${mOk ? "✅" : "❌"}\nexecution: ${eOk ? "✅" : "❌"}\nchain_proof: ${cOk ? "✅" : "❌"}`
+                                    );
+                                  } catch { alert("Verification error"); }
+                                }}
+                                style={{
+                                  padding: "3px 10px", fontSize: 10, fontWeight: 600,
+                                  background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.4)",
+                                  borderRadius: 5, color: "#A78BFA", cursor: "pointer",
+                                  fontFamily: "var(--font-mono)", letterSpacing: "0.06em",
+                                }}
+                              >
+                                🔍 {t("shieldHashChainVerify")}
+                              </button>
                             </div>
-                            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontFamily: "var(--font-mono)" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                              {/* Mandate Hash */}
+                              <div style={{ fontSize: 10, fontFamily: "var(--font-mono)" }}>
                                 <span style={{ color: "var(--text-muted)" }}>mandate_hash</span>
-                                <span style={{ color: "#A78BFA" }}>{rescueRes.hashChain.mandateHash}</span>
+                                <div style={{ color: "#A78BFA", wordBreak: "break-all", marginTop: 2, fontSize: 9, lineHeight: 1.4 }}>
+                                  {rescueRes.hashChain.mandateHash}
+                                </div>
                               </div>
                               <div style={{ textAlign: "center", fontSize: 10, color: "var(--text-muted)" }}>↓</div>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontFamily: "var(--font-mono)" }}>
+                              {/* Execution Hash */}
+                              <div style={{ fontSize: 10, fontFamily: "var(--font-mono)" }}>
                                 <span style={{ color: "var(--text-muted)" }}>execution_hash</span>
-                                <span style={{ color: "#A78BFA" }}>{rescueRes.hashChain.executionHash}</span>
+                                <div style={{ color: "#A78BFA", wordBreak: "break-all", marginTop: 2, fontSize: 9, lineHeight: 1.4 }}>
+                                  {rescueRes.hashChain.executionHash}
+                                </div>
                               </div>
                               <div style={{ textAlign: "center", fontSize: 10, color: "var(--text-muted)" }}>↓</div>
-                              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, fontFamily: "var(--font-mono)" }}>
+                              {/* Chain Proof */}
+                              <div style={{ fontSize: 10, fontFamily: "var(--font-mono)" }}>
                                 <span style={{ color: "var(--text-muted)", fontWeight: 700 }}>chain_proof</span>
-                                <span style={{ color: "#8B5CF6", fontWeight: 700 }}>{rescueRes.hashChain.chainProof}</span>
+                                <div style={{ color: "#8B5CF6", fontWeight: 700, wordBreak: "break-all", marginTop: 2, fontSize: 9, lineHeight: 1.4 }}>
+                                  {rescueRes.hashChain.chainProof}
+                                </div>
                               </div>
                             </div>
-                            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 8, lineHeight: 1.5 }}>
+                            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 10, lineHeight: 1.5 }}>
                               {t("shieldHashChainDesc")}
                             </div>
                           </div>

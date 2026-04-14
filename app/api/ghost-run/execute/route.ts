@@ -27,7 +27,7 @@ const MAX_STAKE_SOL_PER_STEP  = 5;    // max 5 SOL per stake (platform wallet li
 const MAX_LEND_AMOUNT_PER_STEP = 500; // max $500 equivalent per lend step
 
 export async function POST(req: NextRequest) {
-  let body: { steps?: StrategyStep[]; wallet?: string } = {};
+  let body: { steps?: StrategyStep[]; wallet?: string; commitmentId?: string } = {};
   try { body = await req.json(); } catch { /* ok */ }
 
   const { steps, wallet } = body;
@@ -198,17 +198,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Write on-chain execution proof via Memo Program
+  // Write on-chain execution proof via Memo Program (cryptographic binding to commitment)
   let memoSig: string | null = null;
   if (signatures.length > 0) {
     try {
+      const { executionProofHash } = await import("@/lib/crypto-proof");
+      const execTs = new Date().toISOString();
+      const execProof = executionProofHash(body.commitmentId ?? "none", signatures, execTs);
       const proofText = JSON.stringify({
         event: "sakura_ghost_run_executed",
+        version: 2,
         wallet: wallet.slice(0, 8),
         steps: steps.length,
+        ref_commitment: (body.commitmentId ?? "none").slice(0, 20),
+        execution_hash: execProof.hash,
+        execution_input: execProof.input,
         platformFeeBps: PLATFORM_FEE_BPS,
         signatures: signatures.map(s => s.slice(0, 12)),
-        ts: new Date().toISOString(),
+        ts: execTs,
       });
 
       const execBaseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`;
