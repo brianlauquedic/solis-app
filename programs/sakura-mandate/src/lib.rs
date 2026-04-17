@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 use anchor_spl::associated_token::AssociatedToken;
 
-declare_id!("2YT6MwLVkd1cpmoQX6KWWn66zz5XNCYrFf5Rjq12g959");
+declare_id!("AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp");
 
 /// Sakura Liquidation Shield — On-chain Rescue Mandate Program
 ///
