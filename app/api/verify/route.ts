@@ -130,8 +130,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           mode: "zk_rescue",
           verified,
-          protocol: proof.protocol,
-          curve: proof.curve,
+          // HONESTY DISCLAIMER: This system uses a Poseidon-over-BN254 commitment
+          // proof with Groth16-shaped structure for future snarkjs compatibility.
+          // It is NOT a real Groth16 pairing check. See README.md "Cryptographic
+          // claims — honest disclosure" section for full details.
+          proofSystem: "Poseidon commitment proof (BN254) with Groth16-shaped structure",
+          disclaimer: "Not a pairing-verified Groth16 proof — commitment-style proof only. See README.md for details.",
           publicSignals: {
             commitmentHash: publicSignals.commitmentHash,
             nullifier: publicSignals.nullifier,
@@ -140,8 +144,7 @@ export async function POST(req: NextRequest) {
           },
           verificationKey: {
             nPublic: vk.nPublic,
-            protocol: vk.protocol,
-            curve: vk.curve,
+            circuit: "sakura_rescue_v1",
           },
         });
       }
@@ -159,8 +162,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
           mode: "zk_ghost_run",
           verified,
-          protocol: proof.protocol,
-          curve: proof.curve,
+          proofSystem: "Poseidon commitment proof (BN254) with Groth16-shaped structure",
+          disclaimer: "Not a pairing-verified Groth16 proof — commitment-style proof only. See README.md for details.",
         });
       }
 
@@ -270,26 +273,35 @@ export async function GET() {
     availableModes: [
       { mode: "hash_chain", description: "Verify SHA-256 rescue hash chain (mandate → execution → chain_proof)" },
       { mode: "single_hash", description: "Verify any single SHA-256 hash from canonical input" },
-      { mode: "dual_hash", description: "Verify SHA-256 + Poseidon dual-hash (zERC20 architecture)" },
+      { mode: "dual_hash", description: "Verify SHA-256 + Poseidon dual-hash" },
       { mode: "merkle_proof", description: "Verify Merkle inclusion proof (stateless batch aggregation)" },
-      { mode: "zk_rescue", description: "Verify ZK commitment proof for rescue operation" },
-      { mode: "zk_ghost_run", description: "Verify ZK commitment proof for Ghost Run simulation" },
-      { mode: "commitment", description: "Verify commitment preimage (zERC20 commitment-nullifier)" },
+      { mode: "zk_rescue", description: "Verify Poseidon commitment proof for rescue operation" },
+      { mode: "zk_ghost_run", description: "Verify Poseidon commitment proof for Ghost Run simulation" },
+      { mode: "commitment", description: "Verify commitment preimage" },
       { mode: "nullifier", description: "Verify nullifier derivation from commitment + wallet" },
       { mode: "full_rescue", description: "Verify ALL cryptographic layers of a rescue operation at once" },
     ],
     verificationKey: {
-      protocol: vk.protocol,
-      curve: vk.curve,
       nPublic: vk.nPublic,
       circuit: "sakura_rescue_v1",
     },
     cryptographicStack: {
       hashFunctions: ["SHA-256 (universal)", "Poseidon over BN254 (ZK-friendly)"],
-      proofSystem: "ZK Commitment Proof (Groth16-compatible structure)",
+      // HONEST LABELING — do NOT claim "Groth16" without pairing verification.
+      proofSystem: "Poseidon commitment proof over BN254 (Groth16-shaped structure for future snarkjs compatibility)",
       auditTrail: "Binary Merkle Tree with O(log n) inclusion proofs",
-      antiReplay: "Cumulative tracking with monotonic index (zERC20-inspired)",
-      techniques: ["Stateless Merkle aggregation", "Dual-hash architecture (SHA-256 + Poseidon)", "ZK commitment proofs (BN254)"],
+      antiReplay: "Cumulative tracking with monotonic index",
+      techniques: [
+        "Stateless Merkle aggregation",
+        "Dual-hash architecture (SHA-256 + Poseidon)",
+        "Poseidon commitment proofs over BN254",
+      ],
+      honestyDisclaimer:
+        "Proof objects use Groth16-shaped A/B/C fields so a future real Groth16 " +
+        "circuit can be dropped in without changing the verifier API surface. " +
+        "Current implementation is a Poseidon commitment proof — NOT a pairing-verified " +
+        "Groth16 proof. The on-chain Memo + hash chain is what provides verifiable audit " +
+        "today. See README.md section 'Cryptographic claims' for the full breakdown.",
     },
   });
 }

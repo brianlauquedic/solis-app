@@ -14,18 +14,20 @@
 import { SolanaAgentKit, KeypairWallet } from "solana-agent-kit";
 import TokenPlugin from "@solana-agent-kit/plugin-token";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import { getNetworkConfig } from "./network-config";
 
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY ?? "";
-export const RPC_URL =
-  process.env.HELIUS_RPC_URL ??
-  `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+
+// RPC_URL now routes through network-config so mainnet↔devnet switching is
+// honored. Falls back to legacy HELIUS_RPC_URL env var if set.
+export const RPC_URL = getNetworkConfig().rpcUrl;
 
 export const SOL_MINT = new PublicKey(
   "So11111111111111111111111111111111111111112"
 );
-export const USDC_MINT = new PublicKey(
-  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
-);
+// USDC mint is network-dependent (mainnet vs devnet). Both are re-exported
+// here for backward compatibility; new code should prefer getNetworkConfig().usdcMint.
+export const USDC_MINT = new PublicKey(getNetworkConfig().usdcMint);
 
 // ── Agent factories ──────────────────────────────────────────────────────────
 
@@ -147,4 +149,40 @@ export async function sakCompressedAirdrop(
 /** Jito MEV tip via MiscPlugin */
 export async function sakJitoTip(agent: NonNullable<SakuraAgent>, amount: number) {
   return (agent as any).methods.tipWithJito(amount);
+}
+
+/**
+ * SPL / SOL transfer via TokenPlugin.
+ * Used by Nonce Guardian's "quick exit" flow when a hostile nonce authority
+ * is detected — sweeps user-consented SPL tokens to a safe address.
+ *
+ * @param agent      Signing agent (createSigningAgent or createFullAgent)
+ * @param toAddress  Destination wallet base58
+ * @param amount     Token units (not raw lamports — plugin handles decimals)
+ * @param mint       Optional SPL mint; omit for native SOL
+ */
+export async function sakTransfer(
+  agent: NonNullable<SakuraAgent>,
+  toAddress: string,
+  amount: number,
+  mint?: string,
+) {
+  return mint
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ? (agent as any).methods.transfer(new PublicKey(toAddress), amount, new PublicKey(mint))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    : (agent as any).methods.transfer(new PublicKey(toAddress), amount);
+}
+
+/**
+ * Jupiter Price V2 — SOL / SPL spot price.
+ * Used by Nonce Guardian + Liquidation Shield for USD valuations.
+ */
+export async function sakFetchPrice(
+  agent: NonNullable<SakuraAgent>,
+  mintBase58: string,
+): Promise<number> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p = await (agent as any).methods.fetchPrice(mintBase58);
+  return typeof p === "number" ? p : Number(p) || 0;
 }

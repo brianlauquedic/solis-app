@@ -21,7 +21,7 @@ import { RPC_URL } from "@/lib/agent";
 import { getConnection, getDynamicPriorityFee } from "@/lib/rpc";
 import { buildRescueApproveTransaction } from "@/lib/liquidation-shield";
 import type { LendingPosition } from "@/lib/liquidation-shield";
-import { fetchMandate, microToUsdc } from "@/lib/mandate-program";
+import { fetchMandate, microToUsdc, buildExecuteRescueIx, deriveMandatePDA } from "@/lib/mandate-program";
 
 export const maxDuration = 120;
 
@@ -432,21 +432,38 @@ export async function POST(req: NextRequest) {
     console.warn("[rescue] Mandate PDA verification failed (non-fatal, SPL delegate passed):", err instanceof Error ? err.message : String(err));
   }
 
-  // ── Step 2: Execute rescue via SPL delegate transfer ───────────────────
-  // The agent holds SPL Token delegate authority (set by buildRescueApproveTransaction).
-  // We transfer rescueUsdc from the user's USDC ATA to the agent's escrow ATA.
+  // ── Step 2: Execute rescue — DUAL-GATE enforced on-chain ───────────────
   //
-  // NOTE: In production, this transfer would target the Kamino/MarginFi repay
-  // vault directly (using KaminoAction.buildRepayTxns from @kamino-finance/klend-sdk).
-  // This demo implementation uses agent escrow as a proxy to demonstrate the
-  // delegate mechanism. The agent ATA would then route to the protocol.
+  //   Gate 1 (SPL Token program): user's USDC ATA has `delegate = agent` and
+  //     a capped `delegated_amount`. The SPL program itself enforces the cap
+  //     at transfer time — cannot be bypassed by any program including ours.
+  //
+  //   Gate 2 (Anchor mandate PDA): the `sakura_mandate` program re-verifies
+  //     (agent identity, remaining ceiling, HF <= trigger) before performing
+  //     the SPL transfer via CPI. Caps are double-counted on-chain.
+  //
+  // If the mandate PDA exists on-chain (Gate 2 available), we route through
+  // the Anchor program. If not (program not yet deployed to this network,
+  // or user hasn't created a mandate), we fall back to direct SPL transfer
+  // relying on Gate 1 alone — with a clear flag in the response.
   let rescueSig: string | null = null;
   let error: string | null = null;
+  let rescueMode: "dual_gate_anchor" | "spl_delegate_only" = "spl_delegate_only";
 
   // Module 16: dynamic priority fee (75th percentile of recent 150 slots)
   const priorityFee = await getDynamicPriorityFee(conn);
 
   const { createAssociatedTokenAccountIdempotentInstruction } = await import("@solana/spl-token");
+
+  // Pre-compute deterministic proof_hash BEFORE tx (decoupled from rescueSig).
+  // This ties the on-chain rescue to the off-chain mandate — recomputable by
+  // anyone holding the canonical input.
+  // Canonical: "RESCUE_PROOF|{mandateTxSig}|{wallet}|{rescueUsdc}|{executionTsPrecomputed}|{agentPubkey}"
+  const executionTsForProof = new Date().toISOString();
+  const proofHashHex = crypto.createHash("sha256")
+    .update(`RESCUE_PROOF|${mandateTxSig ?? "none"}|${wallet}|${rescueUsdc}|${executionTsForProof}|${agentKp.publicKey.toString()}`)
+    .digest("hex");
+  const proofHashBuf = Buffer.from(proofHashHex, "hex");
 
   const buildRescueTx = async (): Promise<{ tx: Transaction; blockhash: string; lastValidBlockHeight: number }> => {
     const userUsdcAta  = getAssociatedTokenAddressSync(usdcMintPubkey, new PublicKey(wallet));
@@ -454,8 +471,6 @@ export async function POST(req: NextRequest) {
     const rescueAmount = BigInt(Math.ceil(rescueUsdc * 1_000_000));
 
     // Module 09: init_if_needed — ensure agent's USDC ATA exists before transfer
-    // createAssociatedTokenAccountIdempotentInstruction: no-op if ATA already exists,
-    // creates it if not. Prevents "account does not exist" failure on first rescue.
     const initAgentAtaIx = createAssociatedTokenAccountIdempotentInstruction(
       agentKp.publicKey, // payer
       agentUsdcAta,      // ATA to create/verify
@@ -463,17 +478,41 @@ export async function POST(req: NextRequest) {
       usdcMintPubkey,    // mint
     );
 
-    const rescueIx = createTransferCheckedInstruction(
-      userUsdcAta,       // source: user's USDC ATA
-      usdcMintPubkey,    // mint
-      agentUsdcAta,      // destination: agent escrow
-      agentKp.publicKey, // authority: agent (delegate via SPL approve)
-      rescueAmount,
-      6                  // USDC decimals
-    );
-
     // Module 16: dynamic priority fee for timely inclusion during congestion
     const computeIx = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: priorityFee });
+
+    // Choose rescue path:
+    // - If mandateOnChain was populated (Anchor PDA fetched successfully),
+    //   use Anchor execute_rescue CPI (dual-gate).
+    // - Otherwise, fall back to raw SPL transfer (single-gate: SPL delegate only).
+    let rescueIx;
+    if (mandateOnChain) {
+      rescueMode = "dual_gate_anchor";
+      const [mandatePda] = deriveMandatePDA(new PublicKey(wallet));
+      // Clamp reported HF to u16 range [0, 65535]; bps of HF up to 655.35
+      const reportedHfBps = Math.max(0, Math.min(65535,
+        Math.round(sanitizedPosition.healthFactor * 100)));
+      rescueIx = buildExecuteRescueIx(
+        mandatePda,
+        agentKp.publicKey,
+        userUsdcAta,
+        agentUsdcAta,           // repay_vault — agent escrow in demo, Kamino/MarginFi vault in prod
+        usdcMintPubkey,
+        rescueAmount,
+        reportedHfBps,
+        proofHashBuf,
+      );
+    } else {
+      rescueMode = "spl_delegate_only";
+      rescueIx = createTransferCheckedInstruction(
+        userUsdcAta,       // source: user's USDC ATA
+        usdcMintPubkey,    // mint
+        agentUsdcAta,      // destination: agent escrow
+        agentKp.publicKey, // authority: agent (SPL delegate only — Gate 1)
+        rescueAmount,
+        6                  // USDC decimals
+      );
+    }
 
     // Module 16: use commitment variable — "finalized" for ≥$1000, "confirmed" otherwise
     const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash(commitment);
@@ -691,6 +730,11 @@ export async function POST(req: NextRequest) {
       triggerHfBps: mandateOnChain.triggerHfBps,
       remainingUsdc: +(mandateOnChain.maxUsdc - mandateOnChain.totalRescued).toFixed(4),
     } : "fetch_failed",
+    // Rescue path actually used on-chain:
+    //   "dual_gate_anchor" = SPL delegate + Anchor program (both gates)
+    //   "spl_delegate_only" = SPL delegate only (Anchor PDA unavailable)
+    rescueMode,
+    proofHash: proofHashHex,
     // Module 06: time-gated audit fields
     mandateTs: mandateTs ?? null,
     executionTs,
@@ -761,6 +805,9 @@ export async function POST(req: NextRequest) {
     timeWindowSec,
     // Anchor mandate PDA on-chain verification result
     mandatePDA: mandateOnChain ?? null,
+    // Which gate was actually invoked for the rescue transfer on-chain
+    rescueMode,
+    proofHash: proofHashHex,
     // Module 09: Token-2022 extension warning (null = standard SPL, safe)
     tokenExtensionWarning,
     error,

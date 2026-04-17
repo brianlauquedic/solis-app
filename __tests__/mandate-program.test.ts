@@ -194,6 +194,25 @@ describe("Execute Rescue Instruction", () => {
     expect(signers).toHaveLength(1);
     expect(signers[0].pubkey.toString()).toBe(TEST_AGENT.toString());
   });
+
+  it("includes token_program + associated_token_program (7 accounts)", () => {
+    const ix = buildExecuteRescueIx(
+      mandatePda, TEST_AGENT, userAta, repayVault, TEST_USDC_MINT,
+      500_000_000n, 120, proofHash
+    );
+    // mandate, agent, userAta, repayVault, usdcMint, token_program, ata_program
+    expect(ix.keys).toHaveLength(7);
+  });
+
+  it("rejects proofHash of wrong length", () => {
+    const badHash = Buffer.alloc(16, 0xab);
+    expect(() =>
+      buildExecuteRescueIx(
+        mandatePda, TEST_AGENT, userAta, repayVault, TEST_USDC_MINT,
+        500_000_000n, 120, badHash
+      )
+    ).toThrow(/32 bytes/);
+  });
 });
 
 describe("Update Mandate Instruction", () => {
@@ -261,19 +280,19 @@ describe("Mandate State Deserialization", () => {
   });
 
   it("returns null for wrong discriminator", () => {
-    const buf = Buffer.alloc(109);
+    const buf = Buffer.alloc(116);
     buf.fill(0); // All zeros — wrong discriminator
     expect(deserializeMandate(buf)).toBeNull();
   });
 
-  it("deserializes well-formed mandate data", () => {
+  it("deserializes well-formed mandate data (116-byte layout, u64 rescue_count)", () => {
     const discriminator = crypto
       .createHash("sha256")
       .update("account:RescueMandate")
       .digest()
       .subarray(0, 8);
 
-    const buf = Buffer.alloc(109);
+    const buf = Buffer.alloc(116);
     let offset = 0;
     discriminator.copy(buf, offset); offset += 8;
     TEST_AUTHORITY.toBuffer().copy(buf, offset); offset += 32;
@@ -281,7 +300,7 @@ describe("Mandate State Deserialization", () => {
     buf.writeBigUInt64LE(1_000_000_000n, offset); offset += 8;
     buf.writeUInt16LE(150, offset); offset += 2;
     buf.writeBigUInt64LE(250_000_000n, offset); offset += 8; // totalRescued
-    buf.writeUInt8(3, offset); offset += 1; // rescueCount
+    buf.writeBigUInt64LE(3n, offset); offset += 8; // rescueCount (u64)
     buf.writeBigInt64LE(1700000000n, offset); offset += 8; // createdAt
     buf.writeBigInt64LE(1700001000n, offset); offset += 8; // lastRescueAt
     buf.writeUInt8(1, offset); offset += 1; // isActive
@@ -294,9 +313,35 @@ describe("Mandate State Deserialization", () => {
     expect(state!.maxUsdc).toBe(1_000_000_000n);
     expect(state!.triggerHfBps).toBe(150);
     expect(state!.totalRescued).toBe(250_000_000n);
-    expect(state!.rescueCount).toBe(3);
+    expect(state!.rescueCount).toBe(3n);
     expect(state!.isActive).toBe(true);
     expect(state!.bump).toBe(254);
+  });
+
+  it("handles rescue_count > 255 without overflow (was u8 bug)", () => {
+    const discriminator = crypto
+      .createHash("sha256")
+      .update("account:RescueMandate")
+      .digest()
+      .subarray(0, 8);
+
+    const buf = Buffer.alloc(116);
+    let offset = 0;
+    discriminator.copy(buf, offset); offset += 8;
+    TEST_AUTHORITY.toBuffer().copy(buf, offset); offset += 32;
+    TEST_AGENT.toBuffer().copy(buf, offset); offset += 32;
+    buf.writeBigUInt64LE(1_000_000_000n, offset); offset += 8;
+    buf.writeUInt16LE(150, offset); offset += 2;
+    buf.writeBigUInt64LE(0n, offset); offset += 8;
+    // rescue_count = 9999 — would overflow u8, must decode correctly as u64
+    buf.writeBigUInt64LE(9999n, offset); offset += 8;
+    buf.writeBigInt64LE(1700000000n, offset); offset += 8;
+    buf.writeBigInt64LE(1700001000n, offset); offset += 8;
+    buf.writeUInt8(1, offset); offset += 1;
+    buf.writeUInt8(254, offset);
+
+    const state = deserializeMandate(buf);
+    expect(state!.rescueCount).toBe(9999n);
   });
 });
 
@@ -307,7 +352,7 @@ describe("Format Mandate State", () => {
     maxUsdc: 1_000_000_000n, // $1000
     triggerHfBps: 150,
     totalRescued: 250_000_000n, // $250
-    rescueCount: 3,
+    rescueCount: 3n,
     createdAt: 1700000000n,
     lastRescueAt: 1700001000n,
     isActive: true,

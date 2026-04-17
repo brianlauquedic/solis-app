@@ -22,17 +22,22 @@
 
 import {
   Connection,
+  Keypair,
   PublicKey,
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
 import {
   createApproveInstruction,
+  createTransferCheckedInstruction,
   getAssociatedTokenAddressSync,
+  getAccount,
 } from "@solana/spl-token";
 import { createSolanaRpc } from "@solana/kit";
 import { RPC_URL, USDC_MINT, createReadOnlyAgent } from "./agent";
 import { getDynamicPriorityFee } from "./rpc";
+import { auditTree } from "./merkle-audit";
+import { sha256 } from "./crypto-proof";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -819,6 +824,234 @@ export async function buildRescueApproveTransaction(
     feePayer: walletPubkey,
   }).add(approveIx, memoIx);
   return { tx, blockhash, lastValidBlockHeight };
+}
+
+// ── Rescue executor (real on-chain execution, not simulation) ───────────────
+
+export interface RescueExecutionResult {
+  /** "executed" = fully on-chain, "refused_*" = pre-flight guard tripped */
+  status:
+    | "executed"
+    | "refused_no_mandate"
+    | "refused_mandate_exceeded"
+    | "refused_delegate_invalid"
+    | "refused_no_agent_key"
+    | "refused_sim_failed"
+    | "tx_failed";
+  /** Final rescue transaction signature (only on status=executed) */
+  txSignature?: string;
+  /** USDC amount actually moved (in USDC units, 6-decimal) */
+  repayUsdc: number;
+  /** Memo Solscan URL for the execution audit record */
+  memoUrl?: string;
+  /** Merkle tree leaf index + current root (for independent audit verification) */
+  merkle?: { leafIndex: number; root: string; leafHash: string };
+  /** Deterministic executionId = sha256(mandateTxSig|position|repayUsdc|ts) */
+  executionId: string;
+  error?: string;
+}
+
+/**
+ * Verify that the rescue mandate (SPL delegate) is still valid on-chain.
+ *
+ * Real verification — reads user's USDC associated token account and checks:
+ *   1. delegate pubkey === agentAddress (the agent we're about to use)
+ *   2. delegatedAmount >= requestedRepayUsdc (mandate has enough allowance)
+ *
+ * This is NOT a soft check. If the user revoked via SPL revoke or spent the
+ * allowance elsewhere, the token program itself would reject the transfer;
+ * this pre-flight saves a wasted transaction and gives a clear error.
+ */
+export async function verifyRescueMandate(
+  walletAddress: string,
+  agentAddress: string,
+  requestedRepayUsdc: number,
+  rpcUrl?: string,
+): Promise<{ valid: boolean; reason?: string; delegatedAmount: number }> {
+  try {
+    const conn = new Connection(rpcUrl ?? RPC_URL, "confirmed");
+    const walletPubkey = new PublicKey(walletAddress);
+    const agentPubkey  = new PublicKey(agentAddress);
+    const userUsdcAta  = getAssociatedTokenAddressSync(USDC_MINT, walletPubkey);
+
+    const ata = await getAccount(conn, userUsdcAta).catch(() => null);
+    if (!ata) return { valid: false, reason: "ata_not_found", delegatedAmount: 0 };
+
+    const delegate = ata.delegate?.toString() ?? "";
+    const delegated = Number(ata.delegatedAmount) / 1_000_000;
+
+    if (delegate !== agentPubkey.toString()) {
+      return { valid: false, reason: "delegate_mismatch_or_revoked", delegatedAmount: delegated };
+    }
+    if (delegated < requestedRepayUsdc) {
+      return { valid: false, reason: "allowance_insufficient", delegatedAmount: delegated };
+    }
+    return { valid: true, delegatedAmount: delegated };
+  } catch (err) {
+    console.error("[liquidation-shield] verifyRescueMandate error:", err);
+    return { valid: false, reason: "rpc_error", delegatedAmount: 0 };
+  }
+}
+
+/**
+ * Execute a real rescue on-chain.
+ *
+ * Flow (all on-chain, NOT a simulation):
+ *   1. Load platform agent keypair from SAKURA_AGENT_PRIVATE_KEY
+ *   2. Verify SPL delegate is still valid & mandate covers requested amount
+ *   3. Re-simulate rescue (safety net) — refuse if simulation fails
+ *   4. Build a single atomic transaction:
+ *        a. transferChecked(USDC, user_ata → agent_ata) — agent acts as delegate,
+ *           SPL token program enforces the mandate allowance as a hard limit
+ *        b. Memo instruction embedding {event: rescue_executed, rescueId,
+ *           executionId, mandateTx, position, repayUsdc, chainProof}
+ *   5. Agent signs + sendRawTransaction (agent pays gas)
+ *   6. Add leaf to Merkle audit tree (operationType: "rescue")
+ *
+ * Two-phase rescue design: this pulls USDC from user within the delegated
+ * allowance. The second phase (Kamino/MarginFi repayObligationLiquidity)
+ * follows in a separate signed tx using the now-agent-held USDC; that step
+ * uses protocol SDKs and is invoked by a follow-up API route.
+ *
+ * Returns a structured RescueExecutionResult — never throws for expected
+ * failure modes (missing key, mandate invalid, sim failed); those yield a
+ * `refused_*` status. Only unexpected RPC errors yield `tx_failed`.
+ */
+export async function executeRescue(params: {
+  position: LendingPosition;
+  walletAddress: string;
+  config: ShieldConfig;
+  repayUsdc: number;
+  rpcUrl?: string;
+}): Promise<RescueExecutionResult> {
+  const { position, walletAddress, config, repayUsdc } = params;
+  const timestamp = new Date().toISOString();
+
+  // Deterministic executionId — binds mandate + position + amount + time.
+  // Downstream observers can recompute this from the Memo payload and
+  // independently verify nothing was forged.
+  const executionId = sha256(
+    `${config.mandateTxSig ?? "no-mandate"}|${position.accountAddress}|${repayUsdc}|${timestamp}`,
+  ).slice(0, 32);
+
+  // ── Step 1: Agent keypair ────────────────────────────────────────────────
+  const rawKey = process.env.SAKURA_AGENT_PRIVATE_KEY;
+  if (!rawKey) {
+    return { status: "refused_no_agent_key", repayUsdc, executionId,
+      error: "SAKURA_AGENT_PRIVATE_KEY not configured" };
+  }
+  let agentKeypair: Keypair;
+  try {
+    agentKeypair = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(rawKey) as number[]));
+  } catch {
+    return { status: "refused_no_agent_key", repayUsdc, executionId,
+      error: "Invalid SAKURA_AGENT_PRIVATE_KEY format" };
+  }
+
+  // ── Step 2: Mandate validity (real on-chain read) ────────────────────────
+  if (!config.mandateTxSig) {
+    return { status: "refused_no_mandate", repayUsdc, executionId,
+      error: "No rescue mandate on file — call buildRescueApproveTransaction first" };
+  }
+  if (repayUsdc > config.approvedUsdc) {
+    return { status: "refused_mandate_exceeded", repayUsdc, executionId,
+      error: `Repay $${repayUsdc} exceeds mandate limit $${config.approvedUsdc}` };
+  }
+  const mandate = await verifyRescueMandate(
+    walletAddress, agentKeypair.publicKey.toString(), repayUsdc, params.rpcUrl,
+  );
+  if (!mandate.valid) {
+    return { status: "refused_delegate_invalid", repayUsdc, executionId,
+      error: `Mandate invalid: ${mandate.reason}` };
+  }
+
+  // ── Step 3 + 4: Build tx, simulate, send ─────────────────────────────────
+  const conn = new Connection(params.rpcUrl ?? RPC_URL, "confirmed");
+  const walletPubkey = new PublicKey(walletAddress);
+  const userUsdcAta  = getAssociatedTokenAddressSync(USDC_MINT, walletPubkey);
+  const agentUsdcAta = getAssociatedTokenAddressSync(USDC_MINT, agentKeypair.publicKey);
+  const repayLamports = BigInt(Math.round(repayUsdc * 1_000_000));
+
+  // transferChecked with agent as authority (SPL delegate pattern)
+  const transferIx = createTransferCheckedInstruction(
+    userUsdcAta,               // source (user ATA)
+    USDC_MINT,                 // mint (safety: must match source)
+    agentUsdcAta,              // destination (agent ATA, holds rescue capital)
+    agentKeypair.publicKey,    // authority (agent is delegate)
+    repayLamports,             // amount (token program enforces ≤ allowance)
+    6,                         // USDC has 6 decimals
+  );
+
+  // ── Audit Memo with full chain proof ─────────────────────────────────────
+  const memoPayload = JSON.stringify({
+    event: "rescue_executed",
+    v: 1,
+    executionId,
+    rescueMandate: config.mandateTxSig,
+    position: {
+      protocol: position.protocol,
+      account: position.accountAddress.slice(0, 12),
+      hfBefore: position.healthFactor,
+      hfAfter:  position.postRescueHealthFactor ?? null,
+    },
+    repayUsdc,
+    agent: agentKeypair.publicKey.toString().slice(0, 12),
+    ts: timestamp,
+  });
+  // Memo truncation guard (Solana memo program limit = 566 bytes)
+  const memoBytes = new TextEncoder().encode(memoPayload);
+  const safeMemo  = memoBytes.length > 560
+    ? new TextDecoder().decode(memoBytes.slice(0, 560)).replace(/\uFFFD+$/, "")
+    : memoPayload;
+  const memoIx = new TransactionInstruction({
+    keys: [{ pubkey: agentKeypair.publicKey, isSigner: true, isWritable: false }],
+    programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+    data: Buffer.from(safeMemo, "utf-8"),
+  });
+
+  try {
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash("confirmed");
+    const tx = new Transaction({
+      recentBlockhash: blockhash,
+      feePayer: agentKeypair.publicKey,
+    }).add(transferIx, memoIx);
+
+    // Pre-flight simulation — refuse to send if it would fail
+    tx.sign(agentKeypair);
+    const sim = await conn.simulateTransaction(tx);
+    if (sim.value.err) {
+      return { status: "refused_sim_failed", repayUsdc, executionId,
+        error: `Simulation err: ${JSON.stringify(sim.value.err)}` };
+    }
+
+    // Send
+    const sig = await conn.sendRawTransaction(tx.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: "confirmed",
+    });
+    await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
+
+    // Merkle tree: operationHash binds execution to mandate + position
+    const operationHash = sha256(`${executionId}|${sig}|${position.accountAddress}|${repayUsdc}`);
+    const leafRecord = auditTree.addOperation("rescue", operationHash, timestamp);
+
+    return {
+      status: "executed",
+      txSignature: sig,
+      repayUsdc,
+      memoUrl: `https://solscan.io/tx/${sig}`,
+      merkle: {
+        leafIndex: leafRecord.leaf.index,
+        root: leafRecord.root,
+        leafHash: leafRecord.leaf.leafHash,
+      },
+      executionId,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[liquidation-shield] executeRescue tx error:", msg);
+    return { status: "tx_failed", repayUsdc, executionId, error: "rescue_tx_failed" };
+  }
 }
 
 // ── Main monitor function ─────────────────────────────────────────────────────

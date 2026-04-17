@@ -49,7 +49,7 @@ export interface RescueMandateState {
   maxUsdc: bigint;          // micro-USDC
   triggerHfBps: number;     // e.g., 150 = HF 1.50
   totalRescued: bigint;     // cumulative micro-USDC rescued
-  rescueCount: number;
+  rescueCount: bigint;      // u64 — supports unlimited rescues (was u8 before bug fix)
   createdAt: bigint;        // Unix timestamp
   lastRescueAt: bigint;
   isActive: boolean;
@@ -66,10 +66,13 @@ const MANDATE_DISCRIMINATOR = crypto
 
 /**
  * Deserialize on-chain RescueMandate account data.
- * Layout: 8 (discriminator) + 32 + 32 + 8 + 2 + 8 + 1 + 8 + 8 + 1 + 1 = 109 bytes
+ * Layout: 8 (discriminator) + 32 + 32 + 8 + 2 + 8 + 8 + 8 + 8 + 1 + 1 = 116 bytes
+ * (rescue_count widened from u8 to u64 to prevent overflow after 256 rescues)
  */
+export const MANDATE_ACCOUNT_SIZE = 116;
+
 export function deserializeMandate(data: Buffer): RescueMandateState | null {
-  if (data.length < 109) return null;
+  if (data.length < MANDATE_ACCOUNT_SIZE) return null;
 
   // Verify discriminator
   const disc = data.subarray(0, 8);
@@ -86,8 +89,8 @@ export function deserializeMandate(data: Buffer): RescueMandateState | null {
   offset += 2;
   const totalRescued = data.readBigUInt64LE(offset);
   offset += 8;
-  const rescueCount = data.readUInt8(offset);
-  offset += 1;
+  const rescueCount = data.readBigUInt64LE(offset);
+  offset += 8;
   const createdAt = data.readBigInt64LE(offset);
   offset += 8;
   const lastRescueAt = data.readBigInt64LE(offset);
@@ -180,7 +183,21 @@ export function buildCreateMandateIx(
 /**
  * Build execute_rescue instruction.
  * Agent signs this to execute a rescue transfer.
+ *
+ * Account order MUST match the Anchor program's ExecuteRescue struct:
+ *   1. mandate PDA (writable)
+ *   2. agent (signer, SPL delegate on user_usdc_ata)
+ *   3. user_usdc_ata (writable, source)
+ *   4. repay_vault (writable, destination, must be USDC mint)
+ *   5. usdc_mint
+ *   6. token_program
+ *   7. associated_token_program
  */
+export const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+export const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey(
+  "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+);
+
 export function buildExecuteRescueIx(
   mandatePda: PublicKey,
   agent: PublicKey,
@@ -191,14 +208,16 @@ export function buildExecuteRescueIx(
   reportedHfBps: number,
   proofHash: Buffer,        // 32 bytes SHA-256
 ): TransactionInstruction {
+  if (proofHash.length !== 32) {
+    throw new Error(`proofHash must be exactly 32 bytes, got ${proofHash.length}`);
+  }
+
   // Serialize: rescue_amount (u64) + reported_hf_bps (u16) + proof_hash ([u8; 32])
   const data = Buffer.alloc(8 + 8 + 2 + 32);
   IX_EXECUTE.copy(data, 0);
   data.writeBigUInt64LE(rescueAmount, 8);
   data.writeUInt16LE(reportedHfBps, 16);
   proofHash.copy(data, 18, 0, 32);
-
-  const TOKEN_PROGRAM_ID = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 
   return new TransactionInstruction({
     programId: SAKURA_MANDATE_PROGRAM_ID,
@@ -209,6 +228,7 @@ export function buildExecuteRescueIx(
       { pubkey: repayVault, isSigner: false, isWritable: true },
       { pubkey: usdcMint, isSigner: false, isWritable: false },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
     ],
     data,
   });
@@ -296,7 +316,9 @@ export function formatMandateState(state: RescueMandateState) {
     maxUsdc: microToUsdc(state.maxUsdc),
     triggerHf: state.triggerHfBps / 100,
     totalRescued: microToUsdc(state.totalRescued),
-    rescueCount: state.rescueCount,
+    // rescueCount is bigint (u64 on-chain); convert for JSON. Number is safe
+    // up to 2^53 — more than enough for rescue counters.
+    rescueCount: Number(state.rescueCount),
     remainingUsdc: microToUsdc(state.maxUsdc - state.totalRescued),
     createdAt: new Date(Number(state.createdAt) * 1000).toISOString(),
     lastRescueAt: state.lastRescueAt > 0

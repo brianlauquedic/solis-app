@@ -15,6 +15,7 @@
  */
 
 import { sha256 } from "./crypto-proof";
+import { persistLeaf, persistAnchor, loadMerkleState, type MerkleAnchorRecord } from "./merkle-persistence";
 
 export interface MerkleLeaf {
   index: number;
@@ -76,7 +77,28 @@ class MerkleAuditTree {
     };
     this.leaves.push(leaf);
     const root = this.computeRoot();
+    // Fire-and-forget persistence — survives Vercel cold starts.
+    // No await: we want addOperation() to stay synchronous for hot paths.
+    void persistLeaf(leaf);
     return { leaf, root, treeSize: this.leaves.length };
+  }
+
+  /**
+   * Rehydrate tree from persistent storage (Upstash Redis).
+   * Call once at server startup; safely degrades to empty tree if Redis not configured.
+   * Idempotent-ish: overwrites current in-memory state with persisted state.
+   */
+  async hydrateFromPersistence(): Promise<{ leafCount: number; anchorCount: number }> {
+    const { leaves, anchors } = await loadMerkleState();
+    if (leaves.length > 0) this.leaves = leaves;
+    if (anchors.length > 0) {
+      this.roots = anchors.map(a => ({
+        root: a.root,
+        leafCount: a.leafCount,
+        anchoredAt: a.anchoredAt,
+      }));
+    }
+    return { leafCount: this.leaves.length, anchorCount: this.roots.length };
   }
 
   /**
@@ -150,11 +172,16 @@ class MerkleAuditTree {
    * Record that the current root has been anchored on-chain.
    */
   recordAnchor(memoSig: string): void {
-    this.roots.push({
-      root: this.computeRoot(),
-      leafCount: this.leaves.length,
+    const root = this.computeRoot();
+    const leafCount = this.leaves.length;
+    this.roots.push({ root, leafCount, anchoredAt: memoSig });
+    const record: MerkleAnchorRecord = {
+      root,
+      leafCount,
       anchoredAt: memoSig,
-    });
+      ts: new Date().toISOString(),
+    };
+    void persistAnchor(record);
   }
 
   /**

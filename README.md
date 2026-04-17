@@ -78,6 +78,28 @@ No other product rescues positions across Kamino + MarginFi with pre-authorized 
 
 ---
 
+## Technical Honesty — What's Real, What's Forward-Compatible
+
+Sakura's on-chain integrations are real. The cryptographic layer is honest about its current form:
+
+| Claim | What it actually is today | Production upgrade path |
+|---|---|---|
+| `getProgramAccounts` nonce scan | ✅ **Real** — native Solana RPC, same primitive as Drift exploit | none needed |
+| Kamino / MarginFi health factor | ✅ **Real** — via official `@kamino-finance/klend-sdk` + `@mrgnlabs/marginfi-client-v2` | none needed |
+| `simulateTransaction` previews | ✅ **Real** — native Solana RPC against live mainnet state | none needed |
+| SPL Token `approve` delegate | ✅ **Real** — token program enforces allowance as hard constraint | none needed |
+| Anchor Mandate PDA | ✅ **Real** — program `AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp` on Devnet | deploy to Mainnet |
+| Solana Memo audit anchor | ✅ **Real** — every operation digest written immutably on-chain | none needed |
+| Merkle audit tree + persistence | ✅ **Real** — SHA-256 binary tree with Upstash Redis persistence | none needed |
+| "Groth16 ZK proof" | ⚠️ **Poseidon commitment chain in Groth16 JSON shape** — binding, nullifier, anti-replay, but NOT a real pairing check; no trusted setup, no `.zkey` | circom circuit → snarkjs → `groth16-solana` on-chain verifier |
+| Rescue execution | ✅ **Real delegated `transferChecked` + Memo** inside mandate allowance | Phase 2: Kamino/MarginFi `repayObligationLiquidity` CPI |
+
+The `lib/groth16-verify.ts` file carries an in-source disclaimer matching this table. Verification is hash-equality against deterministic Poseidon derivations — it proves the prover knew a witness satisfying the circuit constraints, but does NOT hide the witness (small input spaces are enumerable). We chose this framing for the hackathon over vaporware real-ZK claims.
+
+Network switching: set `SOLANA_NETWORK=devnet` or `SOLANA_NETWORK=mainnet-beta` (default) — all on-chain operations route through `lib/network-config.ts`.
+
+---
+
 ## Architecture
 
 ### Three-Layer System
@@ -118,6 +140,11 @@ flowchart TB
 ### Liquidation Shield — Dual-Gate Rescue Flow
 
 The rescue path enforces **two independent on-chain authorization gates** before any token moves. Each gate is separately verifiable against Solana state and cannot be forged.
+
+- **Gate 1 — SPL Token delegate**: user's USDC ATA has `delegate = agent` with a capped `delegated_amount`. Enforced by the SPL Token program itself at transfer time.
+- **Gate 2 — Anchor `sakura_mandate` PDA**: re-verifies (agent identity, remaining ceiling, reported HF ≤ trigger, user ATA owner, delegate pointer) and performs the USDC transfer via CPI.
+
+The rescue API performs the transfer through the Anchor program whenever the mandate PDA is fetched successfully (`rescueMode: "dual_gate_anchor"`). If the Anchor PDA is unreachable on a given network, the response explicitly reports `rescueMode: "spl_delegate_only"` rather than silently claiming both gates were used.
 
 ```mermaid
 sequenceDiagram

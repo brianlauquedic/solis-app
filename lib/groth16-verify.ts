@@ -1,14 +1,30 @@
 /**
  * ZK Commitment Proof Engine — Cryptographic Proof for Sakura Operations
  *
- * Implements a zero-knowledge commitment proof using Poseidon hashes over the
- * BN254 scalar field. The proof structure follows Groth16 format (compatible
- * with Solana's alt_bn128 syscalls and snarkjs/circom toolchain) so that it
- * can be upgraded to full elliptic curve Groth16 proofs in production.
+ * ⚠️  HONESTY DISCLAIMER (2026-04-17) ⚠️
+ * ─────────────────────────────────────────────────────────────────────────
+ * This file is NOT a real Groth16 prover/verifier. It is a **Poseidon-based
+ * deterministic commitment chain** that borrows the Groth16 JSON shape
+ * (π_A, π_B, π_C, BN254 field) so the on-chain format is forward-compatible
+ * with snarkjs/circom + `groth16-solana`.
  *
- * Current implementation: Poseidon-based deterministic commitment proofs.
- * Production upgrade path: circom circuit compilation → snarkjs Groth16 prover
- * → on-chain verification via groth16-solana crate (~200K CU on Solana).
+ * What this DOES give you (real, verifiable):
+ *   ✓ Binding commitment: Poseidon(amount, healthFactor, salt) = commitmentHash
+ *   ✓ Nullifier: deterministic anti-replay tag per (wallet, commitment)
+ *   ✓ Prover-side constraint check (amount ≤ max, HF ≤ threshold)
+ *   ✓ Memo anchoring: proof digest written immutably on-chain
+ *
+ * What this does NOT give you:
+ *   ✗ NO real elliptic curve scalar multiplication
+ *   ✗ NO real pairing check e(π_A, π_B) = e(α, β)·e(Σ IC·pub, γ)·e(π_C, δ)
+ *   ✗ NO trusted setup, NO .zkey, NO snarkjs witness generation
+ *   ✗ NO zero-knowledge property — inputs are hash-committed, not zk-hidden
+ *       (a brute-force attacker with a small input space CAN enumerate)
+ *
+ * Production upgrade path (real ZK): circom circuit → snarkjs Groth16 prover
+ * → on-chain verification via `groth16-solana` crate (~200K CU on Solana).
+ * Current implementation: commitment/nullifier chain with Groth16-shaped payload.
+ * ─────────────────────────────────────────────────────────────────────────
  *
  * The proof cryptographically binds private inputs to public commitments,
  * ensuring operations were executed within authorized parameters WITHOUT
@@ -249,6 +265,9 @@ export function generateRescueProof(witness: PrivateWitness, maxAmount: number, 
  *   3. All proof fields are non-empty and in the correct field
  */
 export function verifyRescueProof(proof: Groth16Proof, publicSignals: PublicSignals): boolean {
+  // ⚠️ This is hash-equality verification, NOT a real pairing check.
+  // See header DISCLAIMER. Production upgrade → replace body with
+  // alt_bn128 pairing via groth16-solana (~200K CU).
   try {
     // Verify proof structure
     if (proof.protocol !== "groth16" || proof.curve !== "bn128") return false;
