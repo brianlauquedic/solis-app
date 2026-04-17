@@ -13,7 +13,7 @@ const CONTENT = {
       {
         heading: "1. Introduction",
         body: [
-          `These Terms of Service ("Terms") constitute a binding legal agreement between you ("User," "you," or "your") and Sakura ("Sakura," "we," "us," or "our") governing your access to and use of Sakura's AI-powered Solana DeFi safety advisor platform, including the web application, AI analysis features, security scanning tools, and all associated interfaces (collectively, the "Services").`,
+          `These Terms of Service ("Terms") constitute a binding legal agreement between you ("User," "you," or "your") and Sakura ("Sakura," "we," "us," or "our") governing your access to and use of Sakura Mutual — our zero-knowledge insurance settlement protocol on Solana — and its associated Solana-native defense suite (Nonce Guardian, Ghost Run, Liquidation Shield), including the web application, the mutual-pool smart contract, AI analysis features, and all associated interfaces (collectively, the "Services").`,
           "Our Privacy Policy is incorporated into these Terms by reference and forms part of this agreement.",
           "By accessing or using the Services, you confirm that you are at least 18 years of age, that you have read and understood these Terms, and that you agree to be bound by them.",
           `We may update these Terms from time to time. Continued use of the Services after any update constitutes acceptance of the revised Terms.`,
@@ -140,7 +140,7 @@ const CONTENT = {
       {
         heading: "1. 簡介",
         body: [
-          `本使用條款（「條款」）構成您（「使用者」、「您」）與 Sakura（「Sakura」、「我們」或「我方」）之間的具有約束力的法律協議，規範您訪問和使用 Sakura 的 AI 驅動 Solana DeFi 安全顧問平台，包括網頁應用程式、AI 分析功能、安全掃描工具及所有相關介面（統稱「服務」）。`,
+          `本使用條款（「條款」）構成您（「使用者」、「您」）與 Sakura（「Sakura」、「我們」或「我方」）之間具有約束力的法律協議，規範您訪問和使用 Sakura Mutual — 我們位於 Solana 的零知識保險結算協議，及其配套 Solana 原生防禦套件（Nonce Guardian、Ghost Run、Liquidation Shield），包括網頁應用程式、互助池智能合約、AI 分析功能及所有相關介面（統稱「服務」）。`,
           "我們的隱私政策已納入本條款並構成本協議的一部分。",
           "訪問或使用服務即表示您確認年滿18歲，已閱讀並理解本條款，並同意受其約束。",
           "我們可能不時更新本條款。在任何更新後繼續使用服務，即表示接受修訂後的條款。",
@@ -267,7 +267,7 @@ const CONTENT = {
       {
         heading: "1. はじめに",
         body: [
-          `本利用規約（「規約」）は、お客様（「ユーザー」「お客様」）とSakura（「Sakura」「当社」）の間で締結される拘束力のある法的合意であり、SakuraのAI搭載Solana DeFiセーフティアドバイザープラットフォーム（ウェブアプリケーション、AI分析機能、セキュリティスキャンツール、および関連インターフェース、総称して「サービス」）へのアクセスおよび利用を規定します。`,
+          `本利用規約（「規約」）は、お客様（「ユーザー」「お客様」）とSakura（「Sakura」「当社」）の間で締結される拘束力のある法的合意であり、Sakura Mutual — Solana上のゼロ知識保険決済プロトコル — およびその付属のSolanaネイティブ防衛スイート（Nonce Guardian、Ghost Run、Liquidation Shield）、ウェブアプリケーション、相互プールスマートコントラクト、AI分析機能、および関連インターフェース（総称して「サービス」）へのアクセスおよび利用を規定します。`,
           "当社のプライバシーポリシーは参照により本規約に組み込まれ、本合意の一部を構成します。",
           "サービスにアクセスまたは利用することで、お客様は18歳以上であること、本規約を読み理解したこと、および本規約に拘束されることに同意することを確認します。",
           "当社は随時本規約を更新することがあります。更新後もサービスを継続して利用することで、改訂された規約への同意とみなされます。",

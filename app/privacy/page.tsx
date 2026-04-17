@@ -12,8 +12,8 @@ const CONTENT = {
       {
         heading: "1. Overview",
         body: [
-          `This Privacy Policy ("Policy") describes how Sakura ("Sakura," "we," "us," or "our") collects, uses, stores, and shares information when you access or use our AI-powered Solana DeFi safety advisor platform, including the web application, AI analysis features, security scanning tools, and all associated interfaces (collectively, the "Services").`,
-          `Sakura is a read-only advisor. We do not hold custody of your assets, execute trades on your behalf, or control your wallet. Your Phantom wallet remains entirely under your control at all times.`,
+          `This Privacy Policy ("Policy") describes how Sakura ("Sakura," "we," "us," or "our") collects, uses, stores, and shares information when you access or use Sakura Mutual — our zero-knowledge insurance settlement protocol on Solana and its associated Solana-native defense suite (Nonce Guardian, Ghost Run, Liquidation Shield), including the web application, the mutual-pool smart contract, AI analysis features, and all associated interfaces (collectively, the "Services").`,
+          `Sakura is non-custodial. We do not hold custody of your assets. Insurance claims on Sakura Mutual are settled by on-chain Groth16 ZK-proof verification (alt_bn128_pairing syscall), not by human discretion. Any on-chain action Sakura takes on your behalf — Ghost Run execution, Liquidation Shield rescue, or claim repayment — occurs only within your explicit per-transaction signature or your pre-authorized SPL Token Approve spending cap. Your Phantom wallet remains entirely under your control at all times.`,
           `By using the Services, you acknowledge that you have read and understood this Policy and consent to the collection and use of your information as described herein. This Policy should be read alongside our Terms of Service.`,
         ],
       },
@@ -135,8 +135,8 @@ const CONTENT = {
       {
         heading: "1. 概述",
         body: [
-          `本隱私政策（「政策」）說明 Sakura（「Sakura」、「我們」或「我方」）在您訪問或使用我們的 AI 驅動 Solana DeFi 安全顧問平台時，如何收集、使用、儲存和分享資訊，包括網頁應用程式、AI 分析功能、安全掃描工具及所有相關介面（統稱「服務」）。`,
-          `Sakura 是唯讀顧問。我們不持有您的資產託管、不代表您執行交易，也不控制您的錢包。您的 Phantom 錢包始終完全由您掌控。`,
+          `本隱私政策（「政策」）說明 Sakura（「Sakura」、「我們」或「我方」）在您訪問或使用 Sakura Mutual — 我們位於 Solana 的零知識保險結算協議，及其配套 Solana 原生防禦套件（Nonce Guardian、Ghost Run、Liquidation Shield）時，如何收集、使用、儲存和分享資訊，包括網頁應用程式、互助池智能合約、AI 分析功能及所有相關介面（統稱「服務」）。`,
+          `Sakura 為非託管架構。我們不持有您的資產。Sakura Mutual 的保險理賠由鏈上 Groth16 ZK 證明驗證（alt_bn128_pairing 系統呼叫）自動結算，不由任何人工裁決。Sakura 代您執行的任何鏈上動作——Ghost Run 執行、Liquidation Shield 救援、理賠自動還款——皆需您逐筆明確簽名，或在您預先授權的 SPL Token Approve 支出上限內進行。您的 Phantom 錢包始終完全由您掌控。`,
           `使用服務即表示您已閱讀並理解本政策，並同意按照本政策所述方式收集和使用您的資訊。`,
         ],
       },
@@ -258,8 +258,8 @@ const CONTENT = {
       {
         heading: "1. 概要",
         body: [
-          `本プライバシーポリシー（「ポリシー」）は、Sakura（「Sakura」「当社」）がSakuraのAI搭載Solana DeFiセーフティアドバイザープラットフォーム（ウェブアプリケーション、AI分析機能、セキュリティスキャンツール、および関連インターフェース、総称して「サービス」）へのアクセスまたは利用時に、情報をどのように収集・使用・保存・共有するかを説明します。`,
-          `Sakuraは読み取り専用のアドバイザーです。当社はお客様の資産を預かることなく、お客様に代わってトレードを実行することもなく、ウォレットを制御することもありません。Phantomウォレットは常にお客様が完全に管理します。`,
+          `本プライバシーポリシー（「ポリシー」）は、Sakura（「Sakura」「当社」）が Sakura Mutual — Solana上のゼロ知識保険決済プロトコル — およびその付属のSolanaネイティブ防衛スイート（Nonce Guardian、Ghost Run、Liquidation Shield）、ウェブアプリケーション、相互プールスマートコントラクト、AI分析機能、関連インターフェース（総称して「サービス」）へのアクセスまたは利用時に、情報をどのように収集・使用・保存・共有するかを説明します。`,
+          `Sakuraは非カストディアルです。お客様の資産を預かることはありません。Sakura Mutualの保険請求は、オンチェーンのGroth16 ZK証明検証（alt_bn128_pairingシステムコール）によって自動決済され、人間の裁量で判断されることはありません。Sakuraがお客様に代わって実行するオンチェーン動作——Ghost Run実行、Liquidation Shield救済、請求時の自動返済——はすべて、お客様の都度署名、または事前に承認されたSPL Token Approveの支出上限内でのみ行われます。Phantomウォレットは常にお客様が完全に管理します。`,
           `サービスを利用することで、お客様は本ポリシーを読み理解し、記載された方法での情報収集・利用に同意したものとみなされます。`,
         ],
       },
