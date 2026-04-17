@@ -344,8 +344,8 @@ Includes: CRITICAL foreign-authority nonce threat, Ghost Run 3-step simulation (
 ## Local Development
 
 ```bash
-git clone https://github.com/brianlauquedic/solis-app
-cd solis-app
+git clone https://github.com/brianlauquedic/sakura-app
+cd sakura-app
 npm install
 cp .env.example .env.local   # fill in your keys
 npm run dev
