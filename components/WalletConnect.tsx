@@ -40,8 +40,9 @@ const PROTOCOLS = [
 ];
 
 const STATS = [
-  // v0.3: first-bounded-agentic / per-action ZK cost / Solana DeFi TVL reach / 100% gated
-  { numValue: 1,   suffix: "",   labelKey: "statLabel1" as const },
+  // v0.3 consumer-readable framing: number of wallets shipping agent modes /
+  // per-action verification cost / Solana DeFi TVL reach / gate pass rate.
+  { numValue: 4,   suffix: "+",  labelKey: "statLabel1" as const },
   { numValue: 116, suffix: "",   labelKey: "statLabel2" as const },
   { numValue: 4,   suffix: "B+", labelKey: "statLabel3" as const },
   { numValue: 100, suffix: "%",  labelKey: "statLabel4" as const },

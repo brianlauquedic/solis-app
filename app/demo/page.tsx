@@ -7,19 +7,19 @@ import ArchitectureDiagram from "@/components/ArchitectureDiagram";
 import type { CryptoProofData } from "@/components/CryptoProofPanel";
 
 const t = {
-  title: { zh: "Sakura Shielded Lending — ZK 救援 Demo", en: "Sakura Shielded Lending — ZK Rescue Demo", ja: "Sakura Shielded Lending — ZK救援デモ" },
-  subtitle: { zh: "一鍵體驗「用數學結算清算救援」的完整流程", en: "One-click tour of \"liquidation rescue settled by math\"", ja: "「数学で決済される清算救援」の完全フロー" },
+  title: { zh: "Sakura — 代理執行邊界層 · 完整 Demo", en: "Sakura — Bounded Agentic Execution · Full Demo", ja: "Sakura — 境界付エージェント実行 · フルデモ" },
+  subtitle: { zh: "從「你寫一句話」到「鏈上證明通過」的完整流程——代理越界在數學上不可能", en: "From \"you write one sentence\" to \"proof passes on-chain\" — the agent cannot exceed the rule", ja: "「あなたが 1 文を書く」から「オンチェーン証明通過」までの完全フロー — エージェントは規則を超えられない" },
   runDemo: { zh: "🚀 啟動完整 Demo", en: "🚀 Run Full Demo", ja: "🚀 フルデモ実行" },
   running: { zh: "⏳ 生成 Groth16 證明中...", en: "⏳ Generating Groth16 proof...", ja: "⏳ Groth16証明を生成中..." },
-  step1: { zh: "Step 1: Poseidon 政策承諾 ＝ H(obligation, wallet, nonce)", en: "Step 1: Poseidon policy commitment = H(obligation, wallet, nonce)", ja: "Step 1: Poseidonポリシーコミット = H(obligation, wallet, nonce)" },
-  step2: { zh: "Step 2: 健康因子惡化 → 觸發救援條件 (HF < 1.05)", en: "Step 2: Health factor deteriorates → rescue trigger (HF < 1.05)", ja: "Step 2: ヘルスファクター悪化 → 救援トリガー (HF < 1.05)" },
-  step3: { zh: "Step 3: 組裝 Groth16 witness (BN254 / Circom)", en: "Step 3: Assemble Groth16 witness (BN254 / Circom)", ja: "Step 3: Groth16 witness組立 (BN254 / Circom)" },
-  step4: { zh: "Step 4: 鏈上 alt_bn128_pairing 配對驗證", en: "Step 4: On-chain alt_bn128_pairing verification", ja: "Step 4: チェーン上 alt_bn128_pairing 検証" },
-  step5: { zh: "Step 5: 原子救援 vault → user ATA → Kamino repay", en: "Step 5: Atomic rescue vault → user ATA → Kamino repay", ja: "Step 5: アトミック救援 vault → user ATA → Kamino返済" },
-  complete: { zh: "✅ Groth16 證明通過 · USDC 自動流向已被數學鎖定", en: "✅ Groth16 proof verified · USDC flow locked by math", ja: "✅ Groth16証明検証完了・USDC流れが数学的にロック済み" },
-  verifyApi: { zh: "客戶端驗證：sha256(mandateInput) === mandateHash", en: "Client-side verify: sha256(mandateInput) === mandateHash", ja: "クライアント検証: sha256(mandateInput) === mandateHash" },
+  step1: { zh: "Step 1: 使用者簽下意圖 — Poseidon 壓縮成 32 bytes 承諾", en: "Step 1: User signs the intent — Poseidon folds it into a 32-byte commitment", ja: "Step 1: ユーザーが意図に署名 — Poseidon が 32 バイトコミットメントに畳み込む" },
+  step2: { zh: "Step 2: 代理提議一次動作（例：在 Kamino 放貸 $100）", en: "Step 2: Agent proposes an action (e.g., lend $100 into Kamino)", ja: "Step 2: エージェントがアクションを提案（例：Kamino に $100 貸し出し）" },
+  step3: { zh: "Step 3: 生成 Groth16 證明——綁定當下 Pyth 價格與 slot", en: "Step 3: Generate Groth16 proof — bound to the current Pyth price and slot", ja: "Step 3: Groth16 証明を生成 — 現在の Pyth 価格とスロットに結び付ける" },
+  step4: { zh: "Step 4: 鏈上 alt_bn128 配對驗證（~116k CU）", en: "Step 4: On-chain alt_bn128 pairing verification (~116k CU)", ja: "Step 4: オンチェーン alt_bn128 ペアリング検証（~116k CU）" },
+  step5: { zh: "Step 5: 原子執行——閘門通過，DeFi 指令落地；閘門失敗，整筆回滾", en: "Step 5: Atomic execution — gate passes, DeFi instruction lands; gate fails, whole tx reverts", ja: "Step 5: アトミック実行 — ゲート通過で DeFi 命令着地、失敗で全リバート" },
+  complete: { zh: "✅ 證明通過 · 動作在鏈上已被數學鎖定在你簽的那句話邊界內", en: "✅ Proof verified · the action is mathematically locked inside the sentence you signed", ja: "✅ 証明検証 · 動作があなたの署名した文の境界内に数学的にロックされる" },
+  verifyApi: { zh: "客戶端可獨立核驗：Poseidon(inputs) === intent_commitment", en: "Anyone can verify client-side: Poseidon(inputs) === intent_commitment", ja: "誰でもクライアントで検証可能：Poseidon(inputs) === intent_commitment" },
   techStack: { zh: "技術棧", en: "Tech Stack", ja: "技術スタック" },
-  inspired: { zh: "Circom + snarkjs + groth16-solana (Light Protocol fork) + alt_bn128_pairing syscall", en: "Circom + snarkjs + groth16-solana (Light Protocol fork) + alt_bn128_pairing syscall", ja: "Circom + snarkjs + groth16-solana (Light Protocolフォーク) + alt_bn128_pairingシスコール" },
+  inspired: { zh: "Circom + snarkjs + groth16-solana (Light Protocol fork) + alt_bn128_pairing syscall + Pyth Pull Oracle", en: "Circom + snarkjs + groth16-solana (Light Protocol fork) + alt_bn128_pairing syscall + Pyth Pull Oracle", ja: "Circom + snarkjs + groth16-solana (Light Protocolフォーク) + alt_bn128_pairing syscall + Pyth Pull Oracle" },
 } as const;
 
 type Lang = "zh" | "en" | "ja";
