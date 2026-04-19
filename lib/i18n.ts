@@ -23,14 +23,14 @@ export const translations = {
 
   // ── Hero ──────────────────────────────────────────────────────────
   heroTagline: {
-    zh: "你的 AI 代理。你的規則。由數學執行。",
-    en: "Your agent. Your rules. Enforced by math.",
-    ja: "あなたのエージェント。あなたのルール。数学が執行する。",
+    zh: "Solana 原生的代理執行邊界驗證器。",
+    en: "A Solana-native verifier for bounded agentic execution.",
+    ja: "Solana ネイティブの、境界付きエージェント実行の検証器。",
   },
   heroSubtitle: {
-    zh: "2026 年，每家主流 Solana 錢包都在出 AI 代理版。但沒有一家回答了散戶真正在意的問題——怎麼讓代理幫你動手，又不用交出私鑰？業界的答案至今都是「相信我們」。Sakura 用密碼學取代了「相信」。你寫一句話就是規則，代理每次動手都要證明沒越界，越界在鏈上不會發生。",
-    en: "In 2026, every major Solana wallet is shipping an AI-agent mode. None has answered the question every retail user actually has: how do I give an agent execution authority without giving up my keys? The industry's answer so far is some flavor of 'trust us.' Sakura replaces trust with cryptography. You write one sentence; that sentence becomes the rule; every agent action must prove it fits. Exceeding the rule cannot happen on-chain.",
-    ja: "2026 年、Solana の主要ウォレットは各社が AI エージェント版を出そうとしている。しかし、一般ユーザーが本当に気にする問いに誰も答えていない——鍵を渡さずに、どうやってエージェントに実行権限を与えるのか？業界の答えはこれまで「信頼してほしい」だった。Sakura は「信頼」を暗号で置き換える。あなたが 1 文を書く；その 1 文が規則となる；エージェントのすべての動作は規則内であることを証明しなければならない。規則を超えることはオンチェーンで不可能になる。",
+    zh: "2026 年上半年，Phantom、Backpack、Abstract、Infinex 四家主流消費者錢包將各自推出 AI 代理模式。暴露出的工程難題並非代理的智慧，而是代理的封閉性——能操作用戶 USDC 存入 Kamino、在 MarginFi 借款、在 Jupiter 兌換的 AI，在嚴格的操作學意義上，是一把用戶無法控制的簽名金鑰。業界對此的默認答案與每個面對同一問題的軟體行業的答案相同：一套政策。會話金鑰輪替、白名單維護、彈窗確認——每一條都是操作方的承諾，每一條在歷史記錄上都是該操作方可繞過的。Sakura 用一道電路取代了該政策；其保證是結構性的，而非程序性的。",
+    en: "In the first half of 2026, four consumer wallets — Phantom, Backpack, Abstract, and Infinex — will each release an AI-agent mode. The engineering challenge these modes disclose is not the agent's intelligence but the agent's containment: an AI that can deposit a user's USDC into Kamino, borrow on MarginFi, or swap on Jupiter is, in a strict operational sense, a signing key the user does not control. The industry's default answer is the same answer every software industry has given when faced with containment: a policy. Session keys rotate. Allowlists are maintained. Approval popups interrupt. Each is a promise by an operator, and each, as a matter of record, is bypassable by that operator. Sakura replaces the policy with a circuit. The guarantee is structural, not procedural.",
+    ja: "2026 年上半期、Phantom、Backpack、Abstract、Infinex の 4 つの主要コンシューマーウォレットがそれぞれ AI エージェントモードを公開する予定である。これらのモードが露呈させる工学的課題は、エージェントの知能ではなく、エージェントの封じ込めである——ユーザーの USDC を Kamino に預け、MarginFi で借入し、Jupiter でスワップ可能な AI は、厳密な運用論的意味において、ユーザーが制御しない署名鍵に他ならない。業界のデフォルトの答えは、あらゆるソフトウェア産業が封じ込め問題に直面した際に示してきたのと同じ答えである——ポリシーだ。セッションキーは回転し、許可リストは維持され、承認ポップアップが介入する。各々は運用者の約束であり、各々は、記録上、その運用者によって迂回可能であった。Sakura はこのポリシーを回路で置き換える。保証は手続き的ではなく、構造的である。",
   },
 
   // ── Features (3 core) ─────────────────────────────────────────────
@@ -65,33 +65,33 @@ export const translations = {
   },
 
   // ── Differentiator ────────────────────────────────────────────────
-  diffTitle: { zh: "不再靠「相信我們」── 這一層每家代理錢包都需要，我們先造好", en: "No More \"Trust Us\" — The Layer Every Agentic Wallet Needs, Shipped First", ja: "「信頼してほしい」の終わり — どのエージェントウォレットも必要とする層、我々が先に作る" },
+  diffTitle: { zh: "每家代理錢包都要解同一道驗證題。正確的獨立實作數量是一。", en: "Every agentic wallet has the same verification problem. The correct number of independent implementations is one.", ja: "すべてのエージェントウォレットが同じ検証問題に直面する。独立実装の正しい数は 1 である。" },
   diffDesc: {
-    zh: "今年接下來幾個月，Phantom、Backpack、Abstract、Infinex 都要出代理版。它們各自會面對同一個無法迴避的問題：怎麼向用戶證明代理不會越界？目前的答案都是操作性的——發一個聲明、放一張合規函、換一把 session key、維護一份 allowlist。任何一條都繞得開。Sakura 繞不開。電路就是邊界，Solana 在鏈上 $0.0001 驗證一次。每一家代理錢包最終都會需要這一層——我們把它做成開源公共品，任何團隊一行代碼就能接入，不用重做信任假設、不用重做 trusted setup。這是代理經濟的「SSL 憑證」層：一次建立，每家受益。",
-    en: "Over the next few months, Phantom, Backpack, Abstract, Infinex — all will ship agent modes. Each will face the same unavoidable question: how do we prove to users that the agent cannot exceed its mandate? Their current answers are operational: publish a statement, produce a compliance letter, rotate a session key, maintain an allowlist. Each of those is bypassable. Sakura is not. The circuit is the boundary; Solana verifies it on-chain for $0.0001. Every agentic wallet will eventually need this layer — we shipped it as an open-source public good, integrable in roughly one line, with no new trust assumptions and no separate trusted setup. This is the \"SSL layer\" of the agentic economy: built once, every wallet benefits.",
-    ja: "今後数ヶ月、Phantom、Backpack、Abstract、Infinex——すべてがエージェントモードを出す。各社は避けられない同じ問いに直面する：エージェントが権限を超えないことをユーザーにどう証明するのか？現時点の答えはすべて運用的なもの——声明を出す、コンプライアンス書簡を用意する、セッションキーを回転させる、許可リストを維持する。どれも迂回可能だ。Sakura は迂回不可能。回路が境界であり、Solana が $0.0001 でオンチェーン検証する。どのエージェントウォレットも最終的にこの層を必要とする——我々はこれをオープンソースの公共財として出した。実質 1 行のコードで統合可能、新たな信頼前提なし、別の trusted setup 不要。これはエージェント経済の「SSL レイヤー」である：一度作れば、すべてのウォレットが利益を得る。",
+    zh: "每一道代理閘門必須在每次調用時檢查四件事：動作是否滿足已簽意圖、預言機價格是否來自 Pyth 且與當前帳戶狀態吻合、slot 是否落在 150 block 新鮮度窗口內、action nonce 是否被重放。Phantom、Backpack、Abstract、Infinex 的工程組織各需獨立建造、審計、維護這四項檢查。按歷史對照估算——第一方 ZK 證明者、Pyth 整合層、replay guard 審計——全包成本以工程師季度計，而非工程師週。\n\nSakura 一次把這層做完。費率為每次閘門調用 0.1% 的名義金額，經整合方自動路由至協議費用金庫；15% 進入由 3/5 多簽治理的平台財庫，其餘留作儀式維護與整合方支援。兩項費率皆由多簽在程式級天花板（2% 與 100%）內可調，無法超越該上限而不重新部署。最貼近的歷史類比是 HTTPS 憑證發行——全球每條加密 web 連線的閘口——三十年來以無代幣的主體、以每次發行幾美分的費率模型持續運作。Sakura 按相同範式設計。",
+    en: "Every agentic gate must check four things on every call: that the action satisfies the signed intent, that the oracle price originates from Pyth and matches the current account state, that the slot falls within a 150-block freshness window, and that the action nonce has not been replayed. Each of Phantom's, Backpack's, Abstract's, and Infinex's engineering organizations will need to implement, audit, and maintain those four checks independently. The all-in cost of doing so, by historical analogy — a first-party ZK prover, a Pyth integration layer, a replay-guard audit — is measured in engineer-quarters rather than engineer-weeks, and recurs with every protocol upgrade.\n\nSakura ships that layer once. The fee model is 0.1% of notional per gate call, routed automatically from the integrator to the protocol's fee vault; 15% accrues to a platform treasury governed by a 3-of-5 multisig, with the remainder financing ceremony maintenance and integrator support. Both parameters are multisig-tunable within program-level ceilings (2% and 100%) and cannot be exceeded without redeployment. The closest historical analogue is HTTPS certificate issuance — the gating mechanism for every encrypted web connection globally — which has operated on token-free, cents-per-issuance economics for three decades. Sakura is modeled on the same template.",
+    ja: "すべてのエージェントゲートは呼び出しごとに 4 つを検証しなければならない：アクションが署名済み意図を満たすこと、オラクル価格が Pyth に由来し現在のアカウント状態と一致すること、スロットが 150 ブロックの新鮮度ウィンドウ内にあること、アクションノンスが再生されていないこと。Phantom、Backpack、Abstract、Infinex の各エンジニアリング組織は、この 4 項目を独立に実装、監査、維持する必要がある。類似の歴史的実装を基準とした場合、このフルコスト——ファーストパーティ ZK 証明器、Pyth 統合層、リプレイ防止監査——はエンジニア週ではなくエンジニア四半期で計測され、プロトコルアップグレード毎に再発生する。\n\nSakura はこの層を一度届ける。料金モデルはゲート呼び出し毎に名目金額の 0.1%、統合者からプロトコル手数料金庫へ自動ルーティング；15% が 3/5 マルチシグで統治される平台トレジャリーへ、残りが儀式保守と統合者サポートの資金となる。両パラメータはマルチシグがプログラムレベルの上限（2% と 100%）内で調整可能、上限超過は再デプロイ無しでは不可能。最も近い歴史的類似物は HTTPS 証明書発行——世界のあらゆる暗号化 web 接続を司るゲーティング機構——であり、30 年にわたりトークン無しの、1 発行あたりセント単位の経済で運営されてきた。Sakura は同じテンプレートに基づいて設計されている。",
   },
 
   // ── Sakura Character Narrative ───────────────────────────────────
   sakuraWho: {
-    zh: "桜 Sakura — 讓 AI 代理在 DeFi 為你賺錢，它絕對越不了界。不是承諾，是數學。",
-    en: "桜 Sakura — Let an AI agent earn in DeFi for you. It literally cannot exceed what you allowed. Not a promise — a circuit constraint.",
-    ja: "桜 Sakura — AI エージェントがあなたのために DeFi で利回りを稼ぐ。許可した範囲を絶対に超えられない。約束ではなく、回路の制約として。",
+    zh: "桜 Sakura — 代理執行邊界的鏈上驗證原語，建於 Solana。",
+    en: "桜 Sakura — an on-chain primitive for verifying the bounds of agentic execution, built on Solana.",
+    ja: "桜 Sakura — エージェント実行の境界を検証するオンチェーン原語、Solana 上に構築。",
   },
   sakuraOriginBadge: {
-    zh: "🌸 Sakura · Solana 上的代理執行邊界層 · 每家錢包都需要、我們先做好",
-    en: "🌸 Sakura · Solana's bounded agentic execution layer · the primitive every wallet needs, shipped first",
-    ja: "🌸 Sakura · Solana の境界付きエージェント実行層 · どのウォレットも必要とする基盤、我々が先に届ける",
+    zh: "Sakura · Groth16 Pairing Verifier on Solana alt_bn128 · Protocol 1.17+",
+    en: "Sakura · Groth16 Pairing Verifier on Solana alt_bn128 · Protocol 1.17+",
+    ja: "Sakura · Solana alt_bn128 上の Groth16 ペアリング検証器 · プロトコル 1.17+",
   },
   sakuraCharacterDesc: {
-    zh: "AI 代理今年要闖入 DeFi。Phantom、Backpack、Abstract 都在搶著出代理版本。問題是，當你讓代理幫你去 Kamino 存款、MarginFi 借錢、Jupiter 換幣，你怎麼確定它不會做你沒批准的事？業界目前的答案是一串「相信」——相信服務器不洩漏、相信 session-key 及時輪替、相信白名單維護者不被收買。一個斷裂，整個就垮。\n\nSakura 不讓你相信任何人。你用自然語言寫下一句話——「代理可以在 Kamino 或 MarginFi 放貸，單次最多 $1,000，只能持續一週」——這句話經 Poseidon 雜湊成 32 bytes 鏈上承諾。代理之後每次動手，都要生成一份 Groth16 零知識證明，證明這次動作落在你那句話的邊界內。Solana 的 alt_bn128 系統呼叫在鏈上 116k CU 內驗證這份證明，單次成本約 $0.0001。證明通過，DeFi 指令原子執行；證明失敗，整筆交易回滾。代理越界在數學上不可能發生。\n\n這是每家代理錢包都需要、但都不想自己造的那一層。Phantom、Backpack、Abstract 最終都要有類似機制——我們把它做成開源原語，任何錢包一行代碼就能接入。備えあれば憂いなし。",
-    en: "AI agents are breaking into DeFi this year. Phantom, Backpack, Abstract — every major Solana wallet is racing to ship an agent mode. The question none of them has answered: when you let an agent deposit into Kamino, borrow on MarginFi, swap on Jupiter, how do you know it will not do something you never approved? The industry's standard answer is a chain of hopes — hope the server does not leak, hope the session key rotates in time, hope the allowlist curator does not get bought. One broken link and the whole arrangement collapses.\n\nSakura does not ask you to trust anyone. You write one sentence in plain language — \"the agent may lend up to $1,000 into Kamino or MarginFi, for one week\" — and that sentence is hashed, via Poseidon, into a 32-byte commitment on-chain. Every subsequent action the agent proposes must produce a Groth16 zero-knowledge proof that the action fits inside your sentence. Solana's alt_bn128 syscall verifies the proof on-chain in 116k compute units, about one hundredth of a cent per call. Proof passes, the DeFi instruction lands atomically. Proof fails, the whole transaction reverts. The agent exceeding the rule is not policed — it is mathematically impossible.\n\nThis is the verifier layer every agentic wallet needs and none want to build alone. Phantom, Backpack, Abstract will each end up with some version of it. We shipped it as an open-source primitive, integrable by any wallet in roughly one line of code. 備えあれば憂いなし — those who prepare have nothing to fear.",
-    ja: "今年、AI エージェントが DeFi に本格参入する。Phantom、Backpack、Abstract——Solana の主要ウォレットがこぞってエージェント版の開発を急いでいる。しかし、どのウォレットも答えていない問いがある——あなたがエージェントに Kamino への預け入れ、MarginFi での借入、Jupiter でのスワップを任せたとき、承認していないことを絶対にしないと、どうすれば確信できるのか？業界の標準的な答えは「信頼の連鎖」だ——サーバーが漏れないことを信頼し、セッションキーが時間通りに更新されることを信頼し、許可リスト管理者が買収されないことを信頼する。連鎖が 1 箇所でも切れれば、すべてが崩れる。\n\nSakura は誰かを信頼することを求めない。あなたが普通の言葉で 1 文書く——「エージェントは Kamino または MarginFi に、1 回につき最大 $1,000、1 週間だけ貸し出せる」——この 1 文が Poseidon でハッシュされ、32 バイトのコミットメントとしてオンチェーンに書き込まれる。以降エージェントが提案するすべてのアクションは、それがあなたの 1 文の境界内に収まることを Groth16 ゼロ知識証明で示さなければならない。Solana の alt_bn128 システムコールが 116k CU でこの証明をオンチェーン検証、1 回あたり約 1 セントの 100 分の 1。証明が通れば DeFi 命令がアトミックに着地、失敗すればトランザクション全体がリバート。エージェントが規則を超えることは取り締まられるのではなく、数学的に不可能になる。\n\nこれはすべてのエージェントウォレットが必要としつつ、どこも単独では作りたくない検証層だ。Phantom、Backpack、Abstract はそれぞれ何らかの形でこれを実装することになる——我々はこれをオープンソースの基盤として先に届けた。どのウォレットも実質 1 行のコードで統合できる。備えあれば憂いなし。",
+    zh: "2026 年上半年，Phantom、Backpack、Abstract、Infinex 將各自推出 AI 代理模式。這些模式暴露的工程難題不是代理的智慧，而是代理的封閉性——能操作用戶 USDC 存 Kamino、在 MarginFi 借款、在 Jupiter 兌換的 AI，在嚴格的操作學意義上，是一把用戶無法控制的簽名金鑰。業界對此的默認答案是一套政策：會話金鑰輪替、白名單維護、彈窗確認。每一條都是操作方的承諾，每一條在歷史記錄上都是該操作方可繞過的。線上銀行在 2000 年代為此事定案；託管型交易所在 2014、2019、2022、2024 年，在用戶付出重大代價的情況下，再一次定案。\n\nSakura 用電路取代政策。用戶簽署一次自然語言指令——例如「代理可在 Kamino 或 MarginFi 放貸，單次最多 $1,000，有效期一週」。該指令經 2 層 Poseidon 雜湊壓縮成 32 bytes 承諾，存入 Solana 鏈上 Program Derived Address。代理之後每次嘗試動作，必須生成 Groth16 零知識證明，論證該動作落在承諾的邊界內。Solana 1.17 合入的 alt_bn128 配對系統呼叫在 116,000 CU 內驗證該證明——約合單次調用 $0.0001。失敗的證明在底層 DeFi 指令被允許觸及用戶資金之前，即回滾整筆交易。\n\n該電路編碼的性質是結構性的。代理的操作方不能拓寬規則。協議的維護者不能拓寬規則。中介、relayer、索引器、未來的治理機構亦不能。保證是數學的，不是程序的。\n\n備えあれば憂いなし。",
+    en: "In the first half of 2026, Phantom, Backpack, Abstract, and Infinex will each release an AI-agent mode. The engineering challenge these modes disclose is not the agent's intelligence but the agent's containment: an AI that can deposit a user's USDC into Kamino, borrow on MarginFi, or swap on Jupiter is, in a strict operational sense, a signing key the user does not control. The industry's default answer is the same answer every software industry has given: a policy. Session keys rotate. Allowlists are maintained. Approval popups interrupt. Each is a promise by an operator; each, as a matter of historical record, is bypassable by that operator. Online banking settled this debate in the 2000s. Custodial exchanges re-settled it, at significant user cost, in 2014, 2019, 2022, and 2024.\n\nSakura replaces the policy with a circuit. A user signs, once, a natural-language instruction — for instance, \"the agent may lend up to $1,000 into Kamino or MarginFi for one week.\" The instruction is compressed, via a two-layer Poseidon hash, into a 32-byte commitment stored in a Program Derived Address on the Solana chain. Every subsequent action the agent attempts must produce a Groth16 zero-knowledge proof establishing that the action falls inside the commitment. Solana's alt_bn128 pairing syscall, merged in protocol version 1.17, verifies the proof in 116,000 compute units — approximately one hundredth of a cent per call. A failing proof reverts the surrounding transaction before the underlying DeFi instruction is allowed to touch user funds.\n\nThe property the circuit encodes is structural. The agent's operator cannot widen the rule. The protocol's maintainers cannot widen the rule. Neither can an intermediary, a relayer, an indexer, or a future governance body. The guarantee is mathematical, not procedural.\n\n備えあれば憂いなし.",
+    ja: "2026 年上半期、Phantom、Backpack、Abstract、Infinex がそれぞれ AI エージェントモードを公開する。これらのモードが露呈させる工学的課題は、エージェントの知能ではなく、エージェントの封じ込めである——ユーザーの USDC を Kamino に預け、MarginFi で借入し、Jupiter でスワップできる AI は、厳密な運用論的意味において、ユーザーが制御しない署名鍵に他ならない。業界のデフォルトの答えは、あらゆるソフトウェア産業が封じ込めの問題に直面した際と同じ答えである——ポリシーだ。セッションキーは回転し、許可リストは維持され、承認ポップアップが介入する。各々は運用者の約束であり、各々は、記録上、その運用者によって迂回可能であった。オンラインバンキングは 2000 年代にこの議論を決着させた。カストディアル取引所は 2014、2019、2022、2024 年に、ユーザーに重大なコストを負わせながら、再度決着させた。\n\nSakura はこのポリシーを回路で置き換える。ユーザーは 1 度、自然言語で指令を署名する——例えば「エージェントは Kamino または MarginFi に、1 回最大 $1,000、1 週間のみ貸し出せる」。この指令は 2 層 Poseidon ハッシュで 32 バイトのコミットメントに圧縮され、Solana チェーン上の Program Derived Address に格納される。以降エージェントが試みるすべての動作は、動作がコミットメントの境界内に収まることを示す Groth16 ゼロ知識証明を生成しなければならない。Solana プロトコル 1.17 で合流された alt_bn128 ペアリングシステムコールが 116,000 CU でこの証明を検証する——1 回あたり約 1 セントの 100 分の 1。失敗する証明は、基盤の DeFi 命令がユーザー資金に触れる前に、周囲のトランザクションをリバートさせる。\n\n回路が符号化する性質は構造的である。エージェントの運用者は規則を広げられない。プロトコルの保守者も規則を広げられない。中介者、リレイヤー、インデクサー、将来のガバナンス機構も広げられない。保証は数学的であり、手続き的ではない。\n\n備えあれば憂いなし。",
   },
   sakuraMission: {
-    zh: "她的使命：讓「我的錢、我的規則」從一句口號，變成一條數學定理",
-    en: "Her mission: turn \"my money, my rules\" from a slogan into a theorem",
-    ja: "彼女のミッション：「私の金、私のルール」をスローガンから定理に変える",
+    zh: "使命：將「自主託管」從一項仍需軟體業者否決權背書的權利，化為一項無需其背書即成立的數學性質。",
+    en: "Mission: transform self-custody from a right that still requires a software provider's veto, into a mathematical property that requires no such endorsement.",
+    ja: "ミッション：自己保管を、ソフトウェア提供者の拒否権に依存する権利から、その支持を要しない数学的性質へと変える。",
   },
   sakuraTech1: { zh: "🌸 你的規則，你一個人知道 — 金額上限、協議白名單、有效期限全部留在你的瀏覽器，鏈上只存一個 32 bytes 雜湊", en: "🌸 Only you know the rules — amount caps, protocol whitelist, expiry all stay in your browser; only a 32-byte hash reaches the chain", ja: "🌸 あなただけがルールを知る — 金額上限、プロトコルホワイトリスト、有効期限はブラウザ内に留まり、チェーンには 32 バイトのハッシュのみ" },
   sakuraTech2: { zh: "🔐 越界數學上不可能 — 代理每次動手要生成 ZK 證明，Solana 鏈上 ~116k CU 驗證，一次約 $0.0001", en: "🔐 Exceeding the rule is mathematically impossible — every agent action generates a ZK proof, Solana verifies in ~116k CU, ~$0.0001 per call", ja: "🔐 規則超過は数学的に不可能 — エージェントアクション毎に ZK 証明を生成、Solana が ~116k CU で検証、1 回約 $0.0001" },
@@ -143,29 +143,29 @@ export const translations = {
 
   // ── Stripe MPP section (new) ────────────────────────────────────────
   stripeSectionTitle: {
-    zh: "🤝 x402 — AI Agent 自主調用 · 鏈上 USDC 原子結算 · 人類零介入 · Agentic Economy 基礎設施",
-    en: "🤝 x402 — Agents Call Autonomously · USDC Settles On-Chain · Zero Human in the Loop · The Backbone of Agentic Economy",
-    ja: "🤝 x402 — エージェント自律呼び出し · オンチェーンUSDC原子決済 · 人間介入ゼロ · Agentic Economyインフラ",
+    zh: "x402 · 為機器支付的協議，建於 Solana",
+    en: "x402 · The Payments Protocol for Machines, Built on Solana",
+    ja: "x402 · 機械のための決済プロトコル、Solana 上に構築",
   },
   stripeSectionDesc: {
-    zh: "互聯網誕生時，HTTP 定義了機器間的信息交換協議。Agentic Economy 需要一個新的協議：機器間的價值交換。Sakura 是 Solana agentic 基礎設施領域第一個在部署環境落地 HTTP 402 Payment Required（x402）的項目——Stripe Machine Payments Protocol 的鏈上原生實現。任何 MCP 客戶端——Claude Desktop、Cursor、VS Code、或任意自主 AI Agent——均可直接調用 Sakura 的 Agentic Protocol 狀態 API，每次調用以鏈上 USDC 原子結算，$1 per request，無帳號、無訂閱、無 OAuth、無人工審批門控。這不是未來願景——devnet 已驗證，主網就緒。",
-    en: "When the internet was born, HTTP defined how machines exchange information. The Agentic Economy needs a new protocol: how machines exchange value. Sakura is the first project in the Solana agentic-infrastructure space to ship HTTP 402 Payment Required (x402) — Stripe's Machine Payments Protocol — in a deployed environment. Any MCP client — Claude Desktop, Cursor, VS Code, or any autonomous AI agent — can call Sakura's Agentic Protocol status API directly. Each call settles atomically in on-chain USDC at $1 per request. No account. No subscription. No OAuth. No human approval gate. This is not a future vision — devnet-verified, mainnet-ready.",
-    ja: "インターネットが誕生したとき、HTTPはマシン間の情報交換プロトコルを定義しました。Agentic Economyには新しいプロトコルが必要です：マシン間の価値交換。SakuraはSolana agentic インフラ領域で初めてHTTP 402 Payment Required（x402）——Stripe Machine Payments Protocol——をデプロイ環境で実装したプロジェクトです。Claude Desktop、Cursor、VS Code、その他あらゆる自律AIエージェントを含む任意のMCPクライアントが、Sakura の Agentic Protocol ステータス API を直接呼び出せます。各呼び出しはオンチェーンUSDCで原子的に決済され、1リクエスト$1。アカウント不要。サブスクリプション不要。OAuth不要。人間の承認ゲート不要。これは未来のビジョンではなく——devnet 検証済み、メインネット準備完了。",
+    zh: "HTTP 於 1989 年定義了機器如何交換信息。Agentic Economy 需要一個對等的協議，定義機器如何交換價值。HTTP 402 Payment Required 是三十餘年來預留而未實施的狀態碼；x402 於 2025 年由 Stripe 重新提出，作為 Machine Payments Protocol 的規範。Sakura 將其實作於 Solana：MCP 客戶端——包括 Claude Desktop、Cursor、VS Code 以及任意第三方代理框架——向 /api/mcp 發出工具調用時，端點回傳 HTTP 402 與一則 USDC 付款要求；調用方以 Solana 鏈上 USDC 原子結算 $1，工具結果於同一響應返回。無帳號、無訂閱、無 OAuth。該端點目前於 devnet 驗證，主網就緒。",
+    en: "HTTP defined how machines exchange information in 1989. The Agentic Economy requires an analogous protocol for how machines exchange value. HTTP 402 Payment Required is a status code reserved for three decades without adoption; in 2025 it was re-proposed by Stripe as the Machine Payments Protocol specification. Sakura implements it on Solana: an MCP client — Claude Desktop, Cursor, VS Code, or any third-party agent framework — invoking a tool at /api/mcp receives an HTTP 402 response carrying a USDC payment demand; the caller settles $1 atomically on-chain via Solana USDC and receives the tool result in the same response cycle. No account, no subscription, no OAuth. The endpoint is currently verified on devnet and mainnet-ready.",
+    ja: "HTTP は 1989 年に機械間の情報交換を定義した。Agentic Economy には、機械が価値を交換する方法を定めた類似のプロトコルが必要である。HTTP 402 Payment Required は 30 年以上採用されずに予約されてきたステータスコードであり、2025 年に Stripe により Machine Payments Protocol 仕様として再提案された。Sakura はこれを Solana 上に実装する：MCP クライアント——Claude Desktop、Cursor、VS Code、または任意のサードパーティエージェントフレームワーク——が /api/mcp でツールを呼び出すと、エンドポイントは HTTP 402 レスポンスと USDC 支払い要求を返す；呼び出し者は Solana USDC で $1 をオンチェーンで原子決済し、同じレスポンスサイクル内でツール結果を受け取る。アカウント、サブスクリプション、OAuth は不要。エンドポイントは現在 devnet で検証済み、メインネット準備完了である。",
   },
   stripeFeature1: {
-    zh: "🫙 每次 API 調用自動結算 $1.00 USDC · 鏈上原子確認",
-    en: "🫙 $1.00 USDC auto-settled per API call · atomic on-chain confirmation",
-    ja: "🫙 API呼び出しごとに $1.00 USDC を自動決済 · オンチェーン原子確認",
+    zh: "每次 API 調用原子結算 $1.00 USDC · 同一響應週期內返回結果",
+    en: "$1.00 USDC atomically settled per API call · result returned within the same response cycle",
+    ja: "API 呼び出し毎に $1.00 USDC を原子決済 · 同一レスポンスサイクル内で結果を返却",
   },
   stripeFeature2: {
-    zh: "⚙️ AI Agent 直接調用，無需人工介入",
-    en: "⚙️ AI agents call directly — zero human intervention",
-    ja: "⚙️ AIエージェントが直接呼び出し — 人間介入ゼロ",
+    zh: "無帳號、無訂閱、無 OAuth · 認證即支付",
+    en: "No account, no subscription, no OAuth · authentication is payment",
+    ja: "アカウント不要、サブスクリプション不要、OAuth 不要 · 認証は決済そのもの",
   },
   stripeFeature3: {
-    zh: "🌐 任何 MCP 客戶端均可接入",
-    en: "🌐 Any MCP client can connect instantly",
-    ja: "🌐 任意のMCPクライアントが即座に接続可能",
+    zh: "相容 Claude Desktop、Cursor、VS Code 及任意 MCP 客戶端實作",
+    en: "Compatible with Claude Desktop, Cursor, VS Code, and any MCP client implementation",
+    ja: "Claude Desktop、Cursor、VS Code および任意の MCP クライアント実装と互換",
   },
 
   // ── Connect ───────────────────────────────────────────────────────
