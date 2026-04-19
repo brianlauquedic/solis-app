@@ -7,8 +7,8 @@ import ArchitectureDiagram from "@/components/ArchitectureDiagram";
 import type { CryptoProofData } from "@/components/CryptoProofPanel";
 
 const t = {
-  title: { zh: "Sakura Mutual — ZK 理賠 Demo", en: "Sakura Mutual — ZK Settlement Demo", ja: "Sakura Mutual — ZK清算デモ" },
-  subtitle: { zh: "一鍵體驗「用數學結算保險」的完整流程", en: "One-click tour of \"insurance settled by math\"", ja: "「数学で決済される保険」の完全フロー" },
+  title: { zh: "Sakura Shielded Lending — ZK 救援 Demo", en: "Sakura Shielded Lending — ZK Rescue Demo", ja: "Sakura Shielded Lending — ZK救援デモ" },
+  subtitle: { zh: "一鍵體驗「用數學結算清算救援」的完整流程", en: "One-click tour of \"liquidation rescue settled by math\"", ja: "「数学で決済される清算救援」の完全フロー" },
   runDemo: { zh: "🚀 啟動完整 Demo", en: "🚀 Run Full Demo", ja: "🚀 フルデモ実行" },
   running: { zh: "⏳ 生成 Groth16 證明中...", en: "⏳ Generating Groth16 proof...", ja: "⏳ Groth16証明を生成中..." },
   step1: { zh: "Step 1: Poseidon 政策承諾 ＝ H(obligation, wallet, nonce)", en: "Step 1: Poseidon policy commitment = H(obligation, wallet, nonce)", ja: "Step 1: Poseidonポリシーコミット = H(obligation, wallet, nonce)" },

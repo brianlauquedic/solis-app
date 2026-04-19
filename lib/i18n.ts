@@ -28,9 +28,9 @@ export const translations = {
     ja: "Sakura は Solana の AI セキュリティレイヤー — 見えない脆弱性を捕捉し、予測できない結果を事前に再現し、逃げ切れない清算を阻止する。",
   },
   heroSubtitle: {
-    zh: "在 $2.85 億 Drift 攻擊中，Durable Nonce 是最被忽視的攻擊面 — Nonce Guardian 主動防禦。在多步 DeFi 執行中，滑點與合約衝突是隱性成本 — Ghost Run 預先消除。在 $40 億借貸市場，毫秒之差決定清算損失 — Liquidation Shield 400ms 閃電響應。三道防線，每項 AI 決策的 SHA-256 哈希永久刻入 Solana 主網，任何人可在 Solscan 獨立核驗，無需信任 Sakura。",
-    en: "In the $285M Drift exploit, Durable Nonce was the most overlooked attack surface — Nonce Guardian defends it proactively. In multi-step DeFi execution, slippage and contract conflicts are hidden costs — Ghost Run eliminates them in advance. In the $4B+ lending market, milliseconds separate safety from liquidation — Liquidation Shield responds in 400ms. Three defensive layers. Every AI decision SHA-256 anchored on Solana mainnet — independently verifiable on Solscan, no trust in Sakura required.",
-    ja: "$2.85億Driftエクスプロイトで、Durable Nonceは最も見落とされた攻撃面でした — Nonce Guardianが能動的に防御。複数ステップのDeFi実行では、スリッページとスマートコントラクトの競合が隠れたコストとなる — Ghost Runが事前に排除。$40億超のレンディング市場では、数ミリ秒の差が安全と清算を分ける — Liquidation Shieldが400msで即応。3重の防衛レイヤー。すべてのAI判断のSHA-256ハッシュがSolanaメインネットに永久刻印 — Solscanで独立検証可能、Sakuraを信頼する必要なし。",
+    zh: "Solana 借貸市場 TVL 超過 $40 億，但每一次清算都是公開表演 — MEV 機器人看得見、清算機器人盯著、狙擊者抄襲你的策略。Sakura Shielded Lending 用 Groth16 + alt_bn128 把你的倉位私有化，並在健康因子跌破觸發線時自動在鏈上 pairing 驗證放出救援款。無人工審批、無裁量權、無對手方風險，所有決策的 SHA-256 哈希永久刻入 Solana 主網，任何人可在 Solscan 獨立核驗。",
+    en: "Solana's lending TVL is north of $4B, but every liquidation plays out in public — MEV bots watch, liquidation bots target, front-runners copy your every move. Sakura Shielded Lending uses Groth16 + alt_bn128 to privatize your position, and when your health factor crosses the trigger, an on-chain pairing check automatically releases a rescue payout. No human approvals, no discretion, no counter-party risk — every decision's SHA-256 is inscribed on Solana mainnet and independently verifiable on Solscan.",
+    ja: "SolanaのレンディングTVLは $40億超。しかし清算は常に公開で行われる — MEVボットが監視し、清算ボットが狙い、フロントランナーが戦略を模倣する。Sakura Shielded Lending は Groth16 + alt_bn128 でポジションをプライベート化し、ヘルスファクターがトリガーを下回るとオンチェーンのペアリング検証が自動で救援を解放。人間の承認なし、裁量なし、カウンターパーティリスクなし — すべての判断の SHA-256 は Solana メインネットに刻印され、Solscan で誰でも独立検証可能。",
   },
 
   // ── Features (3 core) ─────────────────────────────────────────────
@@ -41,21 +41,21 @@ export const translations = {
   },
   agent1Title: { zh: "🛣️ 跨協議路由", en: "🛣️ Cross-Protocol Routing", ja: "🛣️ クロスプロトコル・ルーティング" },
   agent1Desc: {
-    zh: "Solana 首個主動式 Durable Nonce 安全協議，以攻擊者所用 RPC 原語反制攻擊。getProgramAccounts 逐一解析每個 80-byte nonce 結構體的 authority pubkey，精確標記已被劫持的高風險賬戶。2026 年 4 月 $2.85 億 Drift 攻擊即源於此漏洞。每份 AI 安全報告的 SHA-256 哈希透過 Memo Program 不可篡改地刻入 Solana 主網。掃描永久免費 · AI 安全報告 $1 USDC · 鏈上可驗證。",
-    en: "Solana's first proactive Durable Nonce security protocol — turning the attacker's own RPC primitive against them. getProgramAccounts parses each 80-byte nonce struct's authority pubkey and flags hijacked accounts before a single cent drains. The April 2026 $285M Drift attack exploited exactly this vector. Every AI report's SHA-256 hash is immutably inscribed on Solana mainnet via Memo Program. Free scan · $1 USDC AI report · Onchain verifiable.",
-    ja: "Solana初の能動的Durable Nonceセキュリティプロトコル — 攻撃者自身のRPCプリミティブを盾として転用。getProgramAccountsが各80バイトnonceアカウントのauthority pubkeyを解析し、資金流出前に乗っ取りアカウントを検出・警告。2026年4月の$2.85億Driftエクスプロイトはまさにこの攻撃ベクターを悪用したもの。各AIレポートのSHA-256ハッシュがMemo Programを通じてSolanaメインネットに不変刻印。スキャン永久無料 · AIレポート $1 USDC · オンチェーン検証可能。",
+    zh: "Sakura 將 Kamino + MarginFi 借貸倉位統一抽象為單一 ZK 承諾。在一筆原子 v0 transaction 內完成「ZK 配對驗證 + 跨協議 CPI 還款」——救援款直達使用者 ATA 並同步調用 Kamino 抹平借據。Pyth pull oracle 即時供價，所有 fee_id / posted_slot / price 由鏈上 Anchor 程式獨立重算對齊，oracle 偽造無門。路由費 0.1% · 管理費 0.5% / 年。",
+    en: "Sakura abstracts your Kamino + MarginFi borrow positions into a single ZK commitment. One atomic v0 transaction performs ZK pairing verification + cross-protocol CPI repayment — the rescue lands directly in your ATA while the borrow is settled on Kamino in the same slot. Pyth pull oracle feeds the live price; the on-chain Anchor program independently re-derives feed_id / posted_slot / price, making oracle spoofing infeasible. 0.1% routing fee · 0.5% / year management fee.",
+    ja: "Sakura は Kamino + MarginFi の借貸ポジションを単一の ZK コミットメントに抽象化。1 つのアトミック v0 トランザクション内で ZK ペアリング検証 + クロスプロトコル CPI 返済を完結 — 救援送金がユーザー ATA に着金しつつ Kamino の借入を同期決済。Pyth pull oracle がリアルタイム価格を供給し、オンチェーン Anchor プログラムが feed_id / posted_slot / price を独立に再計算してオラクル偽造を不能にする。ルーティング手数料 0.1% · 管理料 0.5% / 年。",
   },
   agent2Title: { zh: "🔬 ZK 配對驗證器", en: "🔬 ZK Pairing Verifier", ja: "🔬 ZK ペアリング検証器" },
   agent2Desc: {
-    zh: "全球首個多步跨協議 DeFi 策略預執行引擎。以自然語言描述跨協議策略，Claude AI 解析意圖並構建完整交易序列，Solana 原生 simulateTransaction 在主網真實狀態下幽靈演練全程 — 精確返回每步的 token delta、APY 預估、gas 消耗及衝突檢測。確認前不觸動任何資金；確認後 Solana Agent Kit 一鍵廣播。模擬永久免費 · 執行費 0.3%（較 Phantom 低 65%）。",
-    en: "The world's first multi-step cross-protocol DeFi strategy pre-execution engine. Describe your strategy in natural language; Claude AI deconstructs intent and builds the full transaction sequence; Solana-native simulateTransaction ghost-executes every step against live mainnet state — returning exact token deltas, APY projections, gas costs, and conflict flags. Zero capital at risk until you confirm. Solana Agent Kit executes on confirmation. Simulation permanently free · 0.3% execution fee (65% below Phantom).",
-    ja: "世界初のマルチステップ・クロスプロトコルDeFi戦略事前実行エンジン。自然言語で戦略を入力するとClaude AIが意図を解析してトランザクション一覧を構築し、Solanaネイティブ simulateTransactionがメインネットのリアル状態で戦略全体をゴースト実行 — 各ステップの正確なトークンデルタ、APY予測、ガスコスト、コンフリクト警告を返す。確認まで資本リスクゼロ。Solana Agent Kitが確認後に実行。シミュレーション永久無料 · 実行手数料0.3%（Phantomより65%低コスト）。",
+    zh: "客戶端使用 Circom 2.1.6 + snarkjs 生成 Groth16 證明，公開信號五項：(commitment, trigger_hf_bps, rescue_bucket, oracle_price, oracle_slot)。鏈上以 groth16-solana（Light Protocol fork）直接調用 Solana 獨有的 alt_bn128_pairing syscall — 同一場 BN254 配對驗證在 Ethereum L1 上每筆要花 ~$5+，在 Solana 上只要 ~$0.0001。沒有 trusted relayer，沒有 zk-rollup 中介，純鏈上原語。",
+    en: "The client generates a Groth16 proof with Circom 2.1.6 + snarkjs over five public signals: (commitment, trigger_hf_bps, rescue_bucket, oracle_price, oracle_slot). On-chain, groth16-solana (Light Protocol fork) invokes Solana's alt_bn128_pairing syscall — a BN254 pairing instruction unique to Solana that completes for ~$0.0001 the same verification that costs ~$5+ per call on Ethereum L1. No trusted relayer, no zk-rollup intermediary — pure on-chain primitives.",
+    ja: "クライアントは Circom 2.1.6 + snarkjs で Groth16 証明を生成。公開シグナルは (commitment, trigger_hf_bps, rescue_bucket, oracle_price, oracle_slot) の 5 項目。オンチェーンでは groth16-solana (Light Protocol fork) が Solana 固有の alt_bn128_pairing システムコールを直接呼び出す — Ethereum L1 で ~$5+ かかる等価検証を ~$0.0001 で完了する BN254 ペアリング命令。トラステッド・リレイヤー不要、zk-rollup の仲介者不要、純粋なオンチェーン・プリミティブ。",
   },
   agent3Title: { zh: "📜 鏈上審計", en: "📜 On-chain Audit", ja: "📜 オンチェーン監査" },
   agent3Desc: {
-    zh: "業界首個跨協議 AI 清算主動救援協議，覆蓋 Kamino、MarginFi、Solend（合計 TVL $40 億+）。SPL Token Approve 在 token program 合約層面設定硬性授權上限 — 鏈上強制約束，非軟性承諾。健康因子觸及閾值時，simulateTransaction 精確預演還款方案，Solana Agent Kit 於 400ms 內執行，Memo Program 寫入全程不可篡改審計鏈。監控永久免費 · 救援成功收 1%（清算損失通常 5–10%，淨為您節省 4–9%）。",
-    en: "The industry's first cross-protocol AI liquidation rescue protocol, covering Kamino, MarginFi, and Solend — $4B+ TVL in aggregate. SPL Token Approve enforces a hard spending cap at the token-program contract level — an onchain constraint, not a software promise. When health factor breaches threshold, simulateTransaction pre-computes the exact rescue, Solana Agent Kit executes within 400ms, Memo Program writes a tamper-proof audit chain. Free monitoring · 1% rescue fee on success (vs. 5–10% liquidation penalty — net saving of 4–9%).",
-    ja: "業界初のクロスプロトコルAI清算救済プロトコル。Kamino・MarginFi・Solendをカバー（合計TVL $40億超）。SPL Token ApproveがToken Programのコントラクトレベルでハード支出上限を強制 — ソフトウェアの約束ではなく、オンチェーンの強制制約。ヘルスファクターが閾値を下回ると simulateTransactionが正確な救済を事前計算し、Solana Agent Kitが400ms以内に実行、Memo Programが改ざん不可能な監査チェーンを記録。モニタリング永久無料 · 救済成功時のみ1%手数料（清算ペナルティ5–10%に対し実質4–9%の節約）。",
+    zh: "每筆救援的 (proof_a ‖ proof_c) 經 keccak256 雜湊永久寫入 ClaimRecord PDA（seed = policy + claim_nonce），同一 nonce 重放在帳戶初始化階段即失敗。SPL Token Approve 提供二級硬約束：Token Program 合約層強制執行授權上限，不靠任何 off-chain 軟性承諾。任何人持 tx signature 即可在 Solscan 獨立追溯：哪份 ZK 證明、哪個價格、哪個 slot 允許了該筆款項。",
+    en: "Every rescue's (proof_a ‖ proof_c) is keccak256-hashed and persisted in a ClaimRecord PDA seeded by (policy, claim_nonce) — replay with the same nonce fails at account-init. SPL Token Approve adds a second hard constraint: the Token Program contract enforces the authorization cap directly, not via any off-chain promise. Anyone holding a tx signature can independently trace on Solscan which ZK proof, which price, and which slot authorized the payout.",
+    ja: "各救援の (proof_a ‖ proof_c) を keccak256 ハッシュ化し、ClaimRecord PDA (seed = policy + claim_nonce) に永続化 — 同一 nonce での再生はアカウント初期化時点で失敗。SPL Token Approve が第二のハード制約: Token Program コントラクトレベルで認可上限を強制実行、オフチェーンのソフト約束に依存しない。tx signature を持つ誰でも Solscan でどの ZK 証明、どの価格、どのスロットが当該支払いを承認したかを独立に追跡可能。",
   },
   agent4Title: { zh: "🔒 鏈上可驗證 AI", en: "🔒 Onchain-Verifiable AI", ja: "🔒 オンチェーン検証可能AI" },
   agent4Desc: {
@@ -74,19 +74,19 @@ export const translations = {
 
   // ── Sakura Character Narrative ───────────────────────────────────
   sakuraWho: {
-    zh: "桜 Sakura Mutual — 全球首個由數學結算理賠的 Solana 互助保險協議",
-    en: "桜 Sakura Mutual — the first Solana mutual-insurance protocol where claims are settled by math",
-    ja: "桜 Sakura Mutual — 請求が数学で決済される、世界初のSolana相互保険プロトコル",
+    zh: "桜 Sakura Shielded Lending — Solana 上第一個由數學結算清算救援的私密借貸層",
+    en: "桜 Sakura Shielded Lending — the first private lending layer on Solana where liquidation rescue is settled by math",
+    ja: "桜 Sakura Shielded Lending — 清算救援が数学で決済される、Solana 上初のプライベート・レンディング・レイヤー",
   },
   sakuraOriginBadge: {
-    zh: "🌸 Sakura Mutual · ZK-Settled Insurance · Groth16 on Solana",
-    en: "🌸 Sakura Mutual · ZK-Settled Insurance · Groth16 on Solana",
-    ja: "🌸 Sakura Mutual · ZK決済保険 · Solana上のGroth16",
+    zh: "🌸 Sakura Shielded Lending · Groth16 Pairing on Solana alt_bn128",
+    en: "🌸 Sakura Shielded Lending · Groth16 Pairing on Solana alt_bn128",
+    ja: "🌸 Sakura Shielded Lending · Solana alt_bn128 上のGroth16ペアリング",
   },
   sakuraCharacterDesc: {
-    zh: "傳統保險的理賠由人做決定——可以拖延、可以拒付、可以失聯。Sakura Mutual 把理賠交給數學：用戶購買保單時，Poseidon 雜湊將「倉位所有權 × 錢包 × 秘密 nonce」承諾上鏈；清算事件發生時，Circom 電路生成 Groth16 證明，Solana 的 alt_bn128_pairing 系統呼叫在鏈上驗證 BN254 橢圓曲線配對——證明通過即自動賠付，證明失敗即零信任拒付。不需要信任管理員，不需要理賠員，不需要電話。互助池由 USDC 保證金支撐，保費 5%、質押 ≥ 5× 保費、單戶上限 10,000 USDC。她同時內建三項 Solana 原生防禦：Nonce Guardian（getProgramAccounts 掃描 80-byte nonce 結構）、Ghost Run（simulateTransaction 幽靈演練策略）、Liquidation Shield（SPL Approve 硬性救援上限）。備えあれば憂いなし。",
-    en: "Traditional insurance lets humans decide payouts — they can delay, deny, or disappear. Sakura Mutual hands the decision to math: when a policy is bought, a Poseidon hash commits \"position × wallet × secret nonce\" on-chain; when a liquidation fires, a Circom circuit generates a Groth16 proof, and Solana's alt_bn128_pairing syscall verifies the BN254 pairing on-chain — proof valid means automatic payout, proof invalid means trustless denial. No admin to trust, no claims adjuster, no phone call. The mutual pool is backed by USDC: 5% premium, stake ≥ 5× premium, 10,000 USDC per-user cap. She also ships three Solana-native defenses: Nonce Guardian (getProgramAccounts scanning 80-byte nonce structs), Ghost Run (simulateTransaction ghost-executing strategies), Liquidation Shield (SPL Approve hard spending caps). 備えあれば憂いなし — those who prepare have nothing to fear.",
-    ja: "従来の保険は人間が支払いを決めます——遅延も拒否も音信不通もあり得る。Sakura Mutualは判断を数学に委ねます：保険購入時、Poseidonハッシュが「ポジション × ウォレット × 秘密ノンス」をオンチェーンにコミット；清算発生時、Circom回路がGroth16証明を生成し、Solanaのalt_bn128_pairingシステムコールがBN254楕円曲線ペアリングをオンチェーン検証——証明成功で自動支払い、失敗でトラストレス拒否。管理者への信頼不要、査定員不要、電話不要。相互プールはUSDCで担保：保険料5%、ステーク≥保険料×5、ユーザーあたり上限10,000 USDC。さらにSolanaネイティブ防衛を3つ搭載：Nonce Guardian（getProgramAccountsで80バイトノンス構造体をスキャン）、Ghost Run（simulateTransactionで戦略をゴースト実行）、Liquidation Shield（SPL Approveによる救済上限のハード制約）。備えあれば憂いなし。",
+    zh: "傳統借貸清算是公開表演：你的健康因子、倉位大小、抵押構成全部暴露給鏈上，MEV 機器人、清算機器人、競爭對手一目了然。Sakura Shielded Lending 把判斷交給數學：開倉時，Poseidon 雜湊將「倉位 × 錢包 × 秘密 nonce」承諾上鏈；健康因子跌破您設定的觸發線時，Circom 電路生成 Groth16 證明，Solana 的 alt_bn128_pairing 系統呼叫在鏈上驗證 BN254 橢圓曲線配對——證明通過即自動救援，證明失敗即零信任拒絕。不需要信任管理員，不需要 off-chain relayer。救援池由 USDC 保證金支撐，管理費 5%、質押 ≥ 5× 管理費、單戶上限 10,000 USDC。她站在四道技術護城河上：跨協議 Kamino / MarginFi CPI 路由、alt_bn128 ZK 配對驗證器、keccak256 鏈上審計鏈、SPL Token Approve 硬性救援上限。備えあれば憂いなし。",
+    en: "Traditional lending liquidations play out in public: your health factor, position size, and collateral composition are all on-chain for MEV bots, liquidation bots, and copycats to see. Sakura Shielded Lending hands the decision to math: when a position is opened, a Poseidon hash commits \"position × wallet × secret nonce\" on-chain; when health factor crosses your trigger, a Circom circuit generates a Groth16 proof and Solana's alt_bn128_pairing syscall verifies the BN254 pairing on-chain — proof valid means automatic rescue, proof invalid means trustless denial. No admin to trust, no off-chain relayer required. The rescue pool is USDC-backed: 5% management fee, stake ≥ 5× fee, 10,000 USDC per-user cap. She stands on four technical moats: cross-protocol Kamino / MarginFi CPI routing, alt_bn128 ZK pairing verifier, keccak256 on-chain audit chain, SPL Token Approve hard rescue cap. 備えあれば憂いなし — those who prepare have nothing to fear.",
+    ja: "従来のレンディング清算は公開の場で行われる：ヘルスファクター、ポジションサイズ、担保構成のすべてがオンチェーンで MEV ボット・清算ボット・模倣者に筒抜け。Sakura Shielded Lending は判断を数学に委ねる：ポジション開設時、Poseidon ハッシュが「ポジション × ウォレット × 秘密ノンス」をオンチェーンにコミット；ヘルスファクターがトリガーを下回ると、Circom 回路が Groth16 証明を生成し、Solana の alt_bn128_pairing システムコールが BN254 楕円曲線ペアリングをオンチェーン検証——証明成功で自動救援、失敗でトラストレス拒否。管理者への信頼不要、オフチェーン・リレイヤー不要。救援プールは USDC で担保：管理料 5%、ステーク ≥ 5× 管理料、ユーザーあたり上限 10,000 USDC。4 つの技術的堀の上に立つ：クロスプロトコル Kamino / MarginFi CPI ルーティング、alt_bn128 ZK ペアリング検証、keccak256 オンチェーン監査チェーン、SPL Token Approve ハード救援上限。備えあれば憂いなし。",
   },
   sakuraMission: {
     zh: "她的使命：把保險理賠的最後裁決從人類官僚手中，交還給 BN254 橢圓曲線的數學",
@@ -95,7 +95,7 @@ export const translations = {
   },
   sakuraTech1: { zh: "🌸 Poseidon Commitment — 購買保單時 Poseidon(倉位, 錢包, nonce) 承諾上鏈，隱私保護", en: "🌸 Poseidon Commitment — on policy purchase, Poseidon(position, wallet, nonce) is committed on-chain, privacy-preserving", ja: "🌸 Poseidonコミットメント — 保険購入時、Poseidon(ポジション, ウォレット, ノンス)をオンチェーンにコミット、プライバシー保護" },
   sakuraTech2: { zh: "🔐 Groth16 + alt_bn128_pairing — Circom 電路生成證明，Solana syscall 在鏈上驗證 BN254 配對，零信任結算", en: "🔐 Groth16 + alt_bn128_pairing — Circom circuit generates proof, Solana syscall verifies BN254 pairing on-chain, trustless settlement", ja: "🔐 Groth16 + alt_bn128_pairing — Circom回路が証明を生成、SolanaシステムコールがBN254ペアリングをオンチェーン検証、トラストレス決済" },
-  sakuraTech3: { zh: "⛩️ Nonce Guardian + Ghost Run + Liquidation Shield — 三項原生 RPC 防禦協議，保單生效前的主動防護層", en: "⛩️ Nonce Guardian + Ghost Run + Liquidation Shield — three native-RPC defense protocols, the active layer before a claim is ever needed", ja: "⛩️ Nonce Guardian + Ghost Run + Liquidation Shield — 3つのネイティブRPC防衛プロトコル、請求前の能動防衛層" },
+  sakuraTech3: { zh: "⛩️ 跨協議 CPI + ZK Pairing + On-chain Audit — 四項 Solana 原生基礎設施，每筆救援的鏈上可驗證保障", en: "⛩️ Cross-Protocol CPI + ZK Pairing + On-chain Audit — four Solana-native primitives behind every on-chain verifiable rescue", ja: "⛩️ クロスプロトコル CPI + ZK ペアリング + オンチェーン監査 — 各救援を支える 4 つの Solana ネイティブ基盤" },
   sakuraTech4: { zh: "🔗 Kamino CPI + Memo 審計 — 理賠時自動 CPI 還款用戶 Kamino 倉位，Memo Program 永久刻入完整審計鏈", en: "🔗 Kamino CPI + Memo audit — on claim, atomic CPI repays the user's Kamino obligation, Memo Program immutably inscribes the full audit chain", ja: "🔗 Kamino CPI + Memo監査 — 請求時、CPIがKamino債務を自動返済、Memo Programが完全な監査チェーンを不変刻印" },
   sakuraJapanValue1: { zh: "🌸 備えあれば憂いなし — 有備無患", en: "🌸 備えあれば憂いなし — Those who prepare have nothing to fear", ja: "🌸 備えあれば憂いなし — 準備ある者に憂いなし" },
   sakuraJapanValue2: { zh: "⚔️ 匠人精神 — 表面優雅，底層嚴苛", en: "⚔️ Takumi Spirit — Beautiful surface, ruthlessly precise core", ja: "⚔️ 匠の精神 — 表面は美しく、底層は厳格に" },
@@ -174,22 +174,22 @@ export const translations = {
     ja: "接続即起動 · アカウント不要 · サブスク不要 · スキャン永久無料",
   },
   ctaFreeDesc: {
-    zh: "連接 Phantom 或 OKX，三道防線即刻就緒——Nonce 掃描、Ghost Run 幽靈模擬、健康因子監控三項核心功能永久免費。需要更深入防護？AI 安全報告 $1 USDC，DeFi 策略執行 0.3%，清算倉位救援 1%（救援成功才收費，失敗不收）。對沖基金的防護標準，現在任何人都能用。",
-    en: "Connect Phantom or OKX — all three defense protocols activate instantly. Nonce scanning, Ghost Run simulations, and health factor monitoring are permanently free. Need deeper protection? AI security reports at $1 USDC. Strategy execution at 0.3%. Liquidation rescue at 1% — charged only on successful rescue, never on failure. Hedge-fund-grade protection. Democratized.",
-    ja: "PhantomまたはOKXを接続——3つの防衛プロトコルが即座に起動。Nonceスキャン・Ghost Runシミュレーション・ヘルスファクター監視は永久無料。より深い防御が必要な方へ：AIセキュリティレポート $1 USDC。戦略実行 0.3%。清算救済 1%——救済成功時のみ課金、失敗時は無料。ヘッジファンド水準の防御を、すべての人に。",
+    zh: "連接 Phantom 或 OKX，Sakura Shielded Lending 即刻就緒——倉位 ZK 隱私保護、跨協議 Kamino / MarginFi 路由、鏈上審計追溯永久免費。需要實際救援？救援成功收 1%（失敗不收），管理費 0.5% / 年。清算損失通常 5–10%，Sakura 淨為您節省 4–9%。對沖基金的防護標準，現在任何人都能用。",
+    en: "Connect Phantom or OKX — Sakura Shielded Lending activates instantly. ZK position privacy, cross-protocol Kamino / MarginFi routing, and on-chain audit trails are permanently free. Need actual rescue? 1% fee on successful rescue (never on failure), 0.5% / year management fee. Liquidation normally costs 5–10%, so Sakura saves you 4–9% net. Hedge-fund-grade protection. Democratized.",
+    ja: "PhantomまたはOKXを接続——Sakura Shielded Lending が即座に起動。ZK ポジション・プライバシー、クロスプロトコル Kamino / MarginFi ルーティング、オンチェーン監査トレースは永久無料。実際の救援が必要な方へ：救援成功時のみ 1% 手数料（失敗時は無料）、管理料 0.5% / 年。清算は通常 5–10% の損失、Sakura は実質 4–9% の節約。ヘッジファンド水準の防御を、すべての人に。",
   },
-  ctaFreeBadge1: { zh: "🛡️ Nonce 掃描免費", en: "🛡️ Nonce Scan Free", ja: "🛡️ Nonceスキャン無料" },
-  ctaFreeBadge2: { zh: "👻 Ghost Run 模擬免費", en: "👻 Ghost Run Free", ja: "👻 Ghost Run無料" },
-  ctaFreeBadge3: { zh: "⚡ Shield 監控免費", en: "⚡ Shield Monitor Free", ja: "⚡ Shield監視無料" },
+  ctaFreeBadge1: { zh: "🛣️ 跨協議路由免費", en: "🛣️ Cross-Protocol Routing Free", ja: "🛣️ クロスプロトコル・ルーティング無料" },
+  ctaFreeBadge2: { zh: "🔬 ZK 配對驗證免費", en: "🔬 ZK Pairing Verify Free", ja: "🔬 ZK ペアリング検証無料" },
+  ctaFreeBadge3: { zh: "📜 鏈上審計免費", en: "📜 On-chain Audit Free", ja: "📜 オンチェーン監査無料" },
   ctaFreeBtn: {
     zh: "👻 連接 Phantom — 免費開始",
     en: "👻 Connect Phantom — Start Free",
     ja: "👻 Phantom接続 — 無料で開始",
   },
   ctaSubNote: {
-    zh: "AI 報告 $1 USDC · Ghost Run 執行 0.3% · 清算救援 1%（僅成功收費）",
-    en: "AI Report $1 USDC · Ghost Run execution 0.3% · Rescue fee 1% (success only)",
-    ja: "AIレポート $1 USDC · Ghost Run実行 0.3% · 救済手数料 1%（成功時のみ）",
+    zh: "管理費 0.5% / 年 · 救援成功收 1%（失敗不收）",
+    en: "Management fee 0.5% / year · 1% on successful rescue (none on failure)",
+    ja: "管理料 0.5% / 年 · 救援成功時 1%（失敗時は無料）",
   },
 
   // ── Stripe MPP section (new) ────────────────────────────────────────
@@ -199,9 +199,9 @@ export const translations = {
     ja: "🤝 x402 — エージェント自律呼び出し · オンチェーンUSDC原子決済 · 人間介入ゼロ · Agentic Economyインフラ",
   },
   stripeSectionDesc: {
-    zh: "互聯網誕生時，HTTP 定義了機器間的信息交換協議。Agentic Economy 需要一個新的協議：機器間的價值交換。Sakura 是 Solana DeFi 安全領域第一個在生產環境落地 HTTP 402 Payment Required（x402）的項目——Stripe Machine Payments Protocol 的鏈上原生實現。任何 MCP 客戶端——Claude Desktop、Cursor、VS Code、或任意自主 AI Agent——均可直接調用 Sakura 的 Nonce Guardian 安全分析 API，每次調用以鏈上 USDC 原子結算，$1 per request，無帳號、無訂閱、無 OAuth、無人工審批門控。這不是未來願景——這是已在主網運行的基礎設施。",
-    en: "When the internet was born, HTTP defined how machines exchange information. The Agentic Economy needs a new protocol: how machines exchange value. Sakura is the first project in the Solana DeFi security domain to ship HTTP 402 Payment Required (x402) — Stripe's Machine Payments Protocol — in a production environment. Any MCP client — Claude Desktop, Cursor, VS Code, or any autonomous AI agent — can call Sakura's Nonce Guardian security analysis API directly. Each call settles atomically in on-chain USDC at $1 per request. No account. No subscription. No OAuth. No human approval gate. This is not a future vision — it is infrastructure already running on Solana mainnet.",
-    ja: "インターネットが誕生したとき、HTTPはマシン間の情報交換プロトコルを定義しました。Agentic Economyには新しいプロトコルが必要です：マシン間の価値交換。SakuraはSolana DeFiセキュリティ領域で初めてHTTP 402 Payment Required（x402）——Stripe Machine Payments Protocol——を本番環境で実装したプロジェクトです。Claude Desktop、Cursor、VS Code、その他あらゆる自律AIエージェントを含む任意のMCPクライアントが、Sakuraの Nonce Guardian セキュリティ分析APIを直接呼び出せます。各呼び出しはオンチェーンUSDCで原子的に決済され、1リクエスト$1。アカウント不要。サブスクリプション不要。OAuth不要。人間の承認ゲート不要。これは未来のビジョンではなく——すでにSolanaメインネットで稼働しているインフラです。",
+    zh: "互聯網誕生時，HTTP 定義了機器間的信息交換協議。Agentic Economy 需要一個新的協議：機器間的價值交換。Sakura 是 Solana DeFi 安全領域第一個在生產環境落地 HTTP 402 Payment Required（x402）的項目——Stripe Machine Payments Protocol 的鏈上原生實現。任何 MCP 客戶端——Claude Desktop、Cursor、VS Code、或任意自主 AI Agent——均可直接調用 Sakura 的 Shielded Lending 狀態 API，每次調用以鏈上 USDC 原子結算，$1 per request，無帳號、無訂閱、無 OAuth、無人工審批門控。這不是未來願景——這是已在主網運行的基礎設施。",
+    en: "When the internet was born, HTTP defined how machines exchange information. The Agentic Economy needs a new protocol: how machines exchange value. Sakura is the first project in the Solana DeFi security domain to ship HTTP 402 Payment Required (x402) — Stripe's Machine Payments Protocol — in a production environment. Any MCP client — Claude Desktop, Cursor, VS Code, or any autonomous AI agent — can call Sakura's Shielded Lending status API directly. Each call settles atomically in on-chain USDC at $1 per request. No account. No subscription. No OAuth. No human approval gate. This is not a future vision — it is infrastructure already running on Solana mainnet.",
+    ja: "インターネットが誕生したとき、HTTPはマシン間の情報交換プロトコルを定義しました。Agentic Economyには新しいプロトコルが必要です：マシン間の価値交換。SakuraはSolana DeFiセキュリティ領域で初めてHTTP 402 Payment Required（x402）——Stripe Machine Payments Protocol——を本番環境で実装したプロジェクトです。Claude Desktop、Cursor、VS Code、その他あらゆる自律AIエージェントを含む任意のMCPクライアントが、Sakura の Shielded Lending ステータス API を直接呼び出せます。各呼び出しはオンチェーンUSDCで原子的に決済され、1リクエスト$1。アカウント不要。サブスクリプション不要。OAuth不要。人間の承認ゲート不要。これは未来のビジョンではなく——すでにSolanaメインネットで稼働しているインフラです。",
   },
   stripeFeature1: {
     zh: "🫙 每次 API 調用自動結算 $1.00 USDC · 鏈上原子確認",
@@ -936,7 +936,7 @@ export const translations = {
   planProFeature3:     { zh: "MCP API 無限存取", en: "Unlimited MCP API access", ja: "MCP API無制限アクセス" },
   planProFeature4:     { zh: "最高優先級回應", en: "Highest priority responses", ja: "最優先レスポンス" },
   // ── Footer ───────────────────────────────────────────────────────
-  footerTagline:          { zh: "Sakura Mutual — 全球首個由數學結算理賠的 Solana 互助保險協議。Groth16 ZK 驗證 · Poseidon 承諾 · alt_bn128 鏈上配對。", en: "Sakura Mutual — the first Solana mutual-insurance protocol where claims are settled by math. Groth16 ZK verification · Poseidon commitments · alt_bn128 on-chain pairing.", ja: "Sakura Mutual — 請求が数学で決済される世界初のSolana相互保険プロトコル。Groth16 ZK検証・Poseidonコミットメント・alt_bn128オンチェーンペアリング。" },
+  footerTagline:          { zh: "Sakura Shielded Lending — Solana 上第一個由數學結算清算救援的私密借貸層。Groth16 ZK 驗證 · Poseidon 承諾 · alt_bn128 鏈上配對。", en: "Sakura Shielded Lending — the first private lending layer on Solana where rescue is settled by math. Groth16 ZK verification · Poseidon commitments · alt_bn128 on-chain pairing.", ja: "Sakura Shielded Lending — 救援が数学で決済される Solana 上初のプライベート・レンディング・レイヤー。Groth16 ZK検証・Poseidonコミットメント・alt_bn128オンチェーンペアリング。" },
   footerProductSection:   { zh: "產品功能", en: "Product", ja: "プロダクト" },
   footerResourcesSection: { zh: "資源", en: "Resources", ja: "リソース" },
   footerCommunitySection: { zh: "社交媒體", en: "Social Media", ja: "ソーシャルメディア" },
