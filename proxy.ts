@@ -114,11 +114,8 @@ const AI_ENDPOINT_LIMITS: EndpointLimit[] = [
   { path: "/api/token/premium",                rpm: 5,  burst: 2, burstWindowMs: 10_000 },
   { path: "/api/defi-chat",                    rpm: 10, burst: 3, burstWindowMs: 10_000 },
   { path: "/api/mcp",                          rpm: 20, burst: 5, burstWindowMs:  5_000 },
-  { path: "/api/ghost-run/simulate",           rpm: 4,  burst: 2, burstWindowMs: 15_000 },
-  { path: "/api/ghost-run/execute",            rpm: 4,  burst: 2, burstWindowMs: 15_000 },
-  { path: "/api/liquidation-shield/monitor",   rpm: 3,  burst: 1, burstWindowMs: 30_000 },
-  { path: "/api/liquidation-shield/rescue",    rpm: 3,  burst: 1, burstWindowMs: 30_000 },
-  { path: "/api/nonce-guardian",               rpm: 6,  burst: 2, burstWindowMs: 10_000 },
+  { path: "/api/insurance/claim-with-repay",   rpm: 4,  burst: 2, burstWindowMs: 15_000 },
+  { path: "/api/insurance/buy-policy",         rpm: 6,  burst: 2, burstWindowMs: 10_000 },
   { path: "/api/rpc",                          rpm: 30, burst: 5, burstWindowMs: 10_000 },
 ];
 
@@ -126,14 +123,11 @@ const API_RATE_LIMITED = [
   "/api/analyze",
   "/api/defi-chat",
   "/api/agent/",
-  "/api/verify/",
+  "/api/insurance/",
   "/api/token/",
   "/api/yield",
   "/api/wallet",
   "/api/mcp",
-  "/api/ghost-run",
-  "/api/liquidation-shield",
-  "/api/nonce-guardian",
   "/api/rpc",
 ];
 

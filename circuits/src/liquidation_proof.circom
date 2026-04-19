@@ -2,9 +2,10 @@ pragma circom 2.1.6;
 
 include "../../node_modules/circomlib/circuits/poseidon.circom";
 include "../../node_modules/circomlib/circuits/comparators.circom";
+include "../../node_modules/circomlib/circuits/bitify.circom";
 
 /*
- * Sakura Mutual — Liquidation Eligibility Proof (v2, oracle-bound)
+ * Sakura Mutual — Liquidation Eligibility Proof (v2.1, oracle-bound, range-checked)
  *
  * Proves knowledge of a position (collateral_amount, debt_amount, position
  * account pubkey, user wallet, nonce) such that:
@@ -20,6 +21,11 @@ include "../../node_modules/circomlib/circuits/comparators.circom";
  *
  *   (3) rescue_amount_bucket * 100_000_000 <= debt_usd_micro
  *       Rescue amount (buckets of 100 USDC) cannot exceed outstanding debt.
+ *
+ * RANGE CHECKS (v2.1): All witness values used in multiplications or as
+ * LessThan/LessEqThan inputs are explicitly bit-bounded via Num2Bits. This
+ * prevents a malicious prover from choosing field elements (mod BN254 p ≈
+ * 2^254) that wrap around and spuriously satisfy the scaled inequality.
  *
  * Public inputs (verified on-chain):
  *   - policy_commitment          (binds to Policy.commitment_hash)
@@ -37,8 +43,13 @@ include "../../node_modules/circomlib/circuits/comparators.circom";
  *   - user_wallet_bytes          (Solana Pubkey, 31B)
  *   - nonce                      (anti-replay, fresh per policy)
  *
- * Bit-budget: collateral × price × 10000 is at most
- *   2^40 (amount) × 2^40 (price) × 2^14 = 2^94. LessThan(128) covers safely.
+ * Bit-budget (post-range-check):
+ *   LHS = collateral(≤40) * price(≤40) * 10000(≤14) ≤ 2^94
+ *   RHS = trigger(≤16) * debt(≤64) * 1e6(≤20)       ≤ 2^100
+ *   LessThan(128) covers both with margin.
+ *   bucket_scaled = bucket(≤32) * 1e8(≤27)           ≤ 2^59
+ *   debt(≤64)                                         < 2^96
+ *   LessEqThan(96) covers.
  *
  * Groth16 verification on-chain via Solana's alt_bn128_pairing syscall
  * inside the `groth16-solana` crate.
@@ -57,6 +68,45 @@ template LiquidationProof() {
     signal input position_account_bytes;
     signal input user_wallet_bytes;
     signal input nonce;
+
+    // ------------------------------------------------------------------
+    // RANGE CHECKS — force witness values into declared bit-widths so no
+    // field wraparound can forge an inequality. Num2Bits(N) constrains the
+    // input to lie in [0, 2^N). Without these, a malicious prover can feed
+    // large field elements and wrap modulo p ≈ 2^254.
+    // ------------------------------------------------------------------
+
+    // Public numeric inputs (defense-in-depth; on-chain relayer also caps).
+    component rb_trigger = Num2Bits(16);
+    rb_trigger.in <== trigger_hf_bps;
+
+    component rb_bucket = Num2Bits(32);
+    rb_bucket.in <== rescue_amount_bucket;
+
+    component rb_price = Num2Bits(40);
+    rb_price.in <== oracle_price_usd_micro;
+
+    component rb_slot = Num2Bits(64);
+    rb_slot.in <== oracle_slot;
+
+    // Private numeric inputs used in multiplications.
+    component rb_collat = Num2Bits(40);
+    rb_collat.in <== collateral_amount;
+
+    component rb_debt = Num2Bits(64);
+    rb_debt.in <== debt_usd_micro;
+
+    // Private Poseidon preimage inputs — 31-byte (248-bit) pubkey slices
+    // and a 64-bit nonce. Binding them to bit widths prevents a prover
+    // from substituting giant field elements that collide after Poseidon.
+    component rb_pos = Num2Bits(248);
+    rb_pos.in <== position_account_bytes;
+
+    component rb_wallet = Num2Bits(248);
+    rb_wallet.in <== user_wallet_bytes;
+
+    component rb_nonce = Num2Bits(64);
+    rb_nonce.in <== nonce;
 
     // (1) Commitment binding: tie proof to a specific obligation account
     // committed at policy purchase time. Substituting a different position

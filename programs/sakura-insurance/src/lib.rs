@@ -5,7 +5,33 @@ use groth16_solana::groth16::Groth16Verifier;
 mod zk_verifying_key;
 use zk_verifying_key::VERIFYINGKEY;
 
-declare_id!("A91n9X4MxLaeV9NF1K3jC2yet5VhKjTj48wgWQCA7wka");
+declare_id!("AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp");
+
+// ════════════════════════════════════════════════════════════════════════════
+// Oracle bindings (hardcoded — prevents attacker-supplied fake Pyth accounts)
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Pyth Pull Oracle Receiver program ID (same across mainnet & devnet).
+/// `pyth_price_account.owner` MUST equal this at claim time.
+///
+/// If Pyth rotates this program ID, update here and republish the program.
+/// Reference: https://docs.pyth.network/price-feeds/contract-addresses/solana
+pub const PYTH_RECEIVER_PROGRAM_ID: Pubkey =
+    solana_program::pubkey!("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ");
+
+/// Pyth SOL/USD price feed ID (32 bytes, big-endian).
+/// `price_message.feed_id` MUST equal this — otherwise an attacker could
+/// present a cheaper asset's feed (e.g. a shitcoin that is $0.001) to spoof
+/// a low price and trigger the health-factor inequality in the ZK circuit.
+///
+/// SOL/USD = 0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d
+/// Reference: https://pyth.network/developers/price-feed-ids (Solana → SOL/USD)
+pub const EXPECTED_FEED_ID_SOL_USD: [u8; 32] = [
+    0xef, 0x0d, 0x8b, 0x6f, 0xda, 0x2c, 0xeb, 0xa4,
+    0x1d, 0xa1, 0x5d, 0x40, 0x95, 0xd1, 0xda, 0x39,
+    0x2a, 0x0d, 0x2f, 0x8e, 0xd0, 0xc6, 0xc7, 0xbc,
+    0x0f, 0x4c, 0xfa, 0xc8, 0xc2, 0x80, 0xb5, 0x6d,
+];
 
 /// Sakura Mutual — v0.2 (mutual-self-insurance, no external LP)
 ///
@@ -276,6 +302,11 @@ pub mod sakura_insurance {
     /// Close policy: deactivate, refund time-remaining premium, return stake
     /// pro-rata to current pool value. Stake is last-loss tranche — if claims
     /// have drained the pool, stake refund will be less than nominal.
+    ///
+    /// NOTE (intentional): no `pool.paused` guard here. If admin pauses to
+    /// investigate, users MUST still be able to withdraw their stake — pausing
+    /// close_policy would let admin trap user capital indefinitely. Pausing
+    /// only blocks `buy_policy` and `claim_payout_with_zk_proof`.
     pub fn close_policy(ctx: Context<ClosePolicy>) -> Result<()> {
         let policy = &mut ctx.accounts.policy;
         require!(policy.is_active, InsErr::PolicyInactive);
@@ -402,9 +433,15 @@ pub mod sakura_insurance {
                 .ok_or(InsErr::Overflow)?,
             InsErr::WaitingPeriodNotElapsed
         );
-        // 48h grace period after paid_through
+        // 48h grace period after paid_through. Use checked_add to guard
+        // against i64 overflow if paid_through_unix is pathologically large
+        // (many renewals can push it far into the future).
         const GRACE_SEC: i64 = 48 * 3_600;
-        require!(now <= policy.paid_through_unix + GRACE_SEC, InsErr::PolicyLapsed);
+        let grace_deadline = policy
+            .paid_through_unix
+            .checked_add(GRACE_SEC)
+            .ok_or(InsErr::Overflow)?;
+        require!(now <= grace_deadline, InsErr::PolicyLapsed);
 
         let new_total = policy
             .total_claimed
@@ -466,22 +503,44 @@ pub mod sakura_insurance {
         // and require posted_slot == oracle_slot.
         {
             let acct = &ctx.accounts.pyth_price_account;
+
+            // (a) Owner check — only the real Pyth Receiver program may write
+            // PriceUpdateV2 accounts. Without this, attacker can hand us a
+            // program-owned account they control and forge any price.
+            require!(
+                acct.owner == &PYTH_RECEIVER_PROGRAM_ID,
+                InsErr::PythAccountInvalid
+            );
+
             let data = acct.try_borrow_data()?;
-            require!(data.len() >= 8 + 32 + 2 + 32 + 8 + 8 + 4 + 8 + 8 + 8 + 8 + 8, InsErr::PythAccountInvalid);
+            // Min length for Full variant (no num_signatures payload after tag):
+            //   8 disc + 32 write_authority + 1 tag + 32 feed_id + 8 price + 8 conf
+            //   + 4 exp + 8 pub + 8 prev_pub + 8 ema_p + 8 ema_c + 8 posted_slot = 133
+            // Live Pyth Full account = 134 bytes (1 trailing reserved byte).
+            require!(data.len() >= 8 + 32 + 1 + 32 + 8 + 8 + 4 + 8 + 8 + 8 + 8 + 8, InsErr::PythAccountInvalid);
 
             // Skip discriminator + write_authority
             let mut o: usize = 8 + 32;
-            // verification_level: variant tag (1 byte); Partial has an extra u8
+            // verification_level: variant tag (1 byte).
+            //   tag = 0 → Partial { num_signatures: u8 }  (extra 1 byte follows)
+            //   tag = 1 → Full                            (no payload)
+            // Verified against live devnet PriceUpdateV2 (account 7UVimffxr9...).
             let tag = data[o]; o += 1;
-            if tag == 1 {
+            if tag == 0 {
                 // Partial(num_signatures: u8)
                 o += 1;
-            } else if tag != 0 {
+            } else if tag != 1 {
                 return err!(InsErr::PythAccountInvalid);
             }
 
-            // Skip feed_id — the caller (and on-chain verifier via address
-            // constraint below) is responsible for using the right feed
+            // (b) feed_id check — must be SOL/USD. Otherwise an attacker could
+            // submit a different asset's Pyth account (e.g. a fake memecoin at
+            // $0.001) to make the circuit's HF inequality trivially true.
+            let feed_id_slice = &data[o..o + 32];
+            require!(
+                feed_id_slice == EXPECTED_FEED_ID_SOL_USD.as_slice(),
+                InsErr::PythFeedIdMismatch
+            );
             o += 32;
 
             let price_i64 = i64::from_le_bytes(
@@ -587,13 +646,21 @@ pub mod sakura_insurance {
         );
         token::transfer(cpi, amount_usdc)?;
 
-        // Claim record — PDA init is idempotency / replay guard
+        // Claim record — PDA init seeded by (policy, claim_nonce) is the
+        // authoritative replay guard; a second call with the same nonce fails
+        // at account init before this handler runs.
+        //
+        // We additionally persist a hash over (proof_a || proof_c) as a
+        // forensic audit fingerprint of the exact pairing inputs that landed
+        // this claim. NOT used for security decisions — purely for off-chain
+        // reconstruction of which proof was accepted.
         let record = &mut ctx.accounts.claim_record;
         record.policy = policy.key();
         record.amount_usdc = amount_usdc;
-        let mut fp = [0u8; 32];
-        fp.copy_from_slice(&proof_a[..32]);
-        record.rescue_sig_hash = fp;
+        let mut fp_src = [0u8; 128];
+        fp_src[..64].copy_from_slice(&proof_a);
+        fp_src[64..].copy_from_slice(&proof_c);
+        record.rescue_sig_hash = anchor_lang::solana_program::keccak::hash(&fp_src).to_bytes();
         record.claim_nonce = claim_nonce;
         record.ts = now;
         record.bump = ctx.bumps.claim_record;
@@ -788,15 +855,15 @@ pub struct ClaimPayoutZk<'info> {
     #[account(mut, token::mint = pool.usdc_mint)]
     pub rescue_destination_ata: Box<Account<'info, TokenAccount>>,
 
-    /// Pyth `PriceUpdateV2` account. Handler re-parses and verifies that
-    /// `oracle_price_usd_micro` (public input to the ZK proof) matches the
-    /// price Pyth actually published at `oracle_slot`. Without this check
-    /// the oracle input is attacker-controlled.
+    /// Pyth `PriceUpdateV2` account. Handler enforces:
+    ///   • account.owner == PYTH_RECEIVER_PROGRAM_ID    (spoofing guard)
+    ///   • price_message.feed_id == EXPECTED_FEED_ID_SOL_USD (wrong-asset guard)
+    ///   • posted_slot == oracle_slot                   (replay guard)
+    ///   • oracle_price_usd_micro ≈ price × 10^(6+exp)  (forgery guard)
     ///
-    /// Owner check deferred to handler (we don't want to couple the program
-    /// to a specific Pyth receiver program id at compile time — devnet vs.
-    /// mainnet use different ids).
-    /// CHECK: layout validated by handler byte-parser
+    /// Without all four, the `oracle_price` public input to the ZK proof is
+    /// attacker-controlled and the in-circuit HF comparison is meaningless.
+    /// CHECK: owner + layout validated by handler
     pub pyth_price_account: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, Token>,
@@ -933,4 +1000,5 @@ pub enum InsErr {
     #[msg("amount_usdc exceeds rescue bucket cap")]     ZkBucketTooSmall,
     #[msg("Pyth price account has invalid layout")]     PythAccountInvalid,
     #[msg("oracle_price_usd_micro / oracle_slot does not match Pyth")] OraclePriceMismatch,
+    #[msg("Pyth feed_id does not match expected SOL/USD feed")] PythFeedIdMismatch,
 }

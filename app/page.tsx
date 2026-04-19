@@ -1,31 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import WalletConnect from "@/components/WalletConnect";
 import MutualPool from "@/components/MutualPool";
-import NonceGuardian from "@/components/NonceGuardian";
-import GhostRun from "@/components/GhostRun";
-import LiquidationShield from "@/components/LiquidationShield";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useWallet } from "@/contexts/WalletContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLang } from "@/contexts/LanguageContext";
 import Footer from "@/components/Footer";
 
-type Tab = "mutual" | "nonce" | "ghost" | "shield";
-
-const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: "mutual", icon: "🌸", label: "Mutual Pool" },
-  { id: "nonce",  icon: "🛡️", label: "Nonce Guardian" },
-  { id: "ghost",  icon: "👻", label: "Ghost Run" },
-  { id: "shield", icon: "⚡", label: "Liquidation Shield" },
-];
-
 function AppContent() {
   const { walletAddress, shortAddr, disconnect, showLanding, setShowLanding, activeProvider, isDemo, setIsDemo } = useWallet();
   const { isDayMode, timeBg } = useTheme();
   const { t } = useLang();
-  const [activeTab, setActiveTab] = useState<Tab>("mutual");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -165,43 +152,10 @@ function AppContent() {
               </div>
             </div>
 
-            {/* ── 3-Tab Navigation ── */}
-            <div style={{
-              display: "flex", gap: 0, marginBottom: 28,
-              borderBottom: "1px solid var(--border)",
-            }}>
-              {TABS.map(tab => (
-                <TabButton
-                  key={tab.id}
-                  icon={tab.icon}
-                  label={tab.label}
-                  active={activeTab === tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                />
-              ))}
-            </div>
-
-            {/* ── Tab Content ── */}
-            <div style={{ display: activeTab === "mutual" ? "block" : "none" }}>
-              <ErrorBoundary fallbackLabel="Mutual Pool">
-                <MutualPool isDemo={isDemo} />
-              </ErrorBoundary>
-            </div>
-            <div style={{ display: activeTab === "nonce" ? "block" : "none" }}>
-              <ErrorBoundary fallbackLabel="Nonce Guardian">
-                <NonceGuardian isDemo={isDemo} />
-              </ErrorBoundary>
-            </div>
-            <div style={{ display: activeTab === "ghost" ? "block" : "none" }}>
-              <ErrorBoundary fallbackLabel="Ghost Run">
-                <GhostRun isDemo={isDemo} />
-              </ErrorBoundary>
-            </div>
-            <div style={{ display: activeTab === "shield" ? "block" : "none" }}>
-              <ErrorBoundary fallbackLabel="Liquidation Shield">
-                <LiquidationShield isDemo={isDemo} />
-              </ErrorBoundary>
-            </div>
+            {/* ── Single-product view: Shielded Lending (via MutualPool) ── */}
+            <ErrorBoundary fallbackLabel="Shielded Lending">
+              <MutualPool isDemo={isDemo} />
+            </ErrorBoundary>
           </>
         )}
       </div>
@@ -212,28 +166,4 @@ function AppContent() {
 
 export default function Home() {
   return <AppContent />;
-}
-
-function TabButton({ icon, label, active, onClick }: {
-  icon: string; label: string; active: boolean; onClick: () => void;
-}) {
-  return (
-    <button onClick={onClick} className="tab-btn" style={{
-      flex: 1, padding: "10px 16px", border: "none",
-      fontSize: 13, fontWeight: active ? 500 : 400,
-      cursor: "pointer",
-      background: active ? "var(--accent-soft)" : "transparent",
-      color: active ? "var(--accent)" : "var(--text-muted)",
-      borderBottom: active ? "2px solid var(--accent)" : "2px solid transparent",
-      transition: "background 0.2s ease, color 0.2s ease, border-color 0.2s ease",
-      fontFamily: "var(--font-body)",
-      letterSpacing: "0.04em",
-      marginBottom: -1,
-      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-      minHeight: 44,
-    }}>
-      <span style={{ fontSize: 15 }}>{icon}</span>
-      <span>{label}</span>
-    </button>
-  );
 }

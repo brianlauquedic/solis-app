@@ -63,55 +63,27 @@ async function verifyMCPPayment(
   }
 }
 
-// ── MCP Tool Definitions (v2 — 3 core features) ──────────────────
+// ── MCP Tool Definitions (v3 — Shielded Lending core) ──────────────
+//
+// v3 collapses the prior 3-tab architecture (Nonce Guardian / Ghost Run /
+// Liquidation Shield) into a single focused product: Shielded Lending,
+// powered by on-chain Groth16 pairing verification on Solana's alt_bn128
+// syscall. The exposed MCP tool returns honest pool + policy state read
+// from the deployed program — no AI fluff, no simulated proofs.
 const TOOLS = [
   {
-    name: "sakura_nonce_guardian",
+    name: "sakura_shielded_lending_status",
     description:
-      "Scan a Solana wallet for Durable Nonce accounts and detect security risks. Durable Nonces enable pre-signed transactions that never expire — the attack vector used in the April 2026 Drift $285M hack. Returns nonce accounts, risk signals, and AI analysis.",
+      "Read the on-chain state of Sakura's Shielded Lending pool (mutual self-insured) and the caller's policy if any. Returns: program id, pool TVL, total stakes, total claims paid, plus the user's coverage cap, stake, claims-to-date, and policy commitment hash. All data is fetched live from the deployed Anchor program on Solana devnet.",
     inputSchema: {
       type: "object",
       properties: {
         wallet: {
           type: "string",
-          description: "Solana wallet address (base58) to scan for nonce accounts",
+          description: "Optional Solana wallet address (base58). If provided, returns the policy state for this user; if omitted, returns only the global pool state.",
         },
       },
-      required: ["wallet"],
-    },
-  },
-  {
-    name: "sakura_ghost_run",
-    description:
-      "Ghost-execute a multi-step Solana DeFi strategy using simulateTransaction before the user signs anything. Supports stake (SOL→mSOL/jitoSOL), lend (USDC/SOL into Kamino), and swap. Returns precise token deltas, gas costs, APY estimates, price impact, and AI feasibility analysis.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        strategy: {
-          type: "string",
-          description: "Natural language DeFi strategy, e.g. 'Stake 3 SOL to Marinade and deposit 50 USDC into Kamino'",
-        },
-        wallet: {
-          type: "string",
-          description: "Solana wallet address (base58) — used to check balances and simulate transactions",
-        },
-      },
-      required: ["strategy", "wallet"],
-    },
-  },
-  {
-    name: "sakura_liquidation_shield",
-    description:
-      "Monitor Kamino and MarginFi lending positions for liquidation risk. Scans health factors, calculates the collateral price at which liquidation triggers, simulates rescue repayments, and returns a full AI risk analysis with recommended actions.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        wallet: {
-          type: "string",
-          description: "Solana wallet address (base58) to scan for lending positions",
-        },
-      },
-      required: ["wallet"],
+      required: [],
     },
   },
 ];
@@ -119,9 +91,9 @@ const TOOLS = [
 // ── GET: MCP server manifest / tools list ────────────────────────
 export async function GET() {
   return NextResponse.json({
-    name: "sakura-v2-mcp",
-    version: "2.0.0",
-    description: "Sakura v2 — Nonce Guardian + Ghost Run DeFi Simulator + Liquidation Shield on Solana",
+    name: "sakura-mcp",
+    version: "3.0.0",
+    description: "Sakura — Shielded Lending on Solana with on-chain Groth16 pairing verification",
     tools: TOOLS,
   });
 }
@@ -210,41 +182,13 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<un
     ? `https://${process.env.VERCEL_URL}`
     : "http://localhost:3000";
 
-  if (name === "sakura_nonce_guardian") {
+  if (name === "sakura_shielded_lending_status") {
     const wallet = String(args.wallet ?? "");
-    if (!wallet || wallet.length < 32) throw new Error("wallet address is required");
-    const res = await fetch(`${base}/api/nonce-guardian`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet }),
-    });
-    if (!res.ok) throw new Error(`Nonce Guardian failed: HTTP ${res.status}`);
-    return await res.json();
-  }
-
-  if (name === "sakura_ghost_run") {
-    const strategy = String(args.strategy ?? "");
-    const wallet   = String(args.wallet ?? "");
-    if (!strategy) throw new Error("strategy is required");
-    if (!wallet || wallet.length < 32) throw new Error("wallet address is required");
-    const res = await fetch(`${base}/api/ghost-run/simulate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ strategy, wallet }),
-    });
-    if (!res.ok) throw new Error(`Ghost Run simulation failed: HTTP ${res.status}`);
-    return await res.json();
-  }
-
-  if (name === "sakura_liquidation_shield") {
-    const wallet = String(args.wallet ?? "");
-    if (!wallet || wallet.length < 32) throw new Error("wallet address is required");
-    const res = await fetch(`${base}/api/liquidation-shield/monitor`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ wallet }),
-    });
-    if (!res.ok) throw new Error(`Liquidation Shield failed: HTTP ${res.status}`);
+    const url = wallet && wallet.length >= 32
+      ? `${base}/api/insurance/status?user=${encodeURIComponent(wallet)}`
+      : `${base}/api/insurance/status`;
+    const res = await fetch(url, { method: "GET" });
+    if (!res.ok) throw new Error(`Shielded Lending status fetch failed: HTTP ${res.status}`);
     return await res.json();
   }
 

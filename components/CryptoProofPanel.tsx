@@ -118,21 +118,39 @@ export default function CryptoProofPanel({ data }: { data: CryptoProofData }) {
   const toggle = (key: string) => setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
   const i = (key: keyof typeof t) => t[key][lang] ?? t[key].en;
 
+  // Client-side hash-chain verification. The deleted /api/verify route
+  // was just a sha256 recompute server-side; doing it in the browser
+  // removes a network round-trip, eliminates a server attack surface,
+  // and lets the demo run with no backend dependency.
   const handleVerifyAll = async () => {
     setVerifyResult("...");
     try {
-      const body: Record<string, any> = { mode: "full_rescue" };
+      const sha256Hex = async (s: string): Promise<string> => {
+        const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+        return Array.from(new Uint8Array(buf))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+      };
+      let allVerified = true;
       if (data.hashChain) {
-        body.mandateInput = data.hashChain.mandateInput;
-        body.mandateHash = data.hashChain.mandateHash;
-        body.executionInput = data.hashChain.executionInput;
-        body.executionHash = data.hashChain.executionHash;
-        body.chainInput = data.hashChain.chainInput;
-        body.chainProof = data.hashChain.chainProof;
+        // Each *Input field is optional on the type — if missing, we can't
+        // recompute, so treat the layer as "skipped" (not failed) to match
+        // the prior server-side behavior which only verified layers with
+        // inputs present in the payload.
+        if (data.hashChain.mandateInput !== undefined) {
+          const m = await sha256Hex(data.hashChain.mandateInput);
+          if (m !== data.hashChain.mandateHash) allVerified = false;
+        }
+        if (data.hashChain.executionInput !== undefined) {
+          const e = await sha256Hex(data.hashChain.executionInput);
+          if (e !== data.hashChain.executionHash) allVerified = false;
+        }
+        if (data.hashChain.chainInput !== undefined) {
+          const c = await sha256Hex(data.hashChain.chainInput);
+          if (c !== data.hashChain.chainProof) allVerified = false;
+        }
       }
-      const res = await fetch("/api/verify", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      const json = await res.json();
-      setVerifyResult(json.allVerified ? "ALL_PASS" : "SOME_FAIL");
+      setVerifyResult(allVerified ? "ALL_PASS" : "SOME_FAIL");
     } catch {
       setVerifyResult("ERROR");
     }

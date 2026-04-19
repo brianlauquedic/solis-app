@@ -38,7 +38,11 @@ import crypto from "crypto";
 // imports this file.
 export const SAKURA_INSURANCE_PROGRAM_ID = new PublicKey(
   (process.env.NEXT_PUBLIC_INSURANCE_PROGRAM_ID ?? "").trim() ||
-    "A91n9X4MxLaeV9NF1K3jC2yet5VhKjTj48wgWQCA7wka"
+    // v0.3 — redeployed at Ansze... after Pyth-tag-parsing fix in lib.rs.
+    // The old A91n... binary inverted VerificationLevel discriminants
+    // (treated tag=1 as Partial), corrupting every posted_slot read and
+    // making every claim_payout_with_zk_proof revert with OraclePriceMismatch.
+    "AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp"
 );
 
 export const TOKEN_PROGRAM_ID = new PublicKey(

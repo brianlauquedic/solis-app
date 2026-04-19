@@ -24,10 +24,14 @@ function useIsMobile() {
 }
 
 const AGENT_KEYS = [
-  { tag: "Nonce Guardian",       titleKey: "agent1Title" as const, descKey: "agent1Desc" as const, icon: "護", color: "#FF4444" },
-  { tag: "Ghost Run",            titleKey: "agent2Title" as const, descKey: "agent2Desc" as const, icon: "幽", color: "var(--accent)" },
-  { tag: "Liquidation Shield",   titleKey: "agent3Title" as const, descKey: "agent3Desc" as const, icon: "盾", color: "var(--gold)" },
-  { tag: "Verifiable AI",        titleKey: "agent4Title" as const, descKey: "agent4Desc" as const, icon: "証", color: "var(--green)" },
+  // Single-product architecture (v0.3): Shielded Lending replaces the prior
+  // 3-tab layout. The four cards now describe four LAYERS of the unified
+  // product (cross-protocol routing, ZK pairing verification, on-chain
+  // audit, agent-mediated rescue) rather than separate features.
+  { tag: "Cross-Protocol Routing", titleKey: "agent1Title" as const, descKey: "agent1Desc" as const, icon: "路", color: "var(--accent)" },
+  { tag: "ZK Pairing Verifier",    titleKey: "agent2Title" as const, descKey: "agent2Desc" as const, icon: "証", color: "var(--gold)" },
+  { tag: "On-chain Audit",         titleKey: "agent3Title" as const, descKey: "agent3Desc" as const, icon: "鑑", color: "#FF4444" },
+  { tag: "Agent-Mediated Rescue",  titleKey: "agent4Title" as const, descKey: "agent4Desc" as const, icon: "救", color: "var(--green)" },
 ];
 
 const PROTOCOLS = [

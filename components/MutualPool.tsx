@@ -59,7 +59,11 @@ type Status = {
 
 const INSURANCE_PROGRAM_ID =
   process.env.NEXT_PUBLIC_INSURANCE_PROGRAM_ID?.trim() ||
-  "A91n9X4MxLaeV9NF1K3jC2yet5VhKjTj48wgWQCA7wka";
+  // v0.3 — redeployed at Ansze... after the Pyth-tag-parsing fix.
+  // Old A91n... binary had inverted VerificationLevel discriminants
+  // (treated tag=1 as Partial, tag=0 as Full) which corrupted every
+  // posted_slot read and made every claim revert with OraclePriceMismatch.
+  "AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp";
 
 const POOL_ADMIN =
   process.env.NEXT_PUBLIC_INSURANCE_ADMIN?.trim() ||

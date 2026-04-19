@@ -18,7 +18,18 @@ const nextConfig: NextConfig = {
     "@voltr/vault-sdk",
     "flash-sdk",
     "@cks-systems/manifest-sdk",
+    "snarkjs",
   ],
+
+  // Ensure Vercel's function bundler (nft tracer) includes the ZK prover
+  // artifacts for any route that generates Groth16 proofs server-side.
+  // Without this, /public/zk/*.wasm and *.zkey are served as static assets
+  // but NOT copied into the function bundle, so `fs.readFile("public/zk/...")`
+  // crashes at runtime with ENOENT.
+  outputFileTracingIncludes: {
+    "/api/insurance/claim-with-repay": ["public/zk/**/*"],
+    "/api/_zk-diag": ["public/zk/**/*"],
+  },
 
   async headers() {
     return [

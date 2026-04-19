@@ -3,7 +3,7 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-sakura_mandate = "AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp"
+sakura_insurance = "AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp"
 
 [registry]
 url = "https://api.apr.dev"

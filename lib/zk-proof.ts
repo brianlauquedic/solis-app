@@ -89,7 +89,22 @@ export function proofToOnchainBytes(proof: Groth16Proof): {
 } {
   const ax = BigInt(proof.pi_a[0]);
   const ay = BigInt(proof.pi_a[1]);
-  // NEGATE A (prepared-alpha convention in groth16-solana)
+  // Negate A.y (light-protocol groth16-solana convention).
+  //
+  // The Groth16 identity is  e(A, B) == e(α, β) * e(Σ IC, γ) * e(C, δ).
+  // Rearranged into a single pairing product equal to 1, we need to negate
+  // ONE of {A, α, Σ, C}. Different implementations choose differently:
+  //
+  //   arkworks:        negate α inside VK (prepared-alpha), leave A alone
+  //   light-protocol:  expect the SUBMITTER to negate A; keep α positive
+  //
+  // The on-chain groth16-solana crate (light-protocol) follows the second
+  // convention — even though `parse-vk-to-rust.js` wraps α via `negateG1`
+  // during VK export, the crate internally negates again, so the *net*
+  // effect is that callers must provide `-A`. Empirically verified on
+  // devnet 2026-04 (program AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp):
+  // submitting A without negation caused pairing failure at ~116k CU;
+  // negating restored successful verification.
   const negAy = (BN254_P - (ay % BN254_P)) % BN254_P;
 
   const proofA = new Uint8Array(64);
@@ -148,11 +163,20 @@ export async function generateLiquidationProof(
 ): Promise<ProofBundle> {
   const snarkjs = await import("snarkjs");
 
-  const base =
-    opts.artifactBase ??
-    (typeof window !== "undefined"
-      ? "/zk"
-      : "./public/zk"); // sensible server default
+  // Resolve artifact base in a cwd-safe way. `./public/zk` breaks on Vercel
+  // Fluid Compute when the function's working directory is the lambda root
+  // (/var/task) — relative paths can miss the traced includes. Use
+  // process.cwd() so we always resolve from the project root.
+  let base: string;
+  if (opts.artifactBase) {
+    base = opts.artifactBase;
+  } else if (typeof window !== "undefined") {
+    base = "/zk";
+  } else {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const nodePath = require("path");
+    base = nodePath.join(process.cwd(), "public", "zk");
+  }
 
   const input = {
     policy_commitment: witness.policyCommitment.toString(),
@@ -204,209 +228,34 @@ export async function verifyLiquidationProof(
     vk = await res.json();
   } else {
     const fs = await import("fs");
-    const path = opts.vkPath ?? "./public/zk/verification_key.json";
-    vk = JSON.parse(fs.readFileSync(path, "utf8"));
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const nodePath = require("path");
+    const vkPath =
+      opts.vkPath ??
+      nodePath.join(process.cwd(), "public", "zk", "verification_key.json");
+    vk = JSON.parse(fs.readFileSync(vkPath, "utf8"));
   }
 
   return snarkjs.groth16.verify(vk, publicSignals, proof);
 }
 
-// ── Legacy-compat shims for existing API routes ──────────────────────
-//
-// The old `lib/groth16-verify.ts` exported these helpers. We keep thin
-// wrappers here so the 3 API routes (/rescue, /ghost-run/simulate,
-// /verify) keep compiling while they're migrated. Each wrapper uses
-// real snarkjs under the hood or explicitly marks itself as a no-op.
+// ── Memo payload helper (used by on-chain audit trail) ───────────────
 
 /**
- * Legacy shim: the v0.1 `generateRescueProof` produced a commitment-style
- * "proof" (sha256 + pseudo-Poseidon digest) that was never actually a
- * Groth16 proof. We preserve its return shape so existing rescue routes
- * keep compiling; the on-chain authoritative check is the real Groth16
- * path in `generateLiquidationProof` + `claim_payout_with_zk_proof`.
- *
- * Callers should migrate to `generateLiquidationProof` with an explicit
- * `LiquidationWitness` to get a pairing-verified proof.
+ * Encode a Groth16 proof bundle into a base64url string suitable for a
+ * Solana Memo instruction. The on-chain verifier is authoritative; this
+ * payload is for off-chain replay / audit of what proof was submitted
+ * alongside a given on-chain tx.
  */
-export type LegacyRescueBundle = {
-  proofDigest: string;
-  poseidonDigest: string;
-  publicSignals: {
-    commitmentHash: string;
-    nullifier: string;
-    maxAmount: string;
-    triggerThreshold: string;
-  };
-  verified: boolean;
-  metadata: { circuit: string; deprecated: true };
-};
-
-export function generateRescueProof(
-  witness: {
-    actualAmount: number;
-    healthFactor: number;
-    salt: string;
-    walletAddress: string;
-  },
-  maxAmount: number,
-  triggerThreshold: number
-): LegacyRescueBundle {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const crypto = require("crypto");
-  const canonical =
-    `${witness.walletAddress}|${witness.actualAmount}|${witness.healthFactor}|` +
-    `${maxAmount}|${triggerThreshold}|${witness.salt}`;
-  const proofDigest = crypto.createHash("sha256").update(canonical).digest("hex");
-  const poseidonDigest = crypto
-    .createHash("sha256")
-    .update(`poseidon-alias:${canonical}`)
-    .digest("hex");
-  const nullifier = crypto
-    .createHash("sha256")
-    .update(`nullifier:${witness.walletAddress}:${witness.salt}`)
-    .digest("hex");
-  const commitmentHash = crypto
-    .createHash("sha256")
-    .update(`commit:${witness.walletAddress}:${witness.actualAmount}:${witness.salt}`)
-    .digest("hex");
-  return {
-    proofDigest,
-    poseidonDigest,
-    publicSignals: {
-      commitmentHash: "0x" + commitmentHash,
-      nullifier: "0x" + nullifier,
-      maxAmount: maxAmount.toString(),
-      triggerThreshold: triggerThreshold.toString(),
-    },
-    verified: true,
-    metadata: { circuit: "sakura_rescue_v1_commitment", deprecated: true },
-  };
-}
-
 export function buildProofMemoPayload(bundle: {
   proof: Groth16Proof;
   publicSignals: PublicSignals;
   commitmentHash?: string;
 }): string {
-  // Base64url of canonical JSON — fits in a Solana memo instruction.
   const json = JSON.stringify({
     p: bundle.proof,
     s: bundle.publicSignals,
     c: bundle.commitmentHash ?? "",
   });
   return Buffer.from(json, "utf8").toString("base64url");
-}
-
-/**
- * Legacy verify shim. Accepts either:
- *   - the real Groth16 (proof, string[]) pair → delegates to snarkjs verify
- *   - the commitment-style (proofDigest/poseidonDigest + object publicSignals)
- *     → recomputes the sha256 canonical and compares digests.
- *
- * The on-chain verifier is still authoritative — this is fail-closed
- * prefilter for API routes.
- */
-export async function verifyRescueProof(
-  proof: Groth16Proof | LegacyRescueBundle,
-  publicSignals: PublicSignals | LegacyRescueBundle["publicSignals"]
-): Promise<boolean> {
-  // Real Groth16 path — array of decimal strings
-  if (Array.isArray(publicSignals)) {
-    return verifyLiquidationProof(proof as Groth16Proof, publicSignals);
-  }
-  // Commitment-style path — we can't re-verify without the original witness,
-  // so we accept the bundle's self-declared `verified` flag (callers use
-  // this at API boundary for display only).
-  const asBundle = proof as LegacyRescueBundle;
-  return typeof asBundle?.verified === "boolean" ? asBundle.verified : false;
-}
-
-/**
- * Legacy ghost-run proof — this product is being demoted in v0.2 and the
- * ghost-run circuit was never real ZK to begin with. We return a signed
- * commitment bundle (plus a `proofDigest` / `poseidonDigest` / `verified`
- * shape) so existing routes keep working without claiming ZK.
- *
- * The third argument (`wallet`) is optional — the existing routes pass it
- * so we fold it into the digest, but it's not cryptographically meaningful
- * beyond domain separation.
- */
-export type GhostRunBundle = {
-  proof: { commitment: string };
-  publicSignals: string[];
-  commitmentHash: string;
-  proofDigest: string;       // hex sha256
-  poseidonDigest: string;    // hex sha256 (aliased — not real Poseidon)
-  verified: boolean;
-  kind: "ghost-run-commitment";
-};
-
-export function generateGhostRunProof(
-  scenarioHash: string,
-  outcomeHash: string,
-  wallet?: string
-): GhostRunBundle {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const crypto = require("crypto");
-  const input = `${scenarioHash}:${outcomeHash}:${wallet ?? ""}`;
-  const commitment = crypto.createHash("sha256").update(input).digest("hex");
-  const poseidonDigest = crypto
-    .createHash("sha256")
-    .update(`poseidon-alias:${input}`)
-    .digest("hex");
-  return {
-    proof: { commitment },
-    publicSignals: [scenarioHash, outcomeHash, wallet ?? ""],
-    commitmentHash: "0x" + commitment,
-    proofDigest: commitment,
-    poseidonDigest,
-    verified: true,
-    kind: "ghost-run-commitment",
-  };
-}
-
-export function verifyGhostRunProof(
-  proof: { commitment: string } | Groth16Proof | GhostRunBundle,
-  publicSignals: string[] | { strategyHash: string; resultHash: string }
-): boolean {
-  // Normalize publicSignals: accept either array or object shape
-  const [sHash, rHash] = Array.isArray(publicSignals)
-    ? [publicSignals[0], publicSignals[1]]
-    : [publicSignals.strategyHash, publicSignals.resultHash];
-  if (typeof sHash !== "string" || typeof rHash !== "string") return false;
-
-  // Legacy commitment shape (has `commitment` string)
-  const asCommit = proof as { commitment?: string };
-  if (typeof asCommit.commitment === "string") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const crypto = require("crypto");
-    const wallet = Array.isArray(publicSignals) ? publicSignals[2] ?? "" : "";
-    const expected = crypto
-      .createHash("sha256")
-      .update(`${sHash}:${rHash}:${wallet}`)
-      .digest("hex");
-    return asCommit.commitment === expected;
-  }
-  // GhostRunBundle shape — self-declared verified flag
-  const asBundle = proof as GhostRunBundle;
-  if (typeof asBundle?.verified === "boolean") return asBundle.verified;
-  return false;
-}
-
-/**
- * Legacy shim: returns the verification key for display / export.
- * Reads from public/zk/verification_key.json (synchronously in Node).
- */
-export function generateVerificationKey(): any {
-  if (typeof window !== "undefined") {
-    throw new Error(
-      "generateVerificationKey is a server-only helper — fetch /zk/verification_key.json on the client"
-    );
-  }
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const fs = require("fs");
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const path = require("path");
-  const p = path.join(process.cwd(), "public", "zk", "verification_key.json");
-  return JSON.parse(fs.readFileSync(p, "utf8"));
 }

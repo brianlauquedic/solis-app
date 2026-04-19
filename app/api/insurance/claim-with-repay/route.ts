@@ -219,16 +219,14 @@ export async function POST(req: NextRequest) {
       nonce,
     };
 
-    const bundle = await generateLiquidationProof(witness, {
-      artifactBase: "./public/zk",
-    });
+    // `artifactBase` omitted so lib/zk-proof.ts resolves via
+    // path.join(process.cwd(), "public", "zk") — cwd-safe on Vercel Fluid.
+    const bundle = await generateLiquidationProof(witness);
 
     // Fail-closed off-chain prefilter using the same VK (authoritative check
     // is the on-chain pairing). If this fails the circuit inputs are wrong —
     // don't waste gas submitting.
-    const offchainOk = await verifyLiquidationProof(bundle.proof, bundle.publicSignals, {
-      vkPath: "./public/zk/verification_key.json",
-    });
+    const offchainOk = await verifyLiquidationProof(bundle.proof, bundle.publicSignals);
     if (!offchainOk) {
       return NextResponse.json(
         { ok: false, error: "off-chain proof verification failed — inputs inconsistent" },

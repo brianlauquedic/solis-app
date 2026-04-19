@@ -17,8 +17,9 @@ default = []
 idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
 
 [dependencies]
-anchor-lang = { version = "0.29.0", features = ["init-if-needed"] }
-anchor-spl = "0.29.0"
+anchor-lang = { version = "0.30.1", features = ["init-if-needed"] }
+anchor-spl = "0.30.1"
+solana-program = "1.18"
 # Real Groth16 on-chain verifier (Light Protocol fork) — uses Solana's
 # sol_alt_bn128_pairing / addition / multiplication syscalls.
 groth16-solana = "0.2.0"

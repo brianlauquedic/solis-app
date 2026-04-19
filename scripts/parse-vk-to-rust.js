@@ -93,11 +93,16 @@ function main() {
     throw new Error(`IC length ${icLen} != nPublic + 1 (${nPublic + 1})`);
   }
 
-  // Negate alpha_1 as required by prepared-alpha convention used in
-  // Light Protocol's groth16-solana verifier.
-  const negAlpha1 = negateG1(vk.vk_alpha_1);
-
-  const alphaBytes = g1ToBytes(negAlpha1);
+  // IMPORTANT: do NOT negate alpha_1. Light Protocol's groth16-solana
+  // crate expects the VK's alpha_g1 to be the POSITIVE trusted-setup value.
+  // The single-pairing form of Groth16 is balanced by negating `proof_a`
+  // on the caller side (see `proofToOnchainBytes` in lib/zk-proof.ts and
+  // the crate's own functional test at src/groth16.rs which calls
+  // `proof_a.neg()` before feeding the verifier). Pre-negating alpha here
+  // combined with the caller's proof_a negation produces double-negation
+  // and breaks the pairing check — empirically verified on devnet
+  // 2026-04-19 (116k CU pairing failure).
+  const alphaBytes = g1ToBytes(vk.vk_alpha_1);
   const betaBytes = g2ToBytes(vk.vk_beta_2);
   const gammaBytes = g2ToBytes(vk.vk_gamma_2);
   const deltaBytes = g2ToBytes(vk.vk_delta_2);
@@ -119,13 +124,17 @@ function main() {
 //   [0] commitment_hash       — Poseidon(collateral, debt, wallet, nonce)
 //   [1] trigger_hf_bps        — e.g. 10_500 ⇒ HF < 1.05
 //   [2] rescue_amount_bucket  — buckets of 100 USDC
+//
+// Balance of Groth16 pairing: alpha_g1 is stored POSITIVE here; the caller
+// of Groth16Verifier is expected to pass a NEGATED proof_a (see the crate's
+// own src/groth16.rs tests which use proof_a.neg() and POSITIVE VK alpha).
 
 use groth16_solana::groth16::Groth16Verifyingkey;
 
 pub const VERIFYINGKEY: Groth16Verifyingkey = Groth16Verifyingkey {
     nr_pubinputs: ${nPublic},
 
-    // alpha_1 (negated — prepared-alpha convention used by groth16-solana)
+    // alpha_1 (POSITIVE — caller negates proof_a to balance the pairing)
     vk_alpha_g1: [
 ${formatBytes(alphaBytes, "        ")}
     ],
