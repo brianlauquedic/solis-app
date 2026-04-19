@@ -40,11 +40,14 @@ const PROTOCOLS = [
 ];
 
 const STATS = [
-  // v0.3 consumer-readable framing: number of wallets shipping agent modes /
-  // per-action verification cost / Solana DeFi TVL reach / gate pass rate.
+  // v0.3 Forbes-voice stats. Suffix is the unit that belongs visually with
+  // the number; label is a complete sentence that reads on its own beneath
+  // the number. Labels do not re-introduce the unit.
+  //   4 wallets shipping agent modes  / 116 (shown as number) thousand-CU
+  //   cost per gate call / $4B DeFi TVL accessible / 100% of agent actions gated.
   { numValue: 4,   suffix: "+",  labelKey: "statLabel1" as const },
   { numValue: 116, suffix: "",   labelKey: "statLabel2" as const },
-  { numValue: 4,   suffix: "B+", labelKey: "statLabel3" as const },
+  { numValue: 4,   suffix: "B",  labelKey: "statLabel3" as const },
   { numValue: 100, suffix: "%",  labelKey: "statLabel4" as const },
 ];
 
