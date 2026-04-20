@@ -125,9 +125,9 @@ export const translations = {
   },
   agent2Title: { zh: "🔬 越界數學上不可能", en: "🔬 Exceeding the Rule Becomes Mathematically Impossible", ja: "🔬 規則超過が数学的に不可能になる" },
   agent2Desc: {
-    zh: "代理每一動作附 Groth16 證明——不揭露細節，只論證動作在邊界內。alt_bn128 配對在鏈上驗證：Ethereum L1 要美元，這條鏈上可忽略。Solana 1.17 為這類產品鋪的高速公路。",
-    en: "Every agent action ships with a Groth16 proof — no details disclosed, only that the action sits inside the bounds. Solana's alt_bn128 pairing verifies on-chain. Dollars per call on Ethereum L1, negligible here. The highway Solana built into protocol 1.17.",
-    ja: "エージェントの各動作は Groth16 証明を伴う——詳細は明かさず、境界内であることだけを示す。alt_bn128 ペアリングがオンチェーン検証。Ethereum L1 ではドル単位、このチェーンでは無視できる。Solana 1.17 がこの種の製品のために敷いた高速道路。",
+    zh: "代理每一次動作都附上一份 Groth16 證明——不揭露任何私有細節，只論證此次動作落在已簽邊界內。Solana 的 alt_bn128 配對運算在鏈上直接驗證這份證明。同樣一次驗證，在 Ethereum L1 上要花掉美元級 gas，在 Solana 上幾乎可以忽略——這是 Solana 1.17 協議為這類產品鋪下的那條高速公路。",
+    en: "Every agent action ships with a Groth16 proof — no private details disclosed, only that the action sits inside the signed bounds. Solana's alt_bn128 pairing syscall verifies the proof directly on-chain. The same verification costs dollars per call on Ethereum L1 and is negligible here — this is the highway Solana 1.17 paved for products like this.",
+    ja: "エージェントの各動作は Groth16 証明を伴う——私的な詳細は一切明かさず、署名済み境界の内側に動作が収まっていることだけを示す。Solana の alt_bn128 ペアリング syscall がオンチェーンで証明を直接検証する。同じ検証コストは、Ethereum L1 では 1 回あたりドル単位、Solana では無視できる水準——これが Solana 1.17 がこの種の製品のために敷いた高速道路である。",
   },
   agent3Title: { zh: "📜 全過或全不過，無灰色地帶", en: "📜 All or Nothing — No Grey Zone", ja: "📜 全か無か — グレーゾーンなし" },
   agent3Desc: {
