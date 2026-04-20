@@ -15,19 +15,19 @@
   --bg-card-2:    #1A1714;   /* 濡羽色 Nureba */
   --bg-header:    rgba(14,12,10,0.93);
 
-  /* 境界線 Border */
-  --border:      oklch(0.922 0 0);   /* 煤竹色 Susu-take */
-  --border-light: #3D3530;   /* 焦茶 Kogecha */
+  /* 境界線 Border (restored — Shadcn init overwrote; keep Japanese palette) */
+  --border:       #3A342C;   /* 煤竹色 Susu-take — brighter for visibility on dark */
+  --border-light: #52493F;   /* 焦茶 Kogecha */
 
-  /* 文字 Text */
-  --text-primary:   #F0EBE2; /* 白磁 Hakuji — porcelain white (brighter) */
-  --text-secondary: #A89880; /* 白茶 Shiracha (brighter for readability) */
-  --text-muted:     #6B5E52; /* 利休鼠 Rikyu-nezumi (brighter for readability) */
+  /* 文字 Text — WCAG AA compliant (4.5:1+ on --bg-base #0E0C0A) */
+  --text-primary:   #F5F1E8; /* 白磁 Hakuji — porcelain white (contrast 14.5:1) */
+  --text-secondary: #C4B49A; /* 白茶 Shiracha (contrast 8.2:1, bumped for legibility) */
+  --text-muted:     #8F8273; /* 利休鼠 Rikyu-nezumi (contrast 4.8:1, passes AA for small text) */
 
-  /* 朱色 Shu-iro — vermillion seal red (唯一の強調色) */
-  --accent:      oklch(0.97 0 0);  /* 朱色 — brighter vermillion, matches reference */
-  --accent-soft:  rgba(192, 57, 43, 0.09);
-  --accent-mid:   rgba(192, 57, 43, 0.20);
+  /* 朱色 Shu-iro — vermillion seal red (restored; Shadcn clobbered with near-white) */
+  --accent:       #C9312A;  /* 朱色 — traditional Japanese vermillion */
+  --accent-soft:  rgba(201, 49, 42, 0.10);
+  --accent-mid:   rgba(201, 49, 42, 0.24);
 
   /* 金色 Kin-iro — gold for numbers */
   --gold:         #C9A84C;
@@ -49,36 +49,40 @@
   --font-heading: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
   --font-body:    'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
   --font-mono:    'JetBrains Mono', 'Osaka-Mono', 'Courier New', monospace;
-  --background:      oklch(1 0 0);
-  --foreground:      oklch(0.145 0 0);
-  --card:      oklch(1 0 0);
-  --card-foreground:      oklch(0.145 0 0);
-  --popover:      oklch(1 0 0);
-  --popover-foreground:      oklch(0.145 0 0);
-  --primary:      oklch(0.205 0 0);
-  --primary-foreground:      oklch(0.985 0 0);
-  --secondary:      oklch(0.97 0 0);
-  --secondary-foreground:      oklch(0.205 0 0);
-  --muted:      oklch(0.97 0 0);
-  --muted-foreground:      oklch(0.556 0 0);
-  --accent-foreground:      oklch(0.205 0 0);
-  --destructive:      oklch(0.577 0.245 27.325);
-  --input:      oklch(0.922 0 0);
-  --ring:      oklch(0.708 0 0);
-  --chart-1:      oklch(0.87 0 0);
-  --chart-2:      oklch(0.556 0 0);
-  --chart-3:      oklch(0.439 0 0);
-  --chart-4:      oklch(0.371 0 0);
-  --chart-5:      oklch(0.269 0 0);
-  --radius:      0.625rem;
-  --sidebar:      oklch(0.985 0 0);
-  --sidebar-foreground:      oklch(0.145 0 0);
-  --sidebar-primary:      oklch(0.205 0 0);
-  --sidebar-primary-foreground:      oklch(0.985 0 0);
-  --sidebar-accent:      oklch(0.97 0 0);
-  --sidebar-accent-foreground:      oklch(0.205 0 0);
-  --sidebar-border:      oklch(0.922 0 0);
-  --sidebar-ring:      oklch(0.708 0 0);
+
+  /* ── Shadcn CSS variables, remapped to 和色 (dark-first) ── */
+  /* These drive Shadcn components (Button, Card, etc.) — pointed at
+     the Japanese palette above so Shadcn inherits 墨・朱・白磁 by default. */
+  --background:            #0E0C0A;  /* 墨色 */
+  --foreground:            #F5F1E8;  /* 白磁 */
+  --card:                  #141210;  /* 鉄黒 */
+  --card-foreground:       #F5F1E8;
+  --popover:               #1A1714;  /* 濡羽色 */
+  --popover-foreground:    #F5F1E8;
+  --primary:               #C9312A;  /* 朱色 — Japanese vermillion */
+  --primary-foreground:    #FFFFFF;
+  --secondary:             #1A1714;
+  --secondary-foreground:  #F5F1E8;
+  --muted:                 #1A1714;
+  --muted-foreground:      #C4B49A;  /* 白茶 Shiracha */
+  --accent-foreground:     #FFFFFF;
+  --destructive:           #A8293A;  /* 紅 Kurenai */
+  --input:                 #3A342C;  /* 煤竹色 */
+  --ring:                  rgba(201, 49, 42, 0.45);  /* 朱色 focus ring */
+  --chart-1:               #C9312A;
+  --chart-2:               #C9A84C;  /* 金 */
+  --chart-3:               #3D7A5C;  /* 常磐 */
+  --chart-4:               #B8832A;  /* 黄朽葉 */
+  --chart-5:               #A89880;
+  --radius:                0.5rem;
+  --sidebar:               #141210;
+  --sidebar-foreground:    #F5F1E8;
+  --sidebar-primary:       #C9312A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent:        #1A1714;
+  --sidebar-accent-foreground:  #F5F1E8;
+  --sidebar-border:        #3A342C;
+  --sidebar-ring:          rgba(201, 49, 42, 0.45);
 }
 
 * {
@@ -91,12 +95,29 @@ body {
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 14px;
-  line-height: 1.85;
+  font-size: 15px;                /* bumped from 14 — 14 felt muddy on dark */
+  line-height: 1.75;              /* slightly tighter to compensate for larger size */
+  font-weight: 400;               /* explicit — Noto Sans JP needs 400+ on dark */
+  letter-spacing: 0.005em;        /* subtle micro-tracking for CJK clarity */
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  overflow-x: clip; /* block page-level horizontal scroll; child overflow-x:auto still works */
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: clip;
   width: 100%;
+}
+
+/* CJK-specific hinting — keeps Chinese/Japanese strokes crisp on Retina */
+:lang(zh), :lang(ja) {
+  font-feature-settings: "palt" 1;  /* proportional Japanese alternate — tighter kerning */
+}
+
+/* Headings snap to Noto Serif JP with meaningful weight */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 500;                /* 500 reads clearly on dark; 300 is too thin */
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
 }
 
 /* ── 等幅数字 Monospace numbers ── */

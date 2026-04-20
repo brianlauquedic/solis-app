@@ -3,31 +3,30 @@
 /**
  * IntentSigner.tsx — user-facing intent-signing form (v0.3).
  *
- * Lets a connected wallet user:
- *   1. Enter a natural-language intent ("Lend up to 1000 USDC into Kamino…")
- *   2. Select allowed protocols + action types via checkbox bitmaps
- *   3. Set per-action amount cap (micro-units) + USD cap (micro-USD)
- *   4. Set expiry window (hours)
- *   5. Compute the 2-layer Poseidon commitment client-side
- *   6. Sign and send `sign_intent` tx via Phantom/OKX
- *
- * The user's private witness (max_amount, max_usd, bitmaps, nonce,
- * intent_text_hash) is stored ONLY in localStorage under a key keyed by
- * the user wallet. It NEVER leaves the browser — the Poseidon commitment
- * is the only thing written on-chain.
- *
- * After signing, the `intentSecretsKey` is persisted so the
- * ActionHistory + future execute flows can reconstruct the witness.
+ * Shadcn UI + Lucide icons + 和柄 Seigaiha background accent.
+ * All logic (Poseidon commitment, USDC fee transfer, wallet signing)
+ * is preserved from the prior inline-styled version; only presentation
+ * was rewritten.
  */
 
 import { useCallback, useState } from "react";
 import {
   Connection,
   PublicKey,
-  Transaction,
   VersionedTransaction,
   TransactionMessage,
 } from "@solana/web3.js";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import {
+  Sparkles,
+  ShieldCheck,
+  RotateCcw,
+  Loader2,
+  CheckCircle2,
+  AlertTriangle,
+  ExternalLink,
+  PenLine,
+} from "lucide-react";
 import { useWallet } from "@/contexts/WalletContext";
 import {
   ActionType,
@@ -40,13 +39,31 @@ import {
   deriveFeeVaultPDA,
   SAKURA_INSURANCE_PROGRAM_ID,
 } from "@/lib/insurance-pool";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import {
   computeIntentCommitment,
   pubkeyToFieldBytes,
 } from "@/lib/zk-proof";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Seigaiha, KyokaiDivider } from "@/components/WaPattern";
+import { cn } from "@/lib/utils";
 
 const RPC = process.env.NEXT_PUBLIC_SOLANA_RPC ?? "https://api.devnet.solana.com";
+
+// ───────────────────────────────────────────────────────────────────
+// Types
+// ───────────────────────────────────────────────────────────────────
 
 type Status =
   | { kind: "idle" }
@@ -58,17 +75,21 @@ type Status =
 
 interface IntentSecrets {
   intentText: string;
-  maxAmountMicro: string; // bigint serialized
+  maxAmountMicro: string;
   maxUsdValueMicro: string;
   allowedProtocols: number;
   allowedActionTypes: number;
   nonce: string;
   intentTextHashDecimal: string;
-  expiresAt: string; // unix seconds
+  expiresAt: string;
   commitmentHex: string;
-  signedAt: number; // client time
+  signedAt: number;
   signature: string;
 }
+
+// ───────────────────────────────────────────────────────────────────
+// Option tables
+// ───────────────────────────────────────────────────────────────────
 
 const PROTOCOL_LABELS = [
   { id: ProtocolId.Kamino, label: "Kamino" },
@@ -88,6 +109,10 @@ const ACTION_LABELS = [
   { id: ActionType.Borrow, label: "Borrow" },
 ];
 
+// ───────────────────────────────────────────────────────────────────
+// Poseidon — fold UTF-8 intent text to a single field element
+// ───────────────────────────────────────────────────────────────────
+
 async function hashIntentText(text: string): Promise<bigint> {
   const { buildPoseidon } = await import("circomlibjs");
   const poseidon = await buildPoseidon();
@@ -103,13 +128,17 @@ async function hashIntentText(text: string): Promise<bigint> {
   return acc;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// Main component
+// ═══════════════════════════════════════════════════════════════════
+
 export default function IntentSigner() {
   const { walletAddress, getProvider } = useWallet();
 
   const [intentText, setIntentText] = useState(
     "Lend up to 1000 USDC into Kamino or MarginFi, $10k max per action."
   );
-  const [maxAmountTokens, setMaxAmountTokens] = useState("1000"); // whole tokens
+  const [maxAmountTokens, setMaxAmountTokens] = useState("1000");
   const [maxUsdDollars, setMaxUsdDollars] = useState("10000");
   const [hours, setHours] = useState("24");
   const [selectedProtocols, setSelectedProtocols] = useState<Set<ProtocolId>>(
@@ -135,19 +164,19 @@ export default function IntentSigner() {
 
   const handleSign = useCallback(async () => {
     if (!walletAddress) {
-      setStatus({ kind: "error", message: "Connect a wallet first." });
+      setStatus({ kind: "error", message: "請先連接錢包。" });
       return;
     }
     const provider = getProvider();
     if (!provider) {
-      setStatus({ kind: "error", message: "No wallet provider available." });
+      setStatus({ kind: "error", message: "偵測不到錢包 Provider。" });
       return;
     }
     const adminStr = process.env.NEXT_PUBLIC_SAKURA_PROTOCOL_ADMIN;
     if (!adminStr) {
       setStatus({
         kind: "error",
-        message: "NEXT_PUBLIC_SAKURA_PROTOCOL_ADMIN env var not configured.",
+        message: "未設置 NEXT_PUBLIC_SAKURA_PROTOCOL_ADMIN 環境變量。",
       });
       return;
     }
@@ -165,8 +194,8 @@ export default function IntentSigner() {
       const allowedActionTypes = BigInt(
         buildActionTypesBitmap(Array.from(selectedActions))
       );
-      if (allowedProtocols === 0n) throw new Error("Pick at least one protocol.");
-      if (allowedActionTypes === 0n) throw new Error("Pick at least one action.");
+      if (allowedProtocols === 0n) throw new Error("至少選擇一個協議。");
+      if (allowedActionTypes === 0n) throw new Error("至少選擇一個動作。");
 
       const nonce = BigInt(Date.now());
       const intentTextHash = await hashIntentText(intentText);
@@ -185,20 +214,12 @@ export default function IntentSigner() {
       const expiresAt =
         BigInt(Math.floor(Date.now() / 1000)) + BigInt(hours) * 3600n;
 
-      // Sign fee: 0.1% of max_usd_value. Computed client-side since
-      // max_usd_value is private and the on-chain program cannot verify
-      // the amount — it only enforces the $1,000 ceiling.
+      // Fee = 0.1% × max_usd_value (honor system, enforced by $1000 ceiling on-chain)
       const signFeeMicro = (maxUsdMicro * 10n) / 10_000n;
 
-      // Derive protocol's USDC mint + fee vault, and the user's ATA
-      // against that mint. Mint is fetched from the deployed protocol
-      // state — at this point IntentSigner assumes a canonical Sakura
-      // mint (set via env, on devnet the test-USDC mint).
       const usdcMintStr = process.env.NEXT_PUBLIC_SAKURA_USDC_MINT;
       if (!usdcMintStr) {
-        throw new Error(
-          "NEXT_PUBLIC_SAKURA_USDC_MINT env var not set."
-        );
+        throw new Error("未設置 NEXT_PUBLIC_SAKURA_USDC_MINT 環境變量。");
       }
       const usdcMint = new PublicKey(usdcMintStr);
       const [protocolPda] = deriveProtocolPDA(admin);
@@ -225,14 +246,12 @@ export default function IntentSigner() {
       const tx = new VersionedTransaction(message);
 
       setStatus({ kind: "awaiting-signature" });
-      // Phantom/OKX API: signAndSendTransaction(tx) or
-      // signTransaction(tx) + connection.sendRawTransaction
       let signature: string;
       if ("signAndSendTransaction" in provider) {
         const result = await (
           provider as unknown as {
             signAndSendTransaction: (
-              t: VersionedTransaction | Transaction
+              t: VersionedTransaction
             ) => Promise<{ signature: string }>;
           }
         ).signAndSendTransaction(tx);
@@ -251,12 +270,13 @@ export default function IntentSigner() {
       }
 
       setStatus({ kind: "confirming", signature });
-      await conn.confirmTransaction({ signature, blockhash, lastValidBlockHeight: 0 }, "confirmed").catch(() => {
-        // confirmTransaction can be flaky with lastValidBlockHeight=0; fall back to getSignatureStatus poll
-        return;
-      });
+      await conn
+        .confirmTransaction(
+          { signature, blockhash, lastValidBlockHeight: 0 },
+          "confirmed"
+        )
+        .catch(() => undefined);
 
-      // Persist secrets to localStorage so ActionHistory + executor can reload them.
       const secrets: IntentSecrets = {
         intentText,
         maxAmountMicro: maxAmountMicro.toString(),
@@ -297,191 +317,307 @@ export default function IntentSigner() {
     status.kind === "confirming";
 
   return (
+    <Card className="relative overflow-hidden border-[var(--border)] bg-[var(--bg-card)]">
+      <Seigaiha className="absolute inset-0 pointer-events-none" opacity={0.04} />
+
+      <CardHeader className="relative z-10 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--bg-card-2)]">
+            <PenLine className="h-5 w-5" style={{ color: "var(--accent)" }} />
+          </div>
+          <div>
+            <CardTitle className="font-serif text-xl tracking-wide">
+              簽一次意圖
+            </CardTitle>
+            <CardDescription className="text-[13px] text-[var(--text-secondary)]">
+              一句話寫下代理權限邊界，鏈上只存 32 位元組雜湊。
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+
+      <Separator className="bg-[var(--border)]" />
+
+      <CardContent className="relative z-10 space-y-6 py-6">
+        {/* Intent text */}
+        <div className="space-y-2">
+          <Label className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+            意圖 Intent
+          </Label>
+          <Textarea
+            value={intentText}
+            onChange={(e) => setIntentText(e.target.value)}
+            rows={2}
+            maxLength={500}
+            disabled={isBusy}
+            className="resize-y border-[var(--border)] bg-[var(--bg-base)] font-mono text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+            placeholder="代理可在 Kamino 借貸，單次最多 $500 USDC，為期一週。"
+          />
+        </div>
+
+        {/* Numeric inputs — 3 columns */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <NumField
+            label="單次上限（代幣）"
+            value={maxAmountTokens}
+            onChange={setMaxAmountTokens}
+            disabled={isBusy}
+            min={1}
+          />
+          <NumField
+            label="單次上限（美元）"
+            value={maxUsdDollars}
+            onChange={setMaxUsdDollars}
+            disabled={isBusy}
+            min={1}
+          />
+          <NumField
+            label="有效期（小時）"
+            value={hours}
+            onChange={setHours}
+            disabled={isBusy}
+            min={1}
+            max={8760}
+          />
+        </div>
+
+        {/* Protocols */}
+        <div className="space-y-2">
+          <Label className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+            允許協議 Allowed protocols
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            {PROTOCOL_LABELS.map(({ id, label }) => (
+              <Pill
+                key={id}
+                label={label}
+                active={selectedProtocols.has(id)}
+                onClick={() => toggleProtocol(id)}
+                disabled={isBusy}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="space-y-2">
+          <Label className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+            允許動作 Allowed actions
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            {ACTION_LABELS.map(({ id, label }) => (
+              <Pill
+                key={id}
+                label={label}
+                active={selectedActions.has(id)}
+                onClick={() => toggleAction(id)}
+                disabled={isBusy}
+              />
+            ))}
+          </div>
+        </div>
+
+        <KyokaiDivider className="py-2" />
+
+        {/* Primary action */}
+        <Button
+          onClick={handleSign}
+          disabled={isBusy || !walletAddress}
+          size="lg"
+          className="w-full font-serif text-[15px] tracking-[0.08em]"
+          style={{
+            background: "var(--accent)",
+            color: "white",
+          }}
+        >
+          {status.kind === "computing" && (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              計算 Poseidon 承諾中…
+            </>
+          )}
+          {status.kind === "awaiting-signature" && (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              等待錢包簽名…
+            </>
+          )}
+          {status.kind === "confirming" && (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              鏈上確認中…
+            </>
+          )}
+          {(status.kind === "idle" ||
+            status.kind === "error" ||
+            status.kind === "success") && (
+            <>
+              <ShieldCheck className="mr-2 h-5 w-5" />
+              簽署意圖
+            </>
+          )}
+        </Button>
+
+        {/* Revoke row */}
+        <RevokeRow disabled={isBusy} />
+
+        {/* Result banners */}
+        {status.kind === "success" && (
+          <StatusBanner
+            tone="success"
+            icon={<CheckCircle2 className="h-4 w-4" />}
+            title="意圖已上鏈簽署"
+            linkLabel={`${status.signature.slice(0, 12)}…`}
+            href={`https://solscan.io/tx/${status.signature}?cluster=devnet`}
+          />
+        )}
+        {status.kind === "error" && (
+          <StatusBanner
+            tone="error"
+            icon={<AlertTriangle className="h-4 w-4" />}
+            title={status.message}
+          />
+        )}
+      </CardContent>
+
+      <CardFooter className="relative z-10 justify-between border-t border-[var(--border)] bg-[var(--bg-card-2)]/40 py-3">
+        <span className="font-mono text-[10px] text-[var(--text-muted)]">
+          Program · {SAKURA_INSURANCE_PROGRAM_ID.toBase58().slice(0, 10)}…
+        </span>
+        <span className="font-mono text-[10px] text-[var(--text-muted)]">
+          簽名費 0.1% × max_usd_value
+        </span>
+      </CardFooter>
+    </Card>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Sub-components
+// ═══════════════════════════════════════════════════════════════════
+
+function NumField({
+  label,
+  value,
+  onChange,
+  disabled,
+  min,
+  max,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  disabled?: boolean;
+  min?: number;
+  max?: number;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label className="font-mono text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+        {label}
+      </Label>
+      <Input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        min={min}
+        max={max}
+        className="border-[var(--border)] bg-[var(--bg-base)] font-mono text-[13px] text-[var(--text-primary)]"
+      />
+    </div>
+  );
+}
+
+function Pill({
+  label,
+  active,
+  onClick,
+  disabled,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5",
+        "font-mono text-[11px] tracking-[0.05em] transition-all",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        active
+          ? "border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text-primary)]"
+          : "border-[var(--border)] bg-transparent text-[var(--text-secondary)] hover:border-[var(--border-light)] hover:bg-[var(--bg-card-2)]/40 hover:text-[var(--text-primary)]"
+      )}
+    >
+      {active && <Sparkles className="h-3 w-3" style={{ color: "var(--accent)" }} />}
+      {label}
+    </button>
+  );
+}
+
+function StatusBanner({
+  tone,
+  icon,
+  title,
+  linkLabel,
+  href,
+}: {
+  tone: "success" | "error";
+  icon: React.ReactNode;
+  title: string;
+  linkLabel?: string;
+  href?: string;
+}) {
+  const palette =
+    tone === "success"
+      ? {
+          bg: "rgba(61, 122, 92, 0.08)",
+          border: "rgba(61, 122, 92, 0.35)",
+          fg: "#7FB88F",
+        }
+      : {
+          bg: "rgba(168, 41, 58, 0.08)",
+          border: "rgba(168, 41, 58, 0.35)",
+          fg: "#E87C87",
+        };
+  return (
     <div
+      className="flex items-start gap-2.5 rounded-md border px-3 py-2.5 text-[12px]"
       style={{
-        background: "var(--bg-card)",
-        border: "1px solid var(--border)",
-        borderRadius: 12,
-        padding: 20,
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
+        background: palette.bg,
+        borderColor: palette.border,
+        color: palette.fg,
       }}
     >
-      <div style={{ fontSize: 16, fontWeight: 600, color: "var(--text-primary)" }}>
-        🌸 Sign Intent
-      </div>
-      <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.5 }}>
-        Define what your AI agent is permitted to do. Bounds are cryptographically
-        enforced on-chain via Groth16 — your private witness stays in the browser.
-      </div>
-
-      <label style={labelStyle}>
-        Intent (natural language)
-        <textarea
-          value={intentText}
-          onChange={(e) => setIntentText(e.target.value)}
-          rows={2}
-          disabled={isBusy}
-          style={{ ...inputStyle, resize: "vertical" }}
-          maxLength={500}
-        />
-      </label>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-        <label style={labelStyle}>
-          Max / action (tokens)
-          <input
-            type="number"
-            min="1"
-            value={maxAmountTokens}
-            onChange={(e) => setMaxAmountTokens(e.target.value)}
-            disabled={isBusy}
-            style={inputStyle}
-          />
-        </label>
-        <label style={labelStyle}>
-          Max USD / action
-          <input
-            type="number"
-            min="1"
-            value={maxUsdDollars}
-            onChange={(e) => setMaxUsdDollars(e.target.value)}
-            disabled={isBusy}
-            style={inputStyle}
-          />
-        </label>
-        <label style={labelStyle}>
-          Valid for (hours)
-          <input
-            type="number"
-            min="1"
-            max="8760"
-            value={hours}
-            onChange={(e) => setHours(e.target.value)}
-            disabled={isBusy}
-            style={inputStyle}
-          />
-        </label>
-      </div>
-
-      <div>
-        <div style={labelStyle}>Allowed protocols</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {PROTOCOL_LABELS.map(({ id, label }) => (
-            <Pill
-              key={id}
-              label={label}
-              active={selectedProtocols.has(id)}
-              onClick={() => toggleProtocol(id)}
-              disabled={isBusy}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div style={labelStyle}>Allowed actions</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {ACTION_LABELS.map(({ id, label }) => (
-            <Pill
-              key={id}
-              label={label}
-              active={selectedActions.has(id)}
-              onClick={() => toggleAction(id)}
-              disabled={isBusy}
-            />
-          ))}
-        </div>
-      </div>
-
-      <button
-        onClick={handleSign}
-        disabled={isBusy || !walletAddress}
-        style={{
-          marginTop: 6,
-          padding: "10px 14px",
-          borderRadius: 8,
-          border: "1px solid var(--accent-mid)",
-          background: isBusy ? "var(--bg-card)" : "var(--accent-soft)",
-          color: "var(--accent)",
-          fontSize: 13,
-          fontWeight: 600,
-          letterSpacing: "0.06em",
-          cursor: isBusy || !walletAddress ? "not-allowed" : "pointer",
-        }}
-      >
-        {status.kind === "computing" && "Computing Poseidon commitment…"}
-        {status.kind === "awaiting-signature" && "Awaiting wallet signature…"}
-        {status.kind === "confirming" && "Confirming on devnet…"}
-        {(status.kind === "idle" || status.kind === "error" || status.kind === "success") &&
-          "Sign Intent"}
-      </button>
-
-      <RevokeButton disabled={isBusy} />
-
-      {status.kind === "success" && (
-        <div style={{ fontSize: 11, color: "var(--green)", wordBreak: "break-all" }}>
-          ✓ Intent signed.{" "}
+      <span className="mt-0.5 flex-shrink-0">{icon}</span>
+      <div className="min-w-0 flex-1 break-words">
+        <div>{title}</div>
+        {linkLabel && href && (
           <a
-            href={`https://solscan.io/tx/${status.signature}?cluster=devnet`}
+            href={href}
             target="_blank"
             rel="noreferrer"
-            style={{ color: "inherit", textDecoration: "underline" }}
+            className="mt-1 inline-flex items-center gap-1 font-mono text-[11px] underline underline-offset-2 opacity-90 hover:opacity-100"
           >
-            {status.signature.slice(0, 12)}…
+            {linkLabel}
+            <ExternalLink className="h-3 w-3" />
           </a>
-        </div>
-      )}
-      {status.kind === "error" && (
-        <div style={{ fontSize: 11, color: "var(--red, #ff5555)" }}>
-          ✗ {status.message}
-        </div>
-      )}
-
-      <div
-        style={{
-          marginTop: 6,
-          fontSize: 10,
-          fontFamily: "var(--font-mono)",
-          color: "var(--text-muted)",
-          opacity: 0.7,
-        }}
-      >
-        program: {SAKURA_INSURANCE_PROGRAM_ID.toBase58().slice(0, 12)}…
+        )}
       </div>
     </div>
   );
 }
 
-const labelStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 600,
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
-  color: "var(--text-muted)",
-  display: "flex",
-  flexDirection: "column",
-  gap: 4,
-  marginBottom: 6,
-};
-const inputStyle: React.CSSProperties = {
-  background: "var(--bg-base)",
-  border: "1px solid var(--border)",
-  borderRadius: 6,
-  padding: "8px 10px",
-  color: "var(--text-primary)",
-  fontSize: 12,
-  fontFamily: "var(--font-mono)",
-  width: "100%",
-  boxSizing: "border-box",
-};
-
 // ───────────────────────────────────────────────────────────────────
-// Revoke button — marks the user's on-chain Intent as is_active = false
-// so no further `execute_with_intent_proof` calls can consume it.
+// Revoke row — marks the user's on-chain Intent as is_active = false.
+// Fee = 0.1% × max_usd_value (pulled from cached localStorage secrets).
 // ───────────────────────────────────────────────────────────────────
-function RevokeButton({ disabled }: { disabled?: boolean }) {
+function RevokeRow({ disabled }: { disabled?: boolean }) {
   const { walletAddress, getProvider } = useWallet();
   const [revoking, setRevoking] = useState(false);
   const [result, setResult] = useState<
@@ -494,7 +630,7 @@ function RevokeButton({ disabled }: { disabled?: boolean }) {
     if (!provider) return;
 
     const confirmed = window.confirm(
-      "Revoke your active intent? The agent will no longer be able to execute actions against it. You can sign a new intent afterward."
+      "撤銷當前意圖？代理將無法再對此意圖執行任何動作。你可以之後重新簽署。"
     );
     if (!confirmed) return;
 
@@ -503,13 +639,10 @@ function RevokeButton({ disabled }: { disabled?: boolean }) {
       setResult({ kind: "idle" });
       const user = new PublicKey(walletAddress);
 
-      // Reload the stored intent secrets so we know the original
-      // max_usd_value — the revoke fee is computed on the same base as
-      // the sign fee (0.1% of max_usd_value).
       const cached = localStorage.getItem(`sakura:intent:${walletAddress}`);
       if (!cached) {
         throw new Error(
-          "No cached intent secrets found. Sign an intent first, or clear state and retry."
+          "本機找不到意圖密鑰。請先簽署一次意圖，或清除狀態後重試。"
         );
       }
       const secrets = JSON.parse(cached) as { maxUsdValueMicro: string };
@@ -520,7 +653,7 @@ function RevokeButton({ disabled }: { disabled?: boolean }) {
       const usdcMintStr = process.env.NEXT_PUBLIC_SAKURA_USDC_MINT;
       if (!adminStr || !usdcMintStr) {
         throw new Error(
-          "Missing NEXT_PUBLIC_SAKURA_PROTOCOL_ADMIN or NEXT_PUBLIC_SAKURA_USDC_MINT."
+          "缺少 NEXT_PUBLIC_SAKURA_PROTOCOL_ADMIN 或 NEXT_PUBLIC_SAKURA_USDC_MINT 環境變量。"
         );
       }
       const admin = new PublicKey(adminStr);
@@ -567,7 +700,6 @@ function RevokeButton({ disabled }: { disabled?: boolean }) {
         signature = await conn.sendRawTransaction(signed.serialize());
       }
 
-      // Remove cached secrets so UI reflects revocation
       localStorage.removeItem(`sakura:intent:${walletAddress}`);
       setResult({ kind: "ok", sig: signature });
     } catch (e: unknown) {
@@ -581,76 +713,34 @@ function RevokeButton({ disabled }: { disabled?: boolean }) {
   };
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <button
+    <div className="flex items-center justify-between gap-3 py-1">
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         onClick={handleRevoke}
         disabled={disabled || revoking || !walletAddress}
-        style={{
-          fontSize: 11,
-          padding: "6px 12px",
-          borderRadius: 6,
-          border: "1px solid var(--border)",
-          background: "transparent",
-          color: "var(--text-muted)",
-          cursor:
-            disabled || revoking || !walletAddress ? "not-allowed" : "pointer",
-          letterSpacing: "0.06em",
-        }}
+        className="text-[12px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
       >
-        {revoking ? "Revoking…" : "Revoke existing intent"}
-      </button>
+        <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+        {revoking ? "撤銷中…" : "撤銷當前意圖"}
+      </Button>
       {result.kind === "ok" && (
-        <span style={{ fontSize: 11, color: "var(--green)" }}>
-          ✓ revoked{" "}
-          <a
-            href={`https://solscan.io/tx/${result.sig}?cluster=devnet`}
-            target="_blank"
-            rel="noreferrer"
-            style={{ color: "inherit", textDecoration: "underline" }}
-          >
-            {result.sig.slice(0, 8)}…
-          </a>
-        </span>
+        <a
+          href={`https://solscan.io/tx/${result.sig}?cluster=devnet`}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 font-mono text-[11px] text-[var(--green)] hover:underline"
+        >
+          <CheckCircle2 className="h-3 w-3" />
+          已撤銷 {result.sig.slice(0, 8)}…
+        </a>
       )}
       {result.kind === "err" && (
-        <span style={{ fontSize: 11, color: "var(--red, #ff5555)" }}>
-          ✗ {result.msg}
+        <span className="font-mono text-[11px] text-[var(--red)]">
+          {result.msg}
         </span>
       )}
     </div>
-  );
-}
-
-function Pill({
-  label,
-  active,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        fontSize: 11,
-        padding: "5px 10px",
-        borderRadius: 999,
-        border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-        background: active ? "var(--accent-soft)" : "transparent",
-        color: active ? "var(--accent)" : "var(--text-muted)",
-        cursor: disabled ? "not-allowed" : "pointer",
-        letterSpacing: "0.04em",
-      }}
-    >
-      {active ? "✓ " : ""}
-      {label}
-    </button>
   );
 }
