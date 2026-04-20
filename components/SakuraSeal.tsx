@@ -49,67 +49,69 @@ export default function SakuraSeal({
         style={{ display: "block" }}
       >
         <defs>
-          {/* 家紋 Kamon — cherry-blossom crest pattern, larger + slightly
-              more present so it reads as 「若隱若現」gold-leaf kamon
-              rather than invisible noise. Two layers: a sparse large
-              crest grid + a tiny petal fill for texture between crests. */}
+          {/* 家紋 Kamon — cherry-blossom medallion pattern that echoes
+              the large floral 桜紋 motifs on the bijin's kimono.
+              Structure:
+                • Large rounded sakura medallion (heart-notched petals
+                  with a small outer notch at each petal tip, classic
+                  heraldic 桜紋)
+                • Tiny stamen dots between petals
+                • Small scattered petals between medallions for texture
+              Rendered in faint 金箔 gold on 朱色 red — 若隱若現. */}
           <pattern
             id="sakura-kamon"
             x="0"
             y="0"
-            width="48"
-            height="48"
+            width="72"
+            height="72"
             patternUnits="userSpaceOnUse"
           >
-            {/* Large 5-petal sakura crest — gold-leaf */}
+            {/* ── Large 桜紋 medallion at (36, 36) ── */}
             <g
-              fill="rgba(230, 201, 101, 0.26)"
-              stroke="rgba(230, 201, 101, 0.18)"
-              strokeWidth="0.3"
+              fill="rgba(230, 201, 101, 0.30)"
+              stroke="rgba(230, 201, 101, 0.22)"
+              strokeWidth="0.4"
             >
-              <circle cx="24" cy="24" r="3.2" />
-              <ellipse cx="24" cy="12" rx="2.6" ry="4.6" />
-              <ellipse
-                cx="35.4"
-                cy="19.4"
-                rx="2.6"
-                ry="4.6"
-                transform="rotate(72 35.4 19.4)"
-              />
-              <ellipse
-                cx="32.7"
-                cy="32.7"
-                rx="2.6"
-                ry="4.6"
-                transform="rotate(144 32.7 32.7)"
-              />
-              <ellipse
-                cx="15.3"
-                cy="32.7"
-                rx="2.6"
-                ry="4.6"
-                transform="rotate(216 15.3 32.7)"
-              />
-              <ellipse
-                cx="12.6"
-                cy="19.4"
-                rx="2.6"
-                ry="4.6"
-                transform="rotate(288 12.6 19.4)"
-              />
+              {/* 5 rounded petals with tip-notch (桜花弁) — built as
+                  ellipse body + small circle notch-out cue at tip */}
+              {/* petal 1 (top, 0°) */}
+              <ellipse cx="36" cy="22.5" rx="4.2" ry="7" />
+              <circle cx="36" cy="16.5" r="1.3" fill="rgba(201,49,42,1)" stroke="none" />
+              {/* petal 2 (72°) */}
+              <ellipse cx="48.8" cy="31" rx="4.2" ry="7" transform="rotate(72 48.8 31)" />
+              <circle cx="51.7" cy="26.6" r="1.3" fill="rgba(201,49,42,1)" stroke="none" />
+              {/* petal 3 (144°) */}
+              <ellipse cx="44" cy="45.7" rx="4.2" ry="7" transform="rotate(144 44 45.7)" />
+              <circle cx="48.4" cy="48.2" r="1.3" fill="rgba(201,49,42,1)" stroke="none" />
+              {/* petal 4 (216°) */}
+              <ellipse cx="28" cy="45.7" rx="4.2" ry="7" transform="rotate(216 28 45.7)" />
+              <circle cx="23.6" cy="48.2" r="1.3" fill="rgba(201,49,42,1)" stroke="none" />
+              {/* petal 5 (288°) */}
+              <ellipse cx="23.2" cy="31" rx="4.2" ry="7" transform="rotate(288 23.2 31)" />
+              <circle cx="20.3" cy="26.6" r="1.3" fill="rgba(201,49,42,1)" stroke="none" />
+
+              {/* Inner circle */}
+              <circle cx="36" cy="36" r="2.6" />
+
+              {/* Stamen dots between petals (5 small gold dots at 36°
+                  offsets from petal axes) */}
+              <circle cx="43.4" cy="25.5" r="0.9" />
+              <circle cx="48.2" cy="39.6" r="0.9" />
+              <circle cx="36.9" cy="48.6" r="0.9" />
+              <circle cx="24.5" cy="42.2" r="0.9" />
+              <circle cx="24.5" cy="29.8" r="0.9" />
             </g>
-            {/* Small offset crest — quarter-turn, fainter, fills between */}
-            <g fill="rgba(230, 201, 101, 0.13)">
-              <circle cx="48" cy="48" r="1.6" />
-              <ellipse cx="48" cy="43" rx="1.2" ry="2.2" />
-              <ellipse cx="53" cy="46.2" rx="1.2" ry="2.2" transform="rotate(72 53 46.2)" />
-              <ellipse cx="51.8" cy="51.8" rx="1.2" ry="2.2" transform="rotate(144 51.8 51.8)" />
-              <ellipse cx="44.2" cy="51.8" rx="1.2" ry="2.2" transform="rotate(216 44.2 51.8)" />
-              <ellipse cx="43" cy="46.2" rx="1.2" ry="2.2" transform="rotate(288 43 46.2)" />
-            </g>
-            <g fill="rgba(230, 201, 101, 0.13)">
-              <circle cx="0" cy="0" r="1.6" />
-              <ellipse cx="0" cy="-5" rx="1.2" ry="2.2" />
+
+            {/* ── Small scattered petals between medallions (top-right
+                and bottom-left corners of the tile) for density ── */}
+            <g fill="rgba(230, 201, 101, 0.16)">
+              {/* tiny offset sakura at (0, 0) corner — fragment of a
+                  medallion continuing from the previous tile */}
+              <ellipse cx="0" cy="0" rx="2.6" ry="4.4" />
+              <ellipse cx="7" cy="-3" rx="1.6" ry="2.8" transform="rotate(36 7 -3)" />
+              {/* Mirror at (72, 72) */}
+              <ellipse cx="72" cy="72" rx="2.6" ry="4.4" />
+              <ellipse cx="65" cy="75" rx="1.6" ry="2.8" transform="rotate(216 65 75)" />
             </g>
           </pattern>
 

@@ -31,6 +31,7 @@ import AnimatedNumber from "@/components/AnimatedNumber";
 import { useLang } from "@/contexts/LanguageContext";
 import WaBijinSVG from "@/components/WaBijinSVG";
 import SakuraSeal from "@/components/SakuraSeal";
+import NumeralSeal from "@/components/NumeralSeal";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -699,12 +700,7 @@ function SectionHeading({
   return (
     <div className="landing-section-heading">
       <div className="landing-section-heading-row">
-        <span
-          className="landing-section-numeral jp-heading"
-          aria-hidden
-        >
-          {numeral}
-        </span>
+        <NumeralSeal numeral={numeral} size={56} />
         <span
           className="landing-section-numeral-rule"
           aria-hidden
