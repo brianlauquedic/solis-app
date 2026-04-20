@@ -21,39 +21,39 @@ const PAGE_TEXT: Record<L, {
 }> = {
   zh: {
     back: "← 返回首頁",
-    badge: "USE CASES · REAL SOLANA SCENARIOS",
-    title: "Sakura 真實場景案例",
-    subtitle: "七個源自 Solana 主網真實事件的場景：$2.85 億 Drift 攻擊如何讓毫不知情的用戶在數月後瞬間損失全部資產、多步 DeFi 策略如何在執行前毫無預警地遭遇衝突與滑點、Kamino 借貸倉位如何在 10 分鐘暴跌中被清算人機器人搶先一步——以及 Sakura 的三道 Solana 原生防線如何在每個關鍵時刻精準介入。每個場景附帶精確數字：健康因子、token delta、救援費用、節省金額——不是模糊承諾，而是可驗證的結果。",
-    contextLabel: "真實場景",
-    outcomeLabel: "Sakura 的解決方案",
-    ctaTitle: "立即體驗三道防線",
-    ctaSubtitle: "掃描、幽靈模擬、健康因子監控完全免費——機構級保護，普通用戶可及",
-    ctaPhantom: "👻 連接 Phantom →",
-    ctaOkx: "◈ Connect OKX →",
+    badge: "INTEGRATION PLAYBOOK · AGENTIC BOUNDS LAYER",
+    title: "Sakura 整合案例",
+    subtitle: "六個場景，三種身份——錢包整合者、代理開發者、審計/合規機構。每一個場景給出具體工程路徑、費用結構、鏈上驗證指紋，以及「如果不用 Sakura 會付出什麼代價」的參照數字。不是行銷口號，是可核驗的工程事實。",
+    contextLabel: "場景",
+    outcomeLabel: "Sakura 的路徑",
+    ctaTitle: "開始整合",
+    ctaSubtitle: "首 $10M 整合量免收路由費 · 源碼 MIT · 整合無需許可",
+    ctaPhantom: "👻 連接 Phantom 體驗 →",
+    ctaOkx: "◈ 連接 OKX 體驗 →",
   },
   en: {
     back: "← Back to Home",
-    badge: "USE CASES · REAL SOLANA SCENARIOS",
-    title: "Sakura Real-World Scenarios",
-    subtitle: "Seven scenarios grounded in actual Solana mainnet events: how the $285M Drift attack quietly eroded users' assets months before anyone knew a nonce account had been compromised; how multi-step DeFi strategies silently absorb slippage and contract conflicts before execution; how Kamino lending positions tip into liquidation in the seconds before a push notification arrives. And how Sakura's three Solana-native defense protocols intervene at each critical moment — with exact numbers: health factors, token deltas, rescue costs, net savings — verifiable outcomes, not marketing claims.",
+    badge: "INTEGRATION PLAYBOOK · AGENTIC BOUNDS LAYER",
+    title: "Sakura Integration Playbook",
+    subtitle: "Six scenarios across three roles — wallet integrator, agent developer, auditor / institutional compliance. Each gives a concrete engineering path, the fee structure at work, the on-chain verification fingerprint, and a reference number for \"what it would cost not to use Sakura.\" No marketing claims — verifiable engineering facts.",
     contextLabel: "Scenario",
-    outcomeLabel: "Sakura's Response",
-    ctaTitle: "Activate All Three Defense Protocols",
-    ctaSubtitle: "Scanning, ghost simulation, and health factor monitoring are completely free — institutional protection, democratized",
-    ctaPhantom: "👻 Connect Phantom →",
-    ctaOkx: "◈ Connect OKX →",
+    outcomeLabel: "Sakura's path",
+    ctaTitle: "Start Integrating",
+    ctaSubtitle: "First $10M of integrator notional rebated · MIT source · permissionless integration",
+    ctaPhantom: "👻 Try with Phantom →",
+    ctaOkx: "◈ Try with OKX →",
   },
   ja: {
     back: "← ホームへ戻る",
-    badge: "USE CASES · REAL SOLANA SCENARIOS",
-    title: "Sakura リアルワールドシナリオ",
-    subtitle: "Solanaメインネットで実際に起きた出来事に基づく7つのシナリオ——2.85億ドルのDriftエクスプロイト、マルチステップDeFi戦略のスリッページ、Kaminoレンディングの清算——Nonce Guardian・Ghost Run・Liquidation Shieldが、いかにして全オンチェーンユーザーをミリ秒単位・機関投資家水準の精度で守るかを示します。",
+    badge: "INTEGRATION PLAYBOOK · エージェント境界層",
+    title: "Sakura 統合事例集",
+    subtitle: "6 つのシナリオ、3 つの役柄——ウォレット統合者、エージェント開発者、監査/機関コンプライアンス。それぞれに、具体的なエンジニアリング経路、稼働する料金構造、オンチェーン検証の指紋、そして「Sakura を使わなかった場合の代価」の参照数字を示す。マーケティング上の約束ではない。検証可能なエンジニアリングの事実である。",
     contextLabel: "シナリオ",
-    outcomeLabel: "Sakuraの対応",
-    ctaTitle: "3つの防衛プロトコルを今すぐ起動",
-    ctaSubtitle: "スキャン・ゴーストシミュレーション・ヘルスファクター監視は完全無料——機関投資家レベルの保護を民主化",
-    ctaPhantom: "👻 Phantomを接続 →",
-    ctaOkx: "◈ OKXを接続 →",
+    outcomeLabel: "Sakura の経路",
+    ctaTitle: "統合を始める",
+    ctaSubtitle: "統合者の最初の $10M 分はリベート · ソースは MIT · 統合に許可は要らない",
+    ctaPhantom: "👻 Phantom で試す →",
+    ctaOkx: "◈ OKX で試す →",
   },
 };
 
@@ -75,214 +75,187 @@ interface SectionEntry {
 
 const USE_CASES: SectionEntry[] = [
   {
-    id: "uc-nonce",
-    feature: "🛡️ Nonce Guardian",
-    featureColor: "#FF4444",
-    badge: "DURABLE NONCE GUARDIAN",
+    id: "uc-wallet",
+    feature: "🪪 Wallet Integrator",
+    featureColor: "#C9312A",
+    badge: "PATH I · WALLET INTEGRATOR",
     cases: [
       {
         title: {
-          zh: "我的錢包有被 Durable Nonce 攻擊的風險嗎？",
-          en: "Is My Wallet at Risk from a Durable Nonce Attack?",
-          ja: "私のウォレットはDurable Nonce攻撃のリスクにさらされていますか？",
+          zh: "Phantom 代理模式：直接接 Sakura，省掉 4 個工程師月",
+          en: "Phantom Agent Mode: integrate Sakura, skip four engineer-months",
+          ja: "Phantom のエージェントモード：Sakura を接続し、4 エンジニア月を節約する",
         },
         persona: {
-          zh: "DeFi 重度用戶",
-          en: "Active DeFi User",
-          ja: "アクティブDeFiユーザー",
+          zh: "錢包工程團隊",
+          en: "Wallet Engineering Team",
+          ja: "ウォレットエンジニアリングチーム",
         },
         context: {
-          zh: "2026 年 4 月 1 日，Drift 協議遭受 $2.85 億美元攻擊，攻擊者利用 Durable Nonce 的「永久有效簽名」特性，在 nonce 賬戶 authority 被劫持後的數月後才提交已預先簽名的惡意交易。許多用戶不知道自己錢包中存在高風險 nonce 賬戶。",
-          en: "On April 1, 2026, the Drift Protocol suffered a $285M attack. Exploiting Durable Nonce's 'permanently valid signature' property, attackers submitted pre-signed malicious transactions months after hijacking nonce account authority. Most users had no idea high-risk nonce accounts were linked to their wallets.",
-          ja: "2026年4月1日、DriftプロトコルがDurable Nonceの「永続的に有効な署名」特性を悪用した2.85億ドルの攻撃を受けました。攻撃者はnonceアカウントのauthorityを乗っ取ってから数ヶ月後に事前署名済みの悪意あるトランザクションを送信。多くのユーザーは自分のウォレットに高リスクなnonceアカウントが紐づいていることを知りませんでした。",
+          zh: "Phantom 計劃在 2026 H1 推出代理模式。自家實作需要：Pyth 價格整合（1 工程師月）、簽名驗證與 nonce 防重放（1.5 工程師月）、150 塊新鮮度檢查（0.5 工程師月）、Groth16 驗證器接入（1 工程師月，或放棄 ZK 選雙伺服器方案）。總計約 4 工程師月，且每次 Solana 協議升級要重做一輪。",
+          en: "Phantom plans to ship agent mode in H1 2026. Building in-house requires: Pyth oracle integration (1 engineer-month), signature check + replay guard (1.5), 150-block freshness (0.5), Groth16 verifier (1 engineer-month, or skip ZK and accept two-server trust). Roughly four engineer-months, re-incurred on every Solana protocol upgrade.",
+          ja: "Phantom は 2026 年上期にエージェントモードを出荷する予定である。自社実装に要するのは：Pyth オラクル統合（エンジニア 1 人月）、署名検証と再生防止（1.5 人月）、150 ブロック新鮮度（0.5 人月）、Groth16 検証器（1 人月、あるいは ZK を諦めて二重サーバー信頼モデルを受け入れる）。合計およそ 4 エンジニア月。Solana プロトコル更新の度に再発生する。",
         },
         outcome: {
-          zh: "用戶輸入錢包地址，Nonce Guardian 在 3 秒內掃描所有關聯 nonce 賬戶，發現 1 個 authority 非本人控制的高風險帳戶。Claude AI 生成中文報告，精確指出風險來源。SHA-256 報告哈希永久記錄在 Solana 鏈上——用戶有不可篡改的安全審計記錄。",
-          en: "Enter a wallet address. Nonce Guardian scans all associated nonce accounts in under 3 seconds and flags 1 high-risk account whose authority is not controlled by the user. Claude AI generates a full risk report. The SHA-256 report hash is permanently anchored on Solana — an immutable security audit record the user owns forever.",
-          ja: "ウォレットアドレスを入力すると、Nonce Guardianが3秒以内にすべての関連nonceアカウントをスキャンし、authorityが自分でコントロールしていない高リスクアカウントを1件検出。Claude AIが詳細なリスクレポートを生成。SHA-256レポートハッシュがSolanaに永久記録され、改ざん不可能なセキュリティ監査記録が残ります。",
+          zh: "接入 Sakura SDK：yarn add @sakura/solana-sdk。IntentSigner 元件放入代理模式設定頁；用戶簽署時透過 SDK 上鏈 32 位元組 Poseidon 承諾，一次性 0.1% 費用鏈上扣除。前 $10M 整合量免收，rebate 自動到 Phantom 指定的 USDC 錢包。總接入時程：工程 1 週，不需任何商務談判。每次 Solana 升級——Sakura 自動維護。",
+          en: "Integrate the Sakura SDK: yarn add @sakura/solana-sdk. Drop the IntentSigner component into the agent-mode settings page; when the user signs, the SDK anchors a 32-byte Poseidon commitment on-chain and deducts a one-time 0.1% fee. The first $10M of integrator notional is rebated automatically to the USDC wallet Phantom declares. Total integration time: roughly one week of engineering. No business-development conversation required. Every Solana upgrade is maintained by Sakura.",
+          ja: "Sakura SDK を統合する：yarn add @sakura/solana-sdk。IntentSigner コンポーネントをエージェントモードの設定画面に配置すれば、ユーザーが署名する際に SDK が 32 バイトの Poseidon コミットメントをオンチェーンに定錨し、名目額 0.1% の一回限り手数料を控除する。統合者の最初の $10M 分は、Phantom が指定した USDC アドレスへ自動的にリベートされる。総統合期間：およそエンジニア 1 週間。事業開発の交渉は一切要らない。Solana プロトコル更新の保守は Sakura 側が担う。",
         },
         tag: {
-          zh: "安全審計",
-          en: "Security Audit",
-          ja: "セキュリティ監査",
+          zh: "錢包整合",
+          en: "Wallet Integration",
+          ja: "ウォレット統合",
         },
       },
       {
         title: {
-          zh: "機構資產安全合規：定期 Nonce 風險審計",
-          en: "Institutional Compliance: Periodic Nonce Risk Audits",
-          ja: "機関資産のセキュリティコンプライアンス：定期的なNonceリスク監査",
+          zh: "Backpack 的差異化：用「用戶即主權」代替「您授權我們代管」",
+          en: "Backpack's Differentiation: \"User IS Sovereign\" replacing \"You authorize us to manage\"",
+          ja: "Backpack の差異化——「ユーザーこそが主権である」、「お客様が私たちに管理を委任する」に代わって",
         },
         persona: {
-          zh: "加密資產機構 / DAO 財庫管理",
-          en: "Crypto Fund / DAO Treasury Manager",
-          ja: "暗号資産機関 / DAO財務管理者",
+          zh: "錢包產品團隊",
+          en: "Wallet Product Team",
+          ja: "ウォレットプロダクトチーム",
         },
         context: {
-          zh: "機構帳戶通常持有多個 Durable Nonce 賬戶用於離線批量交易簽名。合規要求定期進行安全審計並保存可驗證的審計記錄。",
-          en: "Institutional accounts commonly hold multiple Durable Nonce accounts for offline batch transaction signing. Compliance mandates regular security audits with verifiable, independently auditable records.",
-          ja: "機関アカウントはオフラインのバッチトランザクション署名のために複数のDurable Nonceアカウントを保有することが多い。コンプライアンス要件として、独立して検証可能な監査記録を伴う定期的なセキュリティ監査が求められます。",
+          zh: "代理模式是 2026 年 Solana 錢包的同質化戰場。會話金鑰輪替、allowlist、授權彈窗——四家錢包能做的事情幾乎沒有差別，都在同一層運營承諾上競爭。獲客故事蒼白，用戶選哪家靠 UI 手感，不靠結構差異。",
+          en: "Agent mode is the commoditization battleground for Solana wallets in 2026. Session-key rotation, allowlists, approval popups — the four wallets are almost indistinguishable, competing on the same layer of operator promises. The acquisition story reads thin. Users choose on UI feel, not on structural difference.",
+          ja: "エージェントモードは、2026 年の Solana ウォレットにとっての均質化の戦場である。セッションキーのローテーション、許可リスト、承認ポップアップ——4 社のウォレットは、ほぼ区別がつかないまま、同じ運営者の約束のレイヤーで競争している。獲得のナラティブは薄く、ユーザーは UI の手触りで選ぶのであって、構造的な違いでは選ばない。",
         },
         outcome: {
-          zh: "每週掃描一次，支付 $1 USDC 生成 AI 安全報告，報告的 SHA-256 哈希上鏈存證。累積的鏈上 tx signatures 構成完整的合規審計鏈，可供外部審計師在 Solscan 獨立驗證。",
-          en: "A weekly scan costs $1 USDC for an AI security report whose SHA-256 hash is anchored on-chain. The accumulated chain of tx signatures forms a complete compliance audit trail that external auditors can verify independently on Solscan — no need to trust Sakura.",
-          ja: "毎週スキャンして$1 USDCのAIセキュリティレポートを生成し、SHA-256ハッシュをオンチェーンに記録。蓄積されたオンチェーンtx署名のチェーンが完全なコンプライアンス監査証跡を形成し、外部監査人がSolscanで独立して検証可能——Sakuraを信頼する必要はありません。",
+          zh: "接 Sakura 後，Backpack 可以用結構性命題做差異化：「在我們的代理模式下，代理的任何動作都無法越過您已簽的邊界——這由 Solana 鏈上 alt_bn128 配對驗證強制，不是由我們的伺服器承諾。用戶即是主權。」這不是行銷文案——Solscan 上每一筆代理動作都留有 keccak256 指紋，用戶可隨時獨立核驗。這是同業難複製的獲客信號。",
+          en: "By integrating Sakura, Backpack differentiates on a structural claim: \"In our agent mode, the agent cannot act outside the bounds you signed — enforced by on-chain alt_bn128 pairing verification, not by our server's promise. The user is the sovereign.\" This is not marketing copy — every agent action leaves a keccak256 fingerprint on Solscan, independently verifiable at any time. A user-acquisition signal peers cannot easily replicate.",
+          ja: "Sakura を統合することで、Backpack は構造的な命題で差異化できる——「当社のエージェントモードにおいて、エージェントはお客様が署名した境界の外では動けない。これは、オンチェーンの alt_bn128 ペアリング検証が強制するのであって、当社サーバーの約束ではない。ユーザーこそが、主権である」。これはマーケティングコピーではない——各エージェント動作は Solscan に keccak256 指紋を残し、いつでも独立に検証できる。競合が容易には真似できない、ユーザー獲得シグナル。",
         },
         tag: {
-          zh: "合規存證",
-          en: "Compliance Record",
-          ja: "コンプライアンス記録",
+          zh: "產品差異化",
+          en: "Product Differentiation",
+          ja: "プロダクト差異化",
         },
       },
     ],
   },
   {
-    id: "uc-ghost",
-    feature: "👻 Ghost Run",
-    featureColor: "#7C6FFF",
-    badge: "GHOST RUN",
+    id: "uc-agent",
+    feature: "🤖 Agent Developer",
+    featureColor: "#B8932A",
+    badge: "PATH II · AGENT DEVELOPER",
     cases: [
       {
         title: {
-          zh: "在不損失資金的前提下，了解複雜 DeFi 策略的精確結果",
-          en: "Know the Exact Outcome of a Complex DeFi Strategy Before Risking a Single Dollar",
-          ja: "1ドルもリスクにさらす前に、複雑なDeFi戦略の正確な結果を把握する",
+          zh: "AI 自動再平衡代理：每次動作自動生成 Groth16 證明",
+          en: "AI Rebalance Agent: Groth16 proof auto-generated for every action",
+          ja: "AI 自動リバランスエージェント——各動作で Groth16 証明を自動生成",
         },
         persona: {
-          zh: "中階 DeFi 用戶",
-          en: "Intermediate DeFi User",
-          ja: "中級DeFiユーザー",
+          zh: "AI Agent 開發者",
+          en: "AI Agent Developer",
+          ja: "AI エージェント開発者",
         },
         context: {
-          zh: "用戶想同時完成：將 5 SOL 質押到 Marinade 賺取 mSOL，並將 100 USDC 存入 Kamino 賺取借貸利息。但不確定精確能收到多少 mSOL、gas 費用是多少、兩步之間是否有衝突。",
-          en: "The user wants to stake 5 SOL with Marinade for mSOL and deposit 100 USDC into Kamino for lending yield — simultaneously. But they're unsure exactly how much mSOL they'll receive, what gas will cost, and whether the two steps conflict.",
-          ja: "ユーザーはMarinadeに5 SOLをステークしてmSOLを得ながら、100 USDCをKaminoに預けて借入利回りを得たいと考えています。しかし、正確にいくらのmSOLが得られるか、ガス代はいくらか、2つのステップが衝突しないかわかりません。",
+          zh: "開發者希望做一個 AI 代理，每日自動在 Kamino / MarginFi / Jupiter 之間為用戶再平衡 USDC 收益倉位。問題：用戶不會為了一個還不知道能賺多少的 AI 代理，把任意金額的簽名權限交出去。必須有一個結構性的上限——但 allowlist / session key 並不夠硬。",
+          en: "A developer wants to build an AI agent that daily rebalances the user's USDC yield positions across Kamino, MarginFi, and Jupiter. The problem: no user will sign over unbounded authority to an agent whose ROI is not yet proven. A structural ceiling is required — but allowlists and session keys are not hard enough.",
+          ja: "ある開発者は、Kamino / MarginFi / Jupiter の間で、ユーザーの USDC 利回りポジションを日次でリバランスする AI エージェントを構築したいと考えている。問題は、ROI がまだ実証されていないエージェントに、ユーザーが無制限の署名権を渡すことは決してない、ということである。構造的な上限が必要だが、許可リストやセッションキーでは硬さが足りない。",
         },
         outcome: {
-          zh: "輸入自然語言描述後，Ghost Run 在 2 秒內完成幽靈執行：「您將收到 4.992 mSOL（APY 7.2% = 年化 +$21.3）；Kamino 存款將獲 kUSDC 收益憑證（APY 8.1% = 年化 +$8.1）；總 gas：0.000048 SOL；兩步無衝突，可安全執行。」確認後 SAK 一鍵執行，執行費 0.3%。",
-          en: "Ghost Run ghost-executes the full strategy in under 2 seconds: 'You will receive 4.992 mSOL (APY 7.2% = +$21.3/year); Kamino deposit yields kUSDC receipt (APY 8.1% = +$8.1/year); total gas: 0.000048 SOL; no conflicts — safe to execute.' Confirm once and SAK executes both on-chain. 0.3% execution fee.",
-          ja: "自然言語で入力すると、Ghost Runが2秒以内でゴースト実行：「4.992 mSOLを受け取ります（APY 7.2% = 年間+$21.3）；Kamino預金はkUSDC収益証書を生成（APY 8.1% = 年間+$8.1）；総ガス：0.000048 SOL；競合なし——安全に実行可能」。確認後、SAKが両方をオンチェーンで実行。実行手数料0.3%。",
+          zh: "以 Sakura SDK 整合：用戶簽一次意圖——「代理每次可移動最多 $500 USDC，僅限 Kamino / MarginFi / Jupiter，為期 30 天」。代理每次執行前，用 @solana/web3.js + SAK 組裝 DeFi 指令，透過 SDK 於瀏覽器本地 600ms 生成 Groth16 證明，打包至 v0 原子交易。鏈上驗證 116k CU。用戶的上限由數學而非軟體保證——結構上不可逾越。",
+          en: "Integrate via Sakura SDK: the user signs one intent — \"the agent may move up to $500 USDC per action, limited to Kamino / MarginFi / Jupiter, for thirty days.\" Before each execution, the agent assembles the DeFi instruction via @solana/web3.js + SAK, generates a Groth16 proof locally in the browser in ~600ms, and bundles it into a v0 atomic transaction. On-chain verification costs ~116k CU. The user's cap is guaranteed by math, not by software — structurally unexceedable.",
+          ja: "Sakura SDK を用いて統合する——ユーザーは、1 度の意図署名を行う。「エージェントは、Kamino / MarginFi / Jupiter に限り、1 回最大 $500 USDC、30 日間に限って動かしてよい」。エージェントは各実行前に、@solana/web3.js と SAK で DeFi 命令を組み立て、ブラウザ内で約 600ms の Groth16 証明を生成し、v0 アトミックトランザクションに束ねる。オンチェーン検証はおよそ 116k CU。ユーザーの上限は、ソフトウェアではなく、数学によって保証される——構造上、越えられない。",
         },
         tag: {
-          zh: "收益優化",
-          en: "Yield Optimization",
-          ja: "利回り最適化",
+          zh: "代理整合",
+          en: "Agent Integration",
+          ja: "エージェント統合",
         },
       },
       {
         title: {
-          zh: "跨協議套利策略預驗——避免因 slippage 或路由失敗損失資金",
-          en: "Pre-Validate a Cross-Protocol Arbitrage Strategy Before Slippage Costs You",
-          ja: "スリッページで損失が出る前に、クロスプロトコル裁定戦略を事前検証する",
+          zh: "DAO 金庫多協議授權代理：精確邊界，零治理爭議",
+          en: "DAO Treasury Multi-Protocol Agent: precise bounds, zero governance disputes",
+          ja: "DAO トレジャリーのマルチプロトコル委任エージェント——精密な境界、ガバナンス紛争ゼロ",
         },
         persona: {
-          zh: "進階 DeFi 交易員",
-          en: "Advanced DeFi Trader",
-          ja: "上級DeFiトレーダー",
+          zh: "DAO 財庫管理者",
+          en: "DAO Treasury Steward",
+          ja: "DAO 財務ガバナンス",
         },
         context: {
-          zh: "交易員設計了複雜的多步套利路徑：Jupiter 換倉 → Jito 質押 → Kamino 借貸循環。每步操作都有 slippage 風險與時序依賴，真實執行前無從得知精確盈利。",
-          en: "A trader has designed a complex multi-step arbitrage path: Jupiter swap → Jito staking → Kamino lending loop. Each step carries slippage risk and timing dependencies — there's no way to know the exact profit before executing for real.",
-          ja: "トレーダーが複雑な多段階裁定戦略を設計：Jupiterスワップ → Jitoステーキング → Kaminoレンディングループ。各ステップにはスリッページリスクとタイミング依存性があり、実際に実行するまで正確な利益を知る方法がありません。",
+          zh: "某 Solana DAO 金庫持有 $10M USDC，DAO 決議委託一個自動代理做流動性挖礦收益最佳化。問題：傳統的 multisig + allowlist 無法精確表達複雜意圖（「每次最多 $200k，僅限特定協議池，每週最多 50 次動作」）；若發生意外，整個金庫管理者會面臨治理彈劾。需要一份「鏈上可驗證的、每次動作皆自證合規」的授權。",
+          en: "A Solana DAO treasury holds $10M USDC. The DAO resolves to delegate yield farming optimization to an autonomous agent. The problem: multisig + allowlist cannot express complex intent precisely (\"up to $200k per action, specific protocol pools only, max 50 actions per week\"). If something goes sideways, treasury stewards face governance impeachment. They need an on-chain-verifiable delegation where every action self-proves compliance.",
+          ja: "ある Solana DAO のトレジャリーは $10M USDC を保有する。DAO は、利回りファーミングの最適化を自律エージェントに委任することを決議する。問題は、multisig と許可リストでは複雑な意図（「1 回最大 $200k、特定のプロトコルプールのみ、週あたり最大 50 アクション」）を精密に表現できないことである。何らかの事故が発生した場合、財務スチュワードはガバナンス的な弾劾に直面する。必要なのは、各動作が自ら合規性を証明する、オンチェーンで検証可能な委任状である。",
         },
         outcome: {
-          zh: "Ghost Run 依序幽靈執行三步策略，返回每步精確 token delta 與累計 gas 消耗，並標記步驟 2→3 存在 slippage 衝突（kUSDC 收益憑證不可直接用於步驟 3 的借貸抵押）。用戶在不損失一分錢的情況下發現策略缺陷並調整。",
-          en: "Ghost Run executes all three strategy steps in ghost mode, returning exact token deltas and cumulative gas per step — and flags a conflict between steps 2 and 3 (the kUSDC receipt token cannot be used as lending collateral in step 3). The trader finds the flaw and adjusts without losing a cent.",
-          ja: "Ghost Runが3ステップ戦略を順番にゴースト実行し、各ステップの正確なトークンデルタと累積ガスを返し、ステップ2→3間の競合を検出（kUSDC収益証書はステップ3の貸し出し担保として直接使用不可）。トレーダーは1セントも失うことなく戦略の欠陥を発見して修正します。",
+          zh: "DAO 在 multisig 簽一次意圖：七項策略值（金額 / USD 上限 / 協議位圖 / 動作位圖 / 過期 / nonce / 意圖文字）經 Poseidon 上鏈。每次代理動作鏈上驗證後才落地；越界鏈上拒絕——任何越界嘗試都在 Solscan 上留痕，治理紀錄可獨立還原。事後若有爭議，審計師以 snarkjs 獨立重驗每一筆 Groth16 證明，結論不依賴 DAO 任何一方。這是「程式化信託」（programmatic fiduciary duty）的實作範本。",
+          en: "The DAO multisig signs one intent: seven policy values (amount / USD cap / protocol bitmap / action bitmap / expiry / nonce / intent text) folded through Poseidon, anchored on-chain. Each agent action lands only after on-chain verification; any out-of-bounds attempt is rejected on-chain and leaves a trace on Solscan that governance can reconstruct. If a dispute arises later, an auditor independently re-verifies every Groth16 proof with snarkjs; the conclusion does not rely on any DAO faction. This is programmatic fiduciary duty, as implementation.",
+          ja: "DAO のマルチシグが、1 度の意図に署名する。7 つのポリシー値（金額 / USD 上限 / プロトコルビットマップ / アクションビットマップ / 有効期限 / ノンス / 意図テキスト）が Poseidon を経てオンチェーンに定錨される。各エージェント動作は、オンチェーン検証を通過して初めて着地する。境界外の試みはその場で拒絶され、Solscan に痕跡を残し、ガバナンス記録として独立に復元可能である。後日紛争が生じた場合、監査人は snarkjs で各 Groth16 証明を独立に再検証する——結論は、DAO のいかなる派閥からも独立する。これは、プログラム化された信認義務（programmatic fiduciary duty）の、実装としての範型である。",
         },
         tag: {
-          zh: "風險前置",
-          en: "Risk Pre-Flight",
-          ja: "リスク事前確認",
+          zh: "機構委任",
+          en: "Institutional Delegation",
+          ja: "機関委任",
         },
       },
     ],
   },
   {
-    id: "uc-shield",
-    feature: "⚡ Liquidation Shield",
-    featureColor: "#FF9F0A",
-    badge: "LIQUIDATION SHIELD",
+    id: "uc-auditor",
+    feature: "🔍 Auditor / Enterprise",
+    featureColor: "#5A7A4A",
+    badge: "PATH III · AUDITOR / COMPLIANCE / ENTERPRISE",
     cases: [
       {
         title: {
-          zh: "行情急跌時，AI 在清算前自動救援 Kamino 倉位",
-          en: "When the Market Dumps, AI Auto-Rescues Your Kamino Position Before Liquidation",
-          ja: "市場暴落時、AIが清算前にKaminoポジションを自動救済",
+          zh: "合規審計：從 Solscan 獨立驗證代理全部動作，無需存取 Sakura",
+          en: "Compliance Audit: independently verify all agent actions on Solscan — no Sakura access required",
+          ja: "コンプライアンス監査——Solscan 上でエージェントの全動作を独立に検証、Sakura へのアクセスは要らぬ",
         },
         persona: {
-          zh: "Kamino 借貸用戶",
-          en: "Kamino Lending User",
-          ja: "Kaminoレンディングユーザー",
+          zh: "外部合規審計師",
+          en: "External Compliance Auditor",
+          ja: "外部コンプライアンス監査人",
         },
         context: {
-          zh: "用戶在 Kamino 以 10 SOL 作抵押借出 $800 USDC，健康因子維持在 1.35。某個週末 SOL 突然下跌 20%，健康因子在 2 小時內從 1.35 跌至 1.03，逼近清算線（HF < 1.0），若被清算將損失約 $80–$160（5–10% 清算罰款）。",
-          en: "A user has borrowed $800 USDC against 10 SOL collateral on Kamino, health factor 1.35. One weekend, SOL drops 20%. The health factor falls from 1.35 to 1.03 within two hours, approaching the liquidation line (HF < 1.0). A liquidation would cost $80–$160 (5–10% liquidation penalty).",
-          ja: "ユーザーはKaminoで10 SOLを担保に$800 USDCを借り入れ、健康係数は1.35。ある週末、SOLが突然20%下落。健康係数が2時間以内に1.35から1.03に低下し、清算ライン（HF < 1.0）に迫ります。清算されると$80〜$160の損失（5〜10%の清算ペナルティ）が発生します。",
+          zh: "某加密基金管理代理投資組合，年終時 LP 要求第三方審計師出具「代理的每一筆動作皆在章程授權範圍內」的獨立意見。傳統審計方式：向基金索取後端日誌、審核 Sakura 伺服器存取權、人工比對——成本高、可信度低、任何伺服器失信都會讓整個意見站不住。",
+          en: "A crypto fund runs an agent-managed portfolio. At year-end, LPs demand a third-party auditor's independent opinion that \"every agent action fell within the charter's authorized bounds.\" Traditional audit paths: request backend logs from the fund, audit Sakura server access, manual reconciliation — high cost, low confidence, any server breach invalidates the entire opinion.",
+          ja: "ある暗号資産ファンドは、エージェント運用のポートフォリオを運用する。年度末、LP は「エージェントの全動作が定款上の授権範囲内に収まっていた」ことを保証する第三者監査人の独立意見を求めてくる。従来の監査経路は、ファンドにバックエンドログの開示を求め、Sakura のサーバーアクセスを監査し、人手で突合する——コストは高く、信頼度は低く、サーバー侵害が一件でもあれば、意見全体が成り立たなくなる。",
         },
         outcome: {
-          zh: "Liquidation Shield 觸發預設閾值（HF < 1.05）。simulateTransaction 預演：還款 $600 USDC 可將 HF 恢復至 1.42。SPL Token Approve 確認授權範圍內（用戶預授權最多 $1000 USDC）。SAK lendAsset() 在 400ms 內完成還款。收取 1% 服務費（$6 USDC），相較 $80–$160 清算損失節省 92%。",
-          en: "Liquidation Shield triggers at the preset threshold (HF < 1.05). simulateTransaction pre-computes: repaying $600 USDC restores HF to 1.42. SPL Token Approve confirms within the authorized cap (user pre-authorized up to $1,000 USDC). SAK lendAsset() completes repayment within 400ms. Service fee: 1% ($6 USDC) vs. $80–$160 in liquidation losses — 92% saved.",
-          ja: "Liquidation Shieldがプリセット閾値（HF < 1.05）でトリガー。simulateTransactionが事前計算：$600 USDC返済でHFを1.42に回復。SPL Token Approveが承認範囲内を確認（最大$1,000 USDC事前承認）。SAK lendAsset()が400ms以内に返済完了。サービス料1%（$6 USDC）——$80〜$160の清算損失と比較して92%の節約。",
+          zh: "審計師從 Solscan 直接檢索基金錢包對應的 ActionRecord PDA（以 Sakura program ID 過濾），下載公開的 Groth16 verifying key（從 GitHub 或已部署合約）。以標準 snarkjs 重驗每一筆動作的證明：若 Poseidon 承諾與鏈上一致、Groth16 驗證通過、Pyth slot 在新鮮度窗口內——這筆動作在數學上確實在章程邊界內。100% 獨立於基金、獨立於 Sakura，結論可審計、可重現。",
+          en: "The auditor queries Solscan directly for ActionRecord PDAs tied to the fund's wallet (filtered by Sakura's program ID), downloads the public Groth16 verifying key (from GitHub or directly from the deployed program). Using standard snarkjs, they re-verify every action's proof: if the Poseidon commitment matches on-chain, Groth16 verification passes, and the Pyth slot falls within the freshness window — the action mathematically sat inside the charter's bounds. Fully independent of the fund, fully independent of Sakura; the conclusion is auditable and reproducible.",
+          ja: "監査人は、Solscan から直接、ファンドのウォレットに紐づく ActionRecord PDA を（Sakura のプログラム ID でフィルタリングして）取得し、公開の Groth16 検証鍵を（GitHub から、あるいはデプロイ済みのプログラムから）ダウンロードする。標準的な snarkjs を用いて、各動作の証明を再検証する。Poseidon コミットメントがオンチェーンのものと一致し、Groth16 検証が通過し、Pyth slot が新鮮度ウィンドウに収まっていれば——当該動作は、数学的に定款の境界内に収まっていたことになる。ファンドからも、Sakura からも、完全に独立した結論——監査可能、再現可能である。",
         },
         tag: {
-          zh: "清算防護",
-          en: "Liquidation Defense",
-          ja: "清算防護",
+          zh: "合規驗證",
+          en: "Compliance Verification",
+          ja: "コンプライアンス検証",
         },
       },
       {
         title: {
-          zh: "跨協議倉位統一監控——Kamino + MarginFi 同時保護",
-          en: "Unified Cross-Protocol Monitoring — Kamino and MarginFi Protected Simultaneously",
-          ja: "クロスプロトコル統合モニタリング——KaminoとMarginFiを同時に保護",
+          zh: "訴訟重建：律師以鏈上證據還原代理行為時序",
+          en: "Dispute Reconstruction: counsel rebuilds agent behavior timeline from on-chain evidence",
+          ja: "訴訟における事実復元——弁護士がオンチェーン証拠から、エージェント挙動のタイムラインを再構成する",
         },
         persona: {
-          zh: "多協議 DeFi 用戶",
-          en: "Multi-Protocol DeFi User",
-          ja: "マルチプロトコルDeFiユーザー",
+          zh: "法律顧問",
+          en: "Legal Counsel",
+          ja: "法務顧問",
         },
         context: {
-          zh: "進階用戶同時在 Kamino 和 MarginFi 持有借貸倉位，分散風險。但管理兩個協議的健康因子需要不斷切換介面，且兩者沒有統一的警報機制。",
-          en: "A power user holds lending positions on both Kamino and MarginFi for risk diversification. Managing health factors across two protocols requires constant context-switching, and neither protocol offers a unified alert mechanism.",
-          ja: "上級ユーザーがリスク分散のためにKaminoとMarginFiの両方で借入ポジションを保有。2つのプロトコル間での健康係数管理には常にコンテキスト切り替えが必要で、どちらも統合されたアラート機能を提供していません。",
+          zh: "一筆來自 AI 代理的大額交易出現爭議——用戶主張代理「超出授權範圍」，代理運營方主張「合規範圍內」。傳統舉證：雙方互相出示後端日誌，法庭上真偽難辨。任何一方伺服器被入侵或日誌被動過，證據鏈即崩潰。",
+          en: "A large-value transaction executed by an AI agent becomes disputed — the user claims the agent \"exceeded authorized scope,\" while the agent operator claims \"it remained in scope.\" Traditional evidence: both sides present backend logs; their truthfulness cannot be determined from the bench. If either server is compromised or its logs edited, the evidentiary chain collapses.",
+          ja: "AI エージェントが執行した高額取引をめぐって、紛争が生じる——ユーザーは「エージェントは授権範囲を超えた」と主張し、エージェント運営者は「範囲内に収まっていた」と主張する。従来の立証は、双方がそれぞれバックエンドログを提出する、というものだが、法廷ではその真偽を見抜くことができない。いずれか一方のサーバーが侵害された、あるいはログが改変された場合、証拠鎖は崩壊する。",
         },
         outcome: {
-          zh: "Liquidation Shield 同時監控兩個協議的所有倉位，統一顯示健康因子儀表板。用戶一次設定預授權上限，AI 根據優先級（健康因子最低者優先）自動分配救援資源。Memo Program 為每個協議的救援操作分別寫入審計記錄，可逐筆追溯。",
-          en: "Liquidation Shield monitors all positions across both protocols in a unified health factor dashboard. One pre-authorization cap covers both. AI allocates rescue resources by priority (lowest health factor first). Memo Program writes a separate audit record per protocol per rescue — fully traceable.",
-          ja: "Liquidation Shieldが両プロトコルのすべてのポジションを統合ダッシュボードで監視。事前承認上限は一度設定するだけで両プロトコルをカバー。AIが優先度順（健康係数最低を優先）に自動救済リソースを割り当て。Memo Programがプロトコルごとに各救済操作の監査記録を書き込み——完全追跡可能。",
+          zh: "律師以被爭議動作的 tx signature 於 Solscan 直接調取 ActionRecord：32 位元組意圖承諾、action_nonce、動作類型、目標協議、金額、landed slot、keccak256 指紋，一目了然。對比用戶錢包簽署 sign_intent 時的原始承諾，若指紋匹配——代理動作確實在簽署邊界內；若不匹配——動作必然在運營方偽造。證據在鏈上留存、不可篡改、獨立於任何一方的伺服器。這是 Solana 作為司法可受證據載體的使用範例。",
+          en: "Counsel pulls the disputed action's ActionRecord from Solscan using the tx signature: 32-byte intent commitment, action_nonce, action type, target protocol, amount, landed slot, keccak256 fingerprint — all legible at a glance. Compared against the user's wallet's original sign_intent commitment, a matching fingerprint proves the action sat inside the signed bounds; a mismatch proves the operator fabricated. The evidence lives on-chain, cannot be tampered with, and is independent of any party's server. This is Solana functioning as a judicially admissible evidentiary layer.",
+          ja: "弁護士は、紛争中の動作の tx signature を用いて、Solscan から直接 ActionRecord を取得する——32 バイトの意図コミットメント、action_nonce、動作タイプ、対象プロトコル、金額、着地 slot、keccak256 指紋、すべてが一目で読める。ユーザーのウォレットが sign_intent を行った際の元のコミットメントと照合し、指紋が一致すれば——エージェント動作は署名済み境界内に収まっていた。一致しなければ——運営者の側の捏造、ということになる。証拠はオンチェーンに残り、改竄できず、いかなる当事者のサーバーからも独立する。これは、Solana が司法上受理可能な証拠レイヤーとして機能する使用例である。",
         },
         tag: {
-          zh: "跨協議管理",
-          en: "Cross-Protocol Mgmt",
-          ja: "クロスプロトコル管理",
-        },
-      },
-      {
-        title: {
-          zh: "預授權上限保護：確保 AI 絕不超出您的授權範圍",
-          en: "Pre-Authorization Hard Cap: AI Can Never Exceed Your Authorized Limit",
-          ja: "事前承認ハードキャップ：AIが承認範囲を絶対に超えない",
-        },
-        persona: {
-          zh: "謹慎型 DeFi 用戶",
-          en: "Risk-Cautious DeFi User",
-          ja: "リスク慎重型DeFiユーザー",
-        },
-        context: {
-          zh: "用戶擔心授權 AI 自動執行交易會失控——如果 AI 判斷錯誤，可能動用超出預期的資金執行不必要的操作。",
-          en: "The user is concerned that authorizing AI to execute transactions autonomously could spiral out of control — if the AI misjudges, it might spend more funds than intended.",
-          ja: "ユーザーはAIによるトランザクションの自律実行の承認が制御不能になることを懸念——AIが誤判断した場合、意図した以上の資金が不要な操作に使われる可能性があります。",
-        },
-        outcome: {
-          zh: "SPL Token Approve 在 token program 層面設定硬性上限（例：最多 $500 USDC）。這是 Solana token program 強制執行的合約級約束，而非 Sakura 的軟性承諾——即使 Sakura 服務端出現任何問題，超出授權的轉帳在鏈上層面就會被拒絕。用戶在 Solscan 可查看授權記錄與所有執行記錄的完整鏈上審計鏈。",
-          en: "SPL Token Approve sets a hard ceiling at the token program level (e.g., maximum $500 USDC). This is a contract-level constraint enforced by Solana's token program — not a soft promise from Sakura. Even if something goes wrong server-side, any transfer exceeding the authorization is rejected at the chain level. Full onchain audit trail visible on Solscan.",
-          ja: "SPL Token ApproveがToken Programレベルでハード上限を設定（例：最大$500 USDC）。SolanaのToken Programが強制するコントラクトレベルの制約であり、Sakuraのソフトな約束ではありません——サーバー側で何か問題が発生しても、承認を超える転送はチェーンレベルで拒否。完全なオンチェーン監査証跡がSolscanで確認可能。",
-        },
-        tag: {
-          zh: "安全授權",
-          en: "Safe Authorization",
-          ja: "安全な承認",
+          zh: "司法證據",
+          en: "Judicial Evidence",
+          ja: "司法証拠",
         },
       },
     ],
@@ -291,12 +264,12 @@ const USE_CASES: SectionEntry[] = [
 
 export default function UseCasesPage() {
   const { lang } = useLang();
-  const l = (lang as L) in PAGE_TEXT ? (lang as L) : "zh";
-  const p = PAGE_TEXT[l];
+  const l = lang as L;
+  const p = PAGE_TEXT[l] ?? PAGE_TEXT.zh;
 
   return (
     <main style={{ minHeight: "100vh", background: "var(--bg-base)", color: "var(--text-primary)" }}>
-      <div style={{ maxWidth: 860, margin: "0 auto", padding: "60px 24px 40px" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "60px 24px 40px" }}>
 
         {/* Header */}
         <div style={{ marginBottom: 56 }}>
@@ -322,7 +295,7 @@ export default function UseCasesPage() {
           </p>
         </div>
 
-        {/* Sakura intro */}
+        {/* Sakura intro — aligned to current product thesis */}
         <div style={{
           background: "var(--bg-card)", border: "1px solid var(--border)",
           borderLeft: "3px solid var(--accent)", borderRadius: 10,
@@ -337,14 +310,14 @@ export default function UseCasesPage() {
           }}>桜</div>
           <div>
             <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 5, textTransform: "uppercase" }}>
-              🌸 Sakura AI Guardian · 備えあれば憂いなし — Real Threats, Real Defense
+              🌸 Sakura · 代理執行邊界層 · 數學強制執行
             </div>
             <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.9 }}>
               {lang === "zh"
-                ? "每一個場景都源自 Solana 主網真實發生的事件。Sakura 以匠人精神打造三道防線應對這些真實威脅：Nonce Guardian 以攻擊者自己的 RPC 武器反守為攻——2026 年 4 月 1 日，Drift $2.85 億攻擊用的是 getProgramAccounts，Sakura 用的也是它，只是方向相反；Ghost Run 讓普通用戶第一次擁有機構級策略預演能力，在投入任何資本之前看到精確結果；Liquidation Shield 以 SPL Token Approve 硬性約束守住借貸倉位，400ms 閃電救援在清算發生前還原健康因子。所有 AI 決策 SHA-256 永久上鏈，任何人可在 Solscan 獨立核驗——無需信任 Sakura，無需信任任何人。"
+                ? "Sakura 是代理錢包、代理開發者、審計/合規機構三方共用的一層：用戶以一句話簽下代理的動作邊界，Poseidon 壓縮為 32 位元組承諾上鏈；代理每一次動作都附 Groth16 證明，由 Solana alt_bn128 配對 syscall 於 ~116k CU 驗證；越界鏈上拒絕、在場鏈上留痕、爭議可鏈上還原。用戶即是主權。數學只是強制執行。"
                 : lang === "ja"
-                ? "すべてのシナリオはSolanaメインネットで実際に起きた出来事に基づいています。Sakuraは匠の精神でこれらの実際の脅威に対応する3つの防衛ラインを構築：Nonce Guardianは攻撃者自身のRPC武器を逆用——2026年4月1日のDrift 2.85億ドル攻撃はgetProgramAccountsを使用、SakuraもそれをあなたのためのシールドとしてgetProgramAccountsを使用；Ghost Runは普通のユーザーが初めて機関投資家レベルの戦略事前演習能力を持つことを可能にし、資本を投入する前に正確な結果を確認；Liquidation ShieldはSPL Token Approveの強制制約で貸出ポジションを守り、400msで清算発生前にヘルスファクターを回復。すべてのAI判断はSHA-256で永続オンチェーン刻印、誰でもSolscanで独立検証可能——Sakuraを信頼する必要なし。"
-                : "Each scenario shows Sakura's three defense protocols operating against real threats: Nonce Guardian counter-attacking with the same RPC primitives attackers use; Ghost Run making zero-capital-at-risk the new standard for multi-step DeFi execution; Liquidation Shield completing rescue within 400ms before liquidation triggers, constrained by SPL Token Approve at the token-program level. All AI decisions SHA-256 inscribed on-chain — independently verifiable by anyone, anywhere."}
+                ? "Sakura は、エージェントウォレット、エージェント開発者、監査/コンプライアンス機関の三者が共有する 1 つのレイヤーである——ユーザーは 1 文でエージェントの動作境界を署名し、Poseidon が 32 バイトのコミットメントに圧縮してオンチェーンに定錨する。エージェントの各動作は Groth16 証明を伴い、Solana の alt_bn128 ペアリング syscall が約 116k CU で検証する。境界外はオンチェーンで拒絶され、動作はオンチェーンに痕跡を残し、紛争はオンチェーンで復元できる。ユーザーこそが主権。数学はその執行にすぎぬ。"
+                : "Sakura is the single layer shared by three roles — wallet integrator, agent developer, auditor/compliance: the user signs the agent's action bounds in a single sentence, Poseidon compresses them into a 32-byte commitment on-chain; every agent action ships with a Groth16 proof, verified by Solana's alt_bn128 pairing syscall in ~116k CU; out-of-bounds is rejected on-chain, in-bounds leaves a fingerprint on-chain, disputes reconstructed on-chain. The user is the sovereign. The math, merely the enforcement."}
             </div>
           </div>
         </div>
@@ -404,7 +377,7 @@ export default function UseCasesPage() {
                   </h3>
 
                   {/* Context + Outcome */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div className="use-case-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
                     <div style={{
                       background: "var(--bg-base)", borderRadius: 8, padding: "14px 16px",
                     }}>

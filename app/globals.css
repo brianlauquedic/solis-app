@@ -1065,31 +1065,42 @@ textarea:focus-visible,
   .landing-nav-links { gap: 20px; }
   .landing-nav-brandtext { font-size: 16px; }
 
-  .landing-container { padding: 32px 18px 56px; gap: 40px; }
+  .landing-container { padding: 32px 14px 56px; gap: 40px; }
 
+  /* Keep the 美人觀印 classical composition intact on mobile —
+     bijin ⇢ gaze-line ⇢ seal, side-by-side. Shrink to fit 375px. */
   .bijin-seal-composition {
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px;
+    flex-direction: row;          /* stays horizontal */
+    gap: 6px;
+    padding: 8px 4px;
   }
   .bijin-gazeline {
-    flex-direction: row;
-    height: auto;
-    width: 140px;
-    gap: 5px;
+    flex-direction: column;        /* vertical gaze-line */
+    height: 180px;
+    width: auto;
+    gap: 4px;
   }
   .bijin-gazeline-rule {
-    width: auto;
-    height: 1px;
-    background: linear-gradient(to right, transparent, var(--gold) 40%, var(--gold) 60%, transparent);
+    width: 1px;
+    height: auto;
+    background: linear-gradient(to bottom, transparent, var(--gold) 40%, var(--gold) 60%, transparent);
   }
-  .bijin-frame { width: 180px; height: 240px; }
-  .bijin-seal > div { width: 200px !important; height: 200px !important; }
-  .bijin-seal svg { width: 200px !important; height: 200px !important; }
+  .bijin-gazeline-dot { width: 5px; height: 5px; }
+  .bijin-frame {
+    width: 140px;
+    height: 180px;
+  }
+  .bijin-frame::before,
+  .bijin-frame::after { width: 12px; height: 12px; }
+  .bijin-seal > div { width: 150px !important; height: 150px !important; }
+  .bijin-seal svg { width: 150px !important; height: 150px !important; }
 
   .landing-section-numeral { font-size: 30px; }
   .landing-section-title { font-size: 17px; }
   .landing-section-numeral-rule { width: 28px; }
+
+  /* Use-case 2-col grid stacks on mobile */
+  .use-case-grid { grid-template-columns: 1fr !important; }
 
   .landing-agents { grid-template-columns: 1fr; }
   .landing-agent-cell { border-right: none !important; border-bottom: 1px solid var(--border); }

@@ -19,171 +19,187 @@ const CONTENT: Record<Lang, {
 }> = {
   zh: {
     back: "← 返回首頁",
-    badge: "🌸 DOCUMENTATION · SOLANA SECURITY",
-    title: "Sakura 使用手冊",
-    subtitle: "2026 年 4 月，$2.85 億在一個幾乎無人審計的 Solana 原語上消失——Nonce Guardian 就是對這次攻擊的技術反制。同年，多步 DeFi 執行的隱性滑點損失每日高達數百萬美元——Ghost Run 以 simulateTransaction 在零資本風險下精確預演整個策略。而 $40 億借貸 TVL 的清算損失，正被一個 400ms AI 救援協議守護。三道 Solana 原生防線，每個 AI 決策 SHA-256 永久上鏈，無需信任任何服務器——這是完整的工程文檔。",
+    badge: "🌸 INTEGRATION DOCS · SOLANA AGENTIC BOUNDS LAYER",
+    title: "Sakura 整合文檔",
+    subtitle: "2026 年上半，Phantom、Backpack、Abstract、Infinex 四家錢包將同時上線代理模式。每家獨立蓋這一層驗證——簽名檢查、Pyth 價格整合、150 塊新鮮度、nonce 防重放——成本以工程師季度計。Sakura 做一次，給所有人。一份文檔，三條整合路徑；源碼 MIT 授權，整合無需許可。",
     sections: [
       {
-        id: "nonce-guardian", badge: "PROTOCOL I · DURABLE NONCE GUARDIAN", badgeColor: "#FF4444",
-        title: "🛡️ Nonce Guardian", subtitle: "全球首個主動式 Durable Nonce 攻擊向量防禦協議",
-        intro: "2026 年 4 月 1 日，一次精心策劃的攻擊讓 Drift 協議損失 $2.85 億。攻擊者利用的不是閃貸，不是預言機操控——而是 Solana Durable Nonce 的「永久有效簽名」特性：一旦 nonce 賬戶的 authority 被劫持，攻擊者可在任意時間——數週後、數月後——提交早已預先簽名的惡意交易，等待最佳時機一擊致命。絕大多數用戶對此毫不知情。Nonce Guardian 的誕生正是為了打破這個信息不對稱：用攻擊者自己所用的 RPC 原語 getProgramAccounts，在他們行動之前，將所有潛在炸彈一一排查。這是 Sakura 匠人精神的第一道防線——靜默、精準、永不下線。",
+        id: "wallet-integrator",
+        badge: "PATH I · WALLET INTEGRATOR",
+        badgeColor: "#C9312A",
+        title: "🪪 錢包整合者",
+        subtitle: "Phantom / Backpack / Abstract / Infinex 如何接入 Sakura",
+        intro: "錢包接入 Sakura 的商業動機只有一條：省下自己蓋這一層的工程成本。這一層該解一次，不該解四次。前 $10M 整合量免收路由費，之後 0.1% 名義金額自動路由至協議金庫；接入流程完全許可免除——沒有商務談判、沒有 BD 流程、沒有配額審批。四個步驟，從安裝 SDK 到用戶第一次簽署意圖，工程日曆上是一週，不是一個季度。",
         steps: [
-          { step: "1", title: "零帳號接入 · 唯讀掃描授權", desc: "無需創建任何帳號、無需 KYC、無需訂閱。輸入任意 Solana 公鑰地址（或連接 Phantom / OKX 錢包），立即進入掃描流程。Sakura 僅讀取鏈上公開數據，不請求任何簽名授權或資產轉移權限——這是底層設計原則，而非承諾。" },
-          { step: "2", title: "getProgramAccounts 精密掃描 · 80 位元組結構體解析", desc: "後端以 getProgramAccounts(SystemProgram.programId, { filters: [{ dataSize: 80 }, { memcmp: { offset: 8, bytes: walletAddress } }] }) 掃描所有關聯 Durable Nonce 賬戶。每個 nonce 賬戶佔 80 bytes，offset 8 處存儲 authority pubkey。Sakura 逐一解析，與您的錢包地址比對，識別所有 authority 異常信號——這與 Drift 攻擊者使用的是完全相同的 RPC 調用，只是目的相反：保護而非攻擊。" },
-          { step: "3", title: "x402 微支付 · $1.00 USDC 解鎖完整 AI 風險報告", desc: "免費掃描結果立即呈現所有 nonce 賬戶與 authority 關係。如需 Claude Sonnet 深度 AI 風險分析報告（含具體攻擊路徑模擬、緊急建議、風險優先級排序），透過 x402 協議（HTTP 402 Payment Required）支付 $1.00 USDC。支付在您的 Phantom 或 OKX 錢包內完成——Sakura 永不持有您的資產，這是鏈上原生設計的硬性保證。" },
-          { step: "4", title: "SHA-256 鏈上存證 · 不可篡改的安全審計記錄", desc: "Claude Sonnet 生成完整風險報告後，報告全文的 SHA-256 加密哈希透過 Solana Memo Program 永久寫入主網。tx signature 公開可查。任何人——包括您的律師、審計師、或投資機構——持有 tx signature 即可在 Solscan 獨立核驗 AI 報告的真實性與完整性，無需信任 Sakura 的服務器。這是去中心化語境下唯一真正可信的 AI 透明度機制。" },
-        ],
-        risks: [
-          { level: "🚨 極高風險 · 立即行動", color: "#FF4444", desc: "Authority 不由您控制——nonce 賬戶已被劫持。攻擊者持有永久有效的預簽名交易，可在任意時刻提交。立即將資產轉移至安全地址，並撤銷所有相關授權。" },
-          { level: "⚠️ 高風險 · 建議審查", color: "#FF8C00", desc: "發現多個高權限 nonce 賬戶，authority 一致但攻擊面廣——任何一個賬戶被劫持均可觸發鏈式風險。建議立即清點並關閉不必要的 nonce 賬戶。" },
-          { level: "⚡ 中風險 · 持續監控", color: "#FFD700", desc: "Nonce 賬戶存在且 authority 由您控制，但缺乏主動監控機制。建議定期以 Nonce Guardian 掃描，任何 authority 變更將即時告警。" },
-          { level: "✓ 低風險 · 健康狀態", color: "#34C759", desc: "未發現 Durable Nonce 賬戶，或所有 nonce 賬戶的 authority 完全在您掌控之內。鏈上安全狀態良好。" },
-        ],
-      },
-      {
-        id: "ghost-run", badge: "PROTOCOL II · GHOST RUN — STRATEGY SIMULATOR", badgeColor: "#7C6FFF",
-        title: "👻 Ghost Run", subtitle: "全球首個多步跨協議 DeFi 策略幽靈執行引擎",
-        intro: "在 DeFi 世界，每一次執行都是一次「真金白銀的實驗」——滑點、流動性深度變化、多步策略間的合約衝突，任何一個變量都可能讓預期收益化為損失。機構交易者在執行大額倉位前，會在沙盒環境中反覆模擬；普通用戶沒有這個條件。Ghost Run 改變了這一切。它是全球首個利用 Solana 原生 simulateTransaction RPC 對多步跨協議 DeFi 策略進行完整鏈上預執行的消費級產品。在您授權任何一筆交易、承擔任何資本風險之前，Ghost Run 已在真實主網狀態下——使用真實流動性數據、真實合約邏輯——完整演練整個策略，返回精確 token delta、gas 消耗與衝突檢測。所見即所得，不再是口號，而是技術保證。",
-        steps: [
-          { step: "1", title: "自然語言策略輸入 · 三語支持", desc: "以中文、英文或日文自然描述您的 DeFi 策略意圖。例：「質押 3 SOL 到 Marinade 換取 mSOL 流動性質押收益，同時將 100 USDC 存入 Kamino 賺取借貸利息」。無需了解任何智能合約地址、ABI 格式或協議參數——Sakura 理解您的意圖。" },
-          { step: "2", title: "Claude AI 意圖解析 · @solana/web3.js 交易構建", desc: "Claude Sonnet 解析策略意圖，精確識別涉及的協議（Marinade / Kamino / Jito / Jupiter）、操作類型（stake / lend / swap）及具體金額。系統以 @solana/web3.js 直接構建對應的未簽名 Solana 交易——不使用 SAK，因為幽靈執行需要未簽名交易的完整控制權。" },
-          { step: "3", title: "simulateTransaction 幽靈執行 · 零資本風險", desc: "每一筆構建好的交易以 connection.simulateTransaction(tx, { sigVerify: false }) 在真實主網狀態下幽靈執行。返回精確 token delta（例：您將收到 2.994 mSOL，APY 7.2% = 年化收益 +$21.3）、lamport 消耗、完整執行日誌與任何潛在的合約衝突或滑點警告。所有數字基於真實鏈上狀態，不是估算，而是精確預測。" },
-          { step: "4", title: "一鍵確認 · SAK 執行 · Memo 鏈上存證", desc: "對預覽結果滿意後，點擊「確認執行」。Solana Agent Kit（SAK）的 stakeWithJup() / lendAsset() 真正執行交易並廣播至主網。執行憑證（含策略摘要、token delta、tx signature）透過 Solana Memo Program 永久上鏈作為不可篡改的執行記錄。執行費 0.3%，透過 Jupiter Platform Fee 機制收取，僅在實際執行時產生，模擬永遠免費。" },
+          { step: "1", title: "安裝 SDK · 串接錢包 provider", desc: "yarn add @sakura/solana-sdk。引入 IntentSigner React 元件，將您的錢包 provider（Phantom、Backpack、OKX 皆可）傳入。SDK 預設連線 Solana mainnet-beta；devnet 切換只需一個 prop。無需任何 API key，無需 OAuth，無需在 Sakura 註冊任何帳號。" },
+          { step: "2", title: "渲染意圖簽署介面", desc: "在您的代理模式設定頁面渲染 <IntentSigner />。用戶以自然語言寫下代理的動作邊界——例如「代理可在 Kamino 借貸，單次 $500 USDC，為期一週」。SDK 解析為七項策略值（意圖文字、錢包、nonce、金額上限、USD 上限、協議位圖、動作位圖）。原始值始終留在瀏覽器，不經過 Sakura 的任何伺服器。" },
+          { step: "3", title: "簽署 · 承諾上鏈", desc: "用戶確認後，SDK 透過 2 層 Poseidon 樹將七項值壓縮為 32 位元組承諾；發起 sign_intent 指令，承諾寫入以用戶錢包為種子的 Program Derived Address (PDA)。一次性 0.1% 費用自動從 SPL Token approve 的 USDC 扣除，路由至協議金庫——前 $10M 整合量免收。用戶看到的，只是一次錢包簽名。" },
+          { step: "4", title: "審計整合 · 收取 rebate", desc: "整合後，您的錢包位址登記在 Sakura 白名單中，首 $10M 整合量自動 rebate 至您預先聲明的 USDC 錢包。之後 0.1% 繼續流入協議金庫（85% 營運、15% 平台）。Solscan 上每一筆意圖簽署的 tx 都留有 keccak256 指紋——您、您的審計師、您的監管方，都可以獨立核驗任何一筆，無需透過 Sakura。" },
         ],
         risks: [],
       },
       {
-        id: "liquidation-shield", badge: "PROTOCOL III · LIQUIDATION SHIELD — ACTIVE RESCUE", badgeColor: "#FF9F0A",
-        title: "⚡ Liquidation Shield", subtitle: "全球首個跨協議 AI 預授權清算救援協議",
-        intro: "Solana 借貸市場總鎖倉量（TVL）超過 $40 億，涵蓋 Kamino、MarginFi、Solend 三大主流借貸協議。這 $40 億背後是數以萬計的普通用戶——他們用 SOL 或 LST 作為抵押品借入 USDC，以 2–3 倍槓桿參與 DeFi 收益。但當市場在 10 分鐘內暴跌 15%，健康因子從 1.3 跌至 0.95，清算人機器人已在毫秒內完成清算——損失通常高達抵押品的 5–10%。用戶在手機上看到通知的那一刻，一切已經太晚。Liquidation Shield 是業界首個真正解決這一問題的協議：跨協議（Kamino / MarginFi / Solend）、有預授權 SPL Token Approve 硬性資金上限、simulateTransaction 精確預演救援效果，SAK 在 400ms 內完成自動還款執行，Memo Program 留存完整審計鏈。這不是軟件承諾——每一個約束都在 Solana 區塊鏈層面強制執行。",
+        id: "agent-developer",
+        badge: "PATH II · AGENT DEVELOPER",
+        badgeColor: "#B8932A",
+        title: "🤖 代理開發者",
+        subtitle: "AI 代理如何生成 Groth16 證明、提交動作",
+        intro: "代理執行任何動作之前，都必須先證明該動作落在用戶已簽的邊界之內。Sakura 的客戶端在用戶瀏覽器內於 600ms 以內生成 Groth16 證明，鏈上驗證器於 ~116k CU 完成配對驗證——每次動作約 \\$0.0001 鏈上成本。不揭露任何私有策略值，只論證「這個動作，合規」。",
         steps: [
-          { step: "1", title: "SPL Token Approve · 設定不可逾越的硬性救援授權上限", desc: "在 Phantom / OKX 錢包中執行 SPL Token createApproveInstruction，設定「最大授權救援金額（USDC）」與「觸發健康因子閾值（建議 1.05–1.15）」。這個授權上限由 Solana Token Program 在鏈上強制執行——不是 Sakura 的承諾，不是智能合約的 if 條件，而是 token program 的原生硬性約束。AI 在任何情況下都無法轉移超出授權上限的 USDC，這是去中心化語境下唯一真正可信的資金安全機制。" },
-          { step: "2", title: "getProgramAccounts 跨協議健康因子監控 · 完全免費", desc: "Sakura 以 getProgramAccounts 持續掃描 Kamino / MarginFi / Solend 的借貸倉位健康因子。監控完全免費，無需付費訂閱。當健康因子觸及您設定的閾值（默認 < 1.05），系統立即進入救援模式——在清算發生之前，而非之後。" },
-          { step: "3", title: "simulateTransaction 精確預演 · 確認救援效果再執行", desc: "@solana/web3.js 構建針對您倉位的還款交易，simulateTransaction 在真實主網狀態下精確計算：還款後健康因子恢復至多少（例：從 1.02 恢復至 1.45）、所需 USDC 金額、gas 消耗、是否在預授權範圍內。所有數字基於真實鏈上狀態，不是估算。您可在執行前完整確認救援方案的效果。" },
-          { step: "4", title: "SAK 400ms 自動執行救援 · Memo 審計鏈", desc: "在預授權 SPL Token 上限範圍內，SAK lendAsset() 自動執行 USDC 還款，將健康因子恢復至安全區間，避免清算觸發。Solana Memo Program 寫入完整審計鏈——含 rescue mandate tx signature、觸發健康因子、執行金額、執行後健康因子。救援成功後收取 1% 服務費（透過 SPL Token transfer 收取）——相較清算損失的 5–10%，用戶淨節省 4–9%。這是 Sakura 承諾的具體數字，而非模糊的「幫您省錢」。" },
+          { step: "1", title: "從 SAK 組裝未簽名 DeFi 指令", desc: "使用 Solana Agent Kit v2 的 plugin surface（Jupiter / Kamino / MarginFi / Marinade 皆已支援）組裝欲執行的未簽名 DeFi 指令。Sakura SDK 提供 buildActionWitness() 函式，接受 SAK 的 Instruction，自動抽取 action_type、action_target、action_amount 三個核心欄位，作為 Groth16 電路的 public inputs。" },
+          { step: "2", title: "於瀏覽器生成 Groth16 證明", desc: "SDK 呼叫 generateProof({ witness, privateValues })，透過 snarkjs 於瀏覽器本地生成 Groth16 證明。證明內容只揭示「此動作在已簽邊界內」，不揭示任何策略值。電路強制五項約束：承諾雜湊一致、金額上限、協議白名單、動作類型白名單、USD 上限（以 Pyth 當下價結算）。瀏覽器端耗時約 600ms。" },
+          { step: "3", title: "組裝 v0 原子交易 · ZK 閘門與 DeFi 指令同捆", desc: "透過 buildAtomicTx({ proof, defiIx }) 將驗證指令（execute_with_intent_proof）與 DeFi 指令打包至同一筆 Solana v0 交易。兩者共生共滅——若證明驗證失敗或 DeFi 指令失敗，整筆交易回滾。不存在「證明通過但動作懸空」的縫隙。代理每次動作結算 \\$0.01，用於覆蓋鏈上驗證成本。" },
+          { step: "4", title: "提交 · 於 Solscan 留下審計指紋", desc: "交易提交至 mainnet。成功後，ActionRecord PDA 以 (intent_commitment, action_nonce) 為種子建立，keccak256 動作指紋永久上鏈。Solscan 上，用戶、審計師、對手方皆可獨立還原這次動作——意圖是什麼、證明是否通過、DeFi 指令是什麼、何時落地。Sakura 不持有任何一方的信任，只作為鏈上閘門。" },
+        ],
+        risks: [],
+      },
+      {
+        id: "auditor-enterprise",
+        badge: "PATH III · AUDITOR / ENTERPRISE",
+        badgeColor: "#5A7A4A",
+        title: "🔍 審計 / 合規 / 機構",
+        subtitle: "律師、審計師、機構合規如何獨立核驗",
+        intro: "Sakura 的價值主張不是「請信任我們」——而是「您不需要信任我們」。每一筆代理動作在 Solana 鏈上留下 keccak256 指紋；每一筆意圖簽署的 Poseidon 承諾；每一筆 Groth16 證明的 public inputs。您不需要任何 Sakura 伺服器的存取，就能獨立還原全部執行路徑。這是 Verifiable Compute 在架構層面的最高保證。",
+        steps: [
+          { step: "1", title: "從 Solscan 檢索 ActionRecord PDA", desc: "在 Solscan 搜尋被審計錢包位址，過濾 Sakura program ID（AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp）。每一筆 execute_with_intent_proof 交易會建立一個 ActionRecord PDA，以 (intent_commitment, action_nonce) 為種子。下載全部 ActionRecord 帳戶資料——這是該錢包所有代理動作的完整時間軸。" },
+          { step: "2", title: "解析 keccak256 動作指紋", desc: "每個 ActionRecord 包含：32 位元組意圖承諾、action_nonce、action_type、action_target、action_amount、landed slot、keccak256 執行指紋。指紋是 (intent, nonce, type, target, amount, slot) 的 keccak256 雜湊——您可以獨立計算並比對，驗證沒有任何事後竄改。" },
+          { step: "3", title: "下載公開 verifying key", desc: "Sakura 的 Groth16 verifying key 在合約部署時烘焙進 zk_verifying_key.rs；非重新部署無法更改。您可以從 GitHub（MIT 授權）或直接從已部署的合約帳戶下載 vkey。驗證金鑰的 SHA-256 雜湊應與部署 commit 的 CI artifact 雜湊一致——任何不一致都是紅旗。" },
+          { step: "4", title: "snarkjs 獨立驗證證明", desc: "使用標準 snarkjs（任何版本）對每一筆被審計動作執行 snarkjs.groth16.verify(vkey, publicSignals, proof)。若您重建的 Poseidon 承諾與鏈上儲存的一致、證明通過驗證、且 Pyth slot 在 150 塊新鮮度內——這次動作在數學上確實落在簽署邊界內。審計結論獨立於 Sakura 任何伺服器，亦獨立於任何代理運營方。" },
         ],
         risks: [],
       },
     ],
-    feeTitle: "透明費用結構 · 按使用付費，無隱藏收費",
+    feeTitle: "透明費用結構 · 按使用付費、無隱藏、無代幣",
     fees: [
-      { feature: "🛡️ Nonce Guardian", free: "✓ 鏈上掃描永久免費", paid: "AI 深度風險報告 $1.00 USDC（x402 鏈上支付）" },
-      { feature: "👻 Ghost Run", free: "✓ 幽靈模擬永久免費", paid: "執行費 0.3%（Jupiter Platform Fee 機制，嵌入交易，完全透明）" },
-      { feature: "⚡ Liquidation Shield", free: "✓ 健康因子監控永久免費", paid: "救援成功費 1%（SPL Token Transfer，僅成功時收取，失敗不收費）" },
+      { feature: "🪪 意圖簽署", free: "首 $10M 整合量免收", paid: "0.1% 名義金額（一次性，鏈上扣除）" },
+      { feature: "🤖 代理動作", free: "無", paid: "$0.01 / 次（鏈上驗證成本覆蓋）" },
+      { feature: "📮 x402 MCP 呼叫", free: "無", paid: "$1 USDC / 次（HTTP 402 原子結算）" },
     ],
-    contact: "技術問題、合作諮詢、媒體採訪：", contactHandle: "𝕏 @sakuraaijp",
+    contact: "整合支援、技術問題、合規諮詢：",
+    contactHandle: "𝕏 @sakuraaijp",
   },
   en: {
     back: "← Back to Home",
-    badge: "🌸 DOCUMENTATION · SOLANA SECURITY",
-    title: "Sakura Documentation",
-    subtitle: "In April 2026, $285 million disappeared through a Solana primitive that almost nobody had audited — Nonce Guardian is the direct technical counter to that attack. Every day, multi-step DeFi execution bleeds millions in hidden slippage — Ghost Run pre-executes entire strategies with simulateTransaction at zero capital risk. And $4B in lending TVL is defended by a 400ms AI rescue protocol. Three Solana-native defense lines. Every AI decision SHA-256 inscribed on-chain, verifiable without trusting any server. This is the complete engineering documentation.",
+    badge: "🌸 INTEGRATION DOCS · SOLANA AGENTIC BOUNDS LAYER",
+    title: "Sakura Integration Docs",
+    subtitle: "In the first half of 2026, Phantom, Backpack, Abstract, and Infinex will each ship an agent mode. Each building this verification layer independently — signature check, Pyth oracle integration, 150-block freshness, replay guard — is a cost measured in engineer-quarters per wallet. Sakura ships it once, for all of them. One document, three integration paths. MIT-licensed source. Permissionless integration.",
     sections: [
       {
-        id: "nonce-guardian", badge: "PROTOCOL I · DURABLE NONCE GUARDIAN", badgeColor: "#FF4444",
-        title: "🛡️ Nonce Guardian", subtitle: "The World's First Proactive Durable Nonce Attack Vector Defense Protocol",
-        intro: "On April 1, 2026, a precisely engineered attack drained $285 million from Drift Protocol. The weapon was not a flash loan. It was not an oracle manipulation. It was a Solana Durable Nonce — a legitimate cryptographic primitive designed for offline transaction signing — whose 'permanently valid signature' property was turned against its users. Once a nonce account's authority is hijacked, an attacker can hold a pre-signed transaction for weeks or months, waiting for the optimal moment to strike. Most users have no idea such accounts exist in their wallet's attack surface. Nonce Guardian was built to close this information gap. Using the exact same RPC primitive — getProgramAccounts — that attackers use to map their targets, Nonce Guardian scans and flags every risk signal before any adversary can act. This is Sakura's first line of defense: silent, precise, and always online.",
+        id: "wallet-integrator",
+        badge: "PATH I · WALLET INTEGRATOR",
+        badgeColor: "#C9312A",
+        title: "🪪 Wallet Integrator",
+        subtitle: "How Phantom / Backpack / Abstract / Infinex integrate Sakura",
+        intro: "The business case for a wallet integrating Sakura is one line: you avoid the engineering cost of building this layer yourself. It should be solved once, not four times. The first \\$10M of integrator notional is rebated; thereafter 0.1% routes automatically to the protocol fee vault. There is no business-development gate, no quota approval, no negotiation. Four steps from SDK install to the user's first signed intent — roughly a week on the engineering calendar, not a quarter.",
         steps: [
-          { step: "1", title: "Zero-account access · Read-only by design", desc: "No account creation, no KYC, no subscription required. Enter any Solana public key — or connect your Phantom / OKX wallet — to begin immediately. Sakura reads only publicly visible on-chain data and requests zero signing or transfer permissions. This is an architectural guarantee, not a policy statement." },
-          { step: "2", title: "getProgramAccounts precision scan · 80-byte struct parsing", desc: "The backend executes getProgramAccounts(SystemProgram.programId, { filters: [{ dataSize: 80 }, { memcmp: { offset: 8, bytes: walletAddress } }] }) against Solana mainnet. Every nonce account is exactly 80 bytes; offset 8 stores the authority pubkey. Sakura parses each struct and flags any authority mismatch — the identical RPC call attackers use, repurposed as your shield." },
-          { step: "3", title: "x402 micro-payment · $1.00 USDC unlocks full AI risk report", desc: "The free scan immediately surfaces all nonce accounts and their authority relationships. For a full Claude Sonnet AI risk analysis — including simulated attack path modeling, prioritized remediation recommendations, and risk severity scoring — pay $1.00 USDC via x402 (HTTP 402 Payment Required). Payment settles in your Phantom or OKX wallet. Sakura never holds your assets. This is a hard guarantee enforced by on-chain architecture, not user agreement." },
-          { step: "4", title: "SHA-256 on-chain proof · Immutable security audit record", desc: "Once Claude Sonnet generates the complete risk report, the SHA-256 cryptographic hash of the full report is permanently inscribed on Solana mainnet via the Memo Program. The tx signature is publicly visible. Any party — your legal counsel, institutional auditor, or compliance team — holding the tx signature can independently verify the report's authenticity and integrity on Solscan, with zero reliance on Sakura's servers. This is the highest standard of AI accountability available today." },
-        ],
-        risks: [
-          { level: "🚨 Critical · Act Immediately", color: "#FF4444", desc: "Authority not controlled by you — nonce account compromised. Attacker holds a permanently valid pre-signed transaction executable at any moment. Transfer assets to a clean address and revoke all related permissions immediately." },
-          { level: "⚠️ High · Review Required", color: "#FF8C00", desc: "Multiple high-privilege nonce accounts with consistent authority — wide attack surface. Compromise of any single account creates chain-level risk. Audit and close unnecessary nonce accounts." },
-          { level: "⚡ Medium", color: "#FFD700", desc: "Nonce accounts exist but are not actively monitored" },
-          { level: "✓ Low", color: "#34C759", desc: "No Durable Nonce accounts found, or authority is fully under your control" },
-        ],
-      },
-      {
-        id: "ghost-run", badge: "PROTOCOL II · GHOST RUN — STRATEGY SIMULATOR", badgeColor: "#7C6FFF",
-        title: "👻 Ghost Run", subtitle: "The World's First Multi-Step Cross-Protocol DeFi Strategy Ghost Execution Engine",
-        intro: "In DeFi, every execution has historically been a live experiment with real capital. Slippage, liquidity depth fluctuations, inter-protocol transaction ordering conflicts — any variable can turn an expected yield into an unexpected loss. Institutional traders run sandbox simulations before executing large positions. Individual users never had that option. Until now. Ghost Run is the world's first consumer-grade product to leverage Solana's native simulateTransaction RPC for complete, multi-step cross-protocol DeFi strategy pre-execution. Before you authorize a single transaction or commit a single dollar, Ghost Run has already fully rehearsed your entire strategy against live mainnet state — using real liquidity data, real contract logic, real fee structures. The result is not an estimate. It is the exact outcome you will receive, displayed before you decide. What you see is what you get. Not as a marketing promise — as a technical guarantee.",
-        steps: [
-          { step: "1", title: "Natural language strategy input · Trilingual", desc: "Describe your DeFi strategy intent in English, Chinese, or Japanese. Example: 'Stake 3 SOL with Marinade for liquid staking yield and deposit 100 USDC into Kamino for lending interest.' No knowledge of smart contract addresses, ABIs, or protocol parameters required. Sakura understands your intent." },
-          { step: "2", title: "Claude AI intent parsing · @solana/web3.js transaction building", desc: "Claude Sonnet parses the strategy intent, precisely identifies the protocols involved (Marinade / Kamino / Jito / Jupiter), operation types (stake / lend / swap), and specific amounts. The system builds corresponding unsigned Solana transactions directly with @solana/web3.js — not SAK, because ghost execution requires full control of unsigned transactions." },
-          { step: "3", title: "simulateTransaction ghost execution · Zero capital at risk", desc: "Each constructed transaction is ghost-executed with connection.simulateTransaction(tx, { sigVerify: false }) against real mainnet state. Returns exact token deltas (e.g. you will receive 2.994 mSOL, APY 7.2% = +$21.3/year), lamport costs, complete execution logs, and any contract conflicts or slippage warnings. All figures are based on real on-chain state — not estimates, but precise predictions." },
-          { step: "4", title: "One-click SAK execution · Memo on-chain proof", desc: "When satisfied with the preview, click Confirm Execute. Solana Agent Kit (SAK) stakeWithJup() / lendAsset() executes the real transactions and broadcasts to mainnet. An immutable execution record (strategy summary, token deltas, tx signatures) is inscribed on-chain via Solana Memo Program. 0.3% platform fee collected via Jupiter Platform Fee mechanism — fully transparent, only charged on actual execution. Simulation is always free." },
+          { step: "1", title: "Install SDK · wire your wallet provider", desc: "yarn add @sakura/solana-sdk. Import the IntentSigner React component and pass in your wallet provider (Phantom, Backpack, OKX — any). The SDK defaults to Solana mainnet-beta; switching to devnet is a single prop. No API key. No OAuth. No registration with Sakura." },
+          { step: "2", title: "Render the intent-signing interface", desc: "Drop <IntentSigner /> into your agent-mode settings page. The user writes the agent's bounds in natural language — for instance: \"the agent may lend up to \\$500 USDC into Kamino, for one week.\" The SDK parses the sentence into seven policy values (intent text, wallet, nonce, amount cap, USD cap, protocol bitmap, action bitmap). The raw values stay in the browser; they never touch a Sakura server." },
+          { step: "3", title: "Sign · anchor the commitment on-chain", desc: "Once the user confirms, the SDK folds the seven values through a two-layer Poseidon tree into a 32-byte commitment and submits sign_intent. The commitment is written to a Program Derived Address seeded by the user's wallet. A one-time 0.1% fee is deducted from the user's approved USDC and routed to the protocol fee vault — rebated for the integrator's first \\$10M of notional. From the user's side: a single wallet signature." },
+          { step: "4", title: "Audit integration · collect rebate", desc: "Post-integration, your wallet address is registered in Sakura's rebate whitelist; the first \\$10M of integrator notional automatically rebates to the USDC address you declared. Beyond that, 0.1% flows into the protocol fee vault (85% operations, 15% platform treasury). Every intent-sign tx leaves a keccak256 fingerprint on Solscan — you, your auditor, your regulator can each reconstruct any transaction independently, without ever calling a Sakura server.",
+          },
         ],
         risks: [],
       },
       {
-        id: "liquidation-shield", badge: "PROTOCOL III · LIQUIDATION SHIELD — ACTIVE RESCUE", badgeColor: "#FF9F0A",
-        title: "⚡ Liquidation Shield", subtitle: "The World's First Cross-Protocol AI Pre-Authorized Liquidation Rescue Protocol",
-        intro: "Solana's lending market has exceeded $4 billion in Total Value Locked, spread across Kamino, MarginFi, and Solend. Behind that $4B are tens of thousands of ordinary users — collateralizing SOL or liquid staking tokens to borrow USDC, operating at 2–3x leverage to capture DeFi yields. When markets fall 15% in ten minutes, health factors drop from 1.3 to 0.95. Liquidator bots — running on co-located infrastructure with microsecond reaction times — complete the liquidation before most users receive a push notification. The loss: 5–10% of total collateral, in seconds. Liquidation Shield is the first protocol that genuinely solves this problem for ordinary users. Cross-protocol coverage (Kamino / MarginFi / Solend), pre-authorized SPL Token Approve hard spending cap, simulateTransaction rescue preview, SAK automated execution within 400 milliseconds, and Memo Program audit chain. Not a software promise. Every constraint enforced at the Solana blockchain layer.",
+        id: "agent-developer",
+        badge: "PATH II · AGENT DEVELOPER",
+        badgeColor: "#B8932A",
+        title: "🤖 Agent Developer",
+        subtitle: "How an AI agent generates a Groth16 proof and submits an action",
+        intro: "Before the agent does anything, it must prove the action falls inside the user's signed bounds. The Sakura client generates a Groth16 proof in the user's browser in under 600 ms; the on-chain verifier completes the pairing check in ~116k compute units — roughly \\$0.0001 per call. No private policy value is disclosed. Only: this action, in bounds.",
         steps: [
-          { step: "1", title: "SPL Token Approve · Set a non-negotiable hard rescue spending cap", desc: "Execute SPL Token createApproveInstruction in your Phantom / OKX wallet to authorize a maximum rescue amount in USDC and set a trigger health factor threshold (recommended 1.05–1.15). This spending cap is enforced by the Solana Token Program at the blockchain layer — not by Sakura's promise, not by a smart contract if-statement, but by the token program's native constraint. The AI cannot transfer more USDC than you have authorized under any circumstances." },
-          { step: "2", title: "Cross-protocol health factor monitoring · Completely free", desc: "Sakura uses getProgramAccounts to continuously scan lending position health factors across Kamino / MarginFi / Solend. Monitoring is permanently free, no subscription required. When your health factor touches your configured threshold (default < 1.05), rescue mode activates — before liquidation, not after." },
-          { step: "3", title: "simulateTransaction rescue preview · Verify outcomes before execution", desc: "@solana/web3.js constructs the repayment transaction for your specific position. simulateTransaction calculates against live mainnet state: exact post-repayment health factor recovery (e.g. from 1.02 to 1.45), required USDC amount, gas costs, and confirmation that the rescue is within the pre-authorized cap. You see the precise outcome before committing." },
-          { step: "4", title: "SAK 400ms auto-rescue · Complete on-chain audit chain", desc: "Within the pre-authorized SPL Token limit, SAK lendAsset() executes the USDC repayment, restoring your health factor to safety before liquidation triggers. Solana Memo Program inscribes the full audit chain — rescue mandate tx signature, trigger health factor, executed amount, post-rescue health factor. 1% success-only service fee charged via SPL Token transfer. Net user savings vs. liquidation: 4–9%. These are concrete numbers, not vague assurances." },
+          { step: "1", title: "Assemble an unsigned DeFi instruction via SAK", desc: "Use Solana Agent Kit v2's plugin surface — Jupiter, Kamino, MarginFi, Marinade are all supported — to assemble the DeFi instruction you intend to execute, unsigned. The Sakura SDK provides buildActionWitness() which accepts the SAK Instruction and extracts the three core fields required as circuit public inputs: action_type, action_target, action_amount." },
+          { step: "2", title: "Generate the Groth16 proof in-browser", desc: "Call generateProof({ witness, privateValues }). snarkjs generates the Groth16 proof locally. The proof asserts \"this action sits inside the signed commitment\" without revealing any policy value. The circuit enforces five constraints: commitment hash match, amount cap, protocol allowlist, action-type allowlist, USD cap (resolved against live Pyth price). Browser-side generation runs at ~600 ms." },
+          { step: "3", title: "Bundle the v0 atomic transaction", desc: "Call buildAtomicTx({ proof, defiIx }) to bundle the verification instruction (execute_with_intent_proof) and the DeFi instruction into a single Solana v0 transaction. They share a fate: if the proof fails to verify, or if the DeFi instruction itself fails, the entire transaction reverts. There is no gap in which the proof passes while the action hangs mid-flight. Each agent action settles at \\$0.01, covering on-chain verification cost." },
+          { step: "4", title: "Submit · leave an audit fingerprint on Solscan", desc: "Submit the transaction to mainnet. On success, an ActionRecord PDA is created, seeded by (intent_commitment, action_nonce); a keccak256 fingerprint of the action is anchored on-chain permanently. On Solscan, the user, an auditor, and a counterparty can each independently reconstruct the action — what the intent was, whether the proof passed, what the DeFi instruction was, when it landed. Sakura holds no one's trust; it acts only as an on-chain gate." },
+        ],
+        risks: [],
+      },
+      {
+        id: "auditor-enterprise",
+        badge: "PATH III · AUDITOR / ENTERPRISE",
+        badgeColor: "#5A7A4A",
+        title: "🔍 Auditor / Compliance / Institutional",
+        subtitle: "How legal counsel, auditors, and institutional compliance independently verify",
+        intro: "Sakura's value proposition is not \"trust us.\" It is \"you do not need to trust us.\" Every agent action leaves a keccak256 fingerprint on Solana; every intent signing leaves a Poseidon commitment; every Groth16 proof has its public inputs on-chain. You do not need any access to a Sakura server to fully reconstruct the execution path. This is Verifiable Compute at its architectural limit.",
+        steps: [
+          { step: "1", title: "Retrieve ActionRecord PDAs from Solscan", desc: "On Solscan, search the audited wallet and filter on Sakura's program ID (AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp). Each execute_with_intent_proof transaction creates an ActionRecord PDA seeded by (intent_commitment, action_nonce). Download all such account records — this is the complete timeline of agent actions for that wallet." },
+          { step: "2", title: "Parse the keccak256 action fingerprint", desc: "Each ActionRecord holds: the 32-byte intent commitment, action_nonce, action_type, action_target, action_amount, landed slot, and a keccak256 execution fingerprint. The fingerprint is the keccak256 hash of (intent, nonce, type, target, amount, slot). You can compute it independently and compare — any discrepancy is evidence of post-hoc tampering." },
+          { step: "3", title: "Download the public verifying key", desc: "The Groth16 verifying key is baked into zk_verifying_key.rs at deploy time; it cannot be altered without redeployment. Download the vkey from GitHub (MIT-licensed) or directly from the deployed program account. The vkey's SHA-256 should match the CI artifact hash recorded against the deploy commit — any mismatch is a red flag." },
+          { step: "4", title: "Verify with snarkjs — independently", desc: "Run snarkjs.groth16.verify(vkey, publicSignals, proof) on every audited action using any standard version of snarkjs. If your reconstructed Poseidon commitment matches the one on-chain, the proof verifies, and the Pyth slot is within the 150-block freshness window, then the action mathematically did fall inside the signed bounds. The audit conclusion is independent of any Sakura server and of any agent operator." },
         ],
         risks: [],
       },
     ],
-    feeTitle: "Transparent Fee Structure · Pay-per-use, zero hidden charges",
+    feeTitle: "Transparent Fee Structure · Pay-per-use, no hidden charges, no token",
     fees: [
-      { feature: "🛡️ Nonce Guardian", free: "✓ On-chain scan forever free", paid: "AI risk report $1.00 USDC (x402 on-chain payment)" },
-      { feature: "👻 Ghost Run", free: "✓ Ghost simulation forever free", paid: "0.3% execution fee (Jupiter Platform Fee, embedded in tx, fully transparent)" },
-      { feature: "⚡ Liquidation Shield", free: "✓ Health factor monitoring forever free", paid: "1% rescue fee on success only (SPL Token Transfer, zero charge on failure)" },
+      { feature: "🪪 Intent signing", free: "First $10M integrator volume rebated", paid: "0.1% of notional, one-time, on-chain" },
+      { feature: "🤖 Agent action", free: "—", paid: "$0.01 per verified action, on-chain" },
+      { feature: "📮 x402 MCP call", free: "—", paid: "$1 USDC per call, atomic via HTTP 402" },
     ],
-    contact: "Technical questions, partnerships, media:", contactHandle: "𝕏 @sakuraaijp",
+    contact: "Integration support, technical questions, compliance inquiries:",
+    contactHandle: "𝕏 @sakuraaijp",
   },
   ja: {
     back: "← ホームへ戻る",
-    badge: "🌸 ドキュメント · SOLANA SECURITY",
-    title: "Sakura 使用マニュアル",
-    subtitle: "3つのSolanaネイティブAI防衛プロトコルの完全エンジニアリング文書。備えあれば憂いなし。匠の精神で磨き上げられたSakuraは、機関投資家級のオンチェーンセキュリティをすべてのユーザーへ届けます。getProgramAccounts脅威スキャン、simulateTransactionゴースト実行、SPL Token Approveによる超えられない強制上限。すべて透明。すべてオンチェーンで検証可能。信頼不要。",
+    badge: "🌸 統合ドキュメント · SOLANA エージェント境界層",
+    title: "Sakura 統合ドキュメント",
+    subtitle: "2026 年上期、Phantom、Backpack、Abstract、Infinex の 4 社は、それぞれエージェントモードを出荷する。各社がこの検証層——署名検証、Pyth 価格統合、150 ブロック新鮮度、再生防止——を独立に構築する場合、コストはウォレットあたりエンジニア四半期の単位である。Sakura は、それを一度だけ構築し、4 社すべてに届ける。1 つの文書、3 つの統合パス。ソースは MIT。統合に許可は要らない。",
     sections: [
       {
-        id: "nonce-guardian", badge: "プロトコル I · DURABLE NONCE GUARDIAN", badgeColor: "#FF4444",
-        title: "🛡️ Nonce Guardian", subtitle: "世界初の能動的Durable Nonce攻撃ベクター防衛プロトコル",
-        intro: "2026年4月1日、綿密に計画された攻撃がDriftプロトコルから2億8500万ドルを奪いました。武器はフラッシュローンでも、オラクル操作でもありませんでした。SolanaのDurable Nonce——オフライン署名のために設計された正当な暗号プリミティブ——の「永続的に有効な署名」特性が悪用されたのです。nonceアカウントのauthorityが乗っ取られると、攻撃者は事前署名済みのトランザクションを何週間も保持し、最適なタイミングを待って実行できます。ほとんどのユーザーはこのような攻撃面が存在することすら知りません。Nonce Guardianはこの情報格差を解消します——攻撃者が使うのと全く同じRPC原語で、あなたを守ります。これがSakuraの匠の精神による第一の防衛線。",
+        id: "wallet-integrator",
+        badge: "パス I · ウォレット統合者",
+        badgeColor: "#C9312A",
+        title: "🪪 ウォレット統合者",
+        subtitle: "Phantom / Backpack / Abstract / Infinex が Sakura を接続する方法",
+        intro: "ウォレットが Sakura を接続するビジネス上の動機は、1 つである——この層を自社で構築する工数を省くこと。この問題は一度解かれるべきであり、四度解かれるべきではない。統合者の最初の \\$10M 分はリベート、以降は 0.1% の名目額が自動的にプロトコル金庫へ流れる。事業開発交渉、BD プロセス、枠の承認、いずれも存在しない。SDK のインストールから、ユーザーが最初の意図に署名するまで、エンジニアリングカレンダー上はおよそ 1 週間——四半期ではない。",
         steps: [
-          { step: "1", title: "ゼロアカウント接続 · 読み取り専用設計", desc: "アカウント作成不要、KYC不要、サブスクリプション不要。任意のSolana公開鍵を入力するか、Phantom / OKXウォレットを接続するだけで即座に開始。Sakuraは公開オンチェーンデータのみを読み取り、署名や転送権限は一切要求しません。これはポリシーではなく、アーキテクチャレベルの保証です。" },
-          { step: "2", title: "getProgramAccounts精密スキャン · 80バイト構造体解析", desc: "バックエンドがgetProgramAccounts(SystemProgram.programId, { filters: [{ dataSize: 80 }, { memcmp: { offset: 8, bytes: walletAddress } }] })をSolanaメインネットに対して実行。各nonceアカウントは80バイト、offset 8にauthority pubkeyを格納。Sakuraは各構造体を解析してauthorityの不一致をフラグします——攻撃者が標的マッピングに使う完全に同一のRPC呼び出しを、盾として転用します。" },
-          { step: "3", title: "x402マイクロ決済 · $1.00 USDCで完全AIリスクレポートをアンロック", desc: "無料スキャンで全nonceアカウントとauthority関係を即座に表示。完全なClaude Sonnet AIリスク分析——攻撃経路シミュレーション、優先度別修復推奨、リスク深刻度スコアリングを含む——には、x402（HTTP 402 Payment Required）経由で$1.00 USDCを支払います。支払いはPhantomまたはOKXウォレット内で完了。Sakuraはあなたの資産を保管しません。" },
-          { step: "4", title: "SHA-256オンチェーン証明 · 改ざん不可能なセキュリティ監査記録", desc: "Claude Sonnetが完全なリスクレポートを生成後、レポート全文のSHA-256暗号ハッシュがSolana Memo Programを通じてメインネットに永久刻印。tx signatureは公開。弁護士、機関監査人、コンプライアンスチームなど、tx signatureを持つ誰でもSolscanでレポートの真正性を独立検証可能——Sakuraのサーバーへの依存ゼロ。" },
-        ],
-        risks: [
-          { level: "🚨 最高リスク · 即座に行動", color: "#FF4444", desc: "Authorityが自分の管理外——nonceアカウント乗っ取り済み。攻撃者は永続的に有効な事前署名済みトランザクションを任意の瞬間に実行可能。直ちに資産を安全なアドレスへ移動し、関連する全ての権限を取り消してください。" },
-          { level: "⚠️ 高リスク · 審査を推奨", color: "#FF8C00", desc: "複数の高権限nonceアカウントを検出。authorityは一致しているが攻撃面が広い。いずれか1つのアカウントが侵害されるとチェーンレベルのリスクが発生。不要なnonceアカウントを監査・閉鎖することを推奨。" },
-          { level: "⚡ 中リスク · 継続監視を推奨", color: "#FFD700", desc: "Nonceアカウントは存在し、authorityは自分の管理下にあるが、積極的な監視機構がない。定期的にNonce Guardianでスキャンし、authorityの変更を即座に検出することを推奨。" },
-          { level: "✓ 低リスク · 健全な状態", color: "#34C759", desc: "Durable Nonceアカウントが見つからないか、全nonceアカウントのauthorityが完全に自分の管理下にある。オンチェーンセキュリティ状態は良好。" },
-        ],
-      },
-      {
-        id: "ghost-run", badge: "プロトコル II · GHOST RUN — STRATEGY SIMULATOR", badgeColor: "#7C6FFF",
-        title: "👻 Ghost Run", subtitle: "世界初のマルチステップ・クロスプロトコルDeFi戦略ゴースト実行エンジン",
-        intro: "DeFiにおいて、これまでのすべての実行はリアルな資本を使った「実験」でした。スリッページ、流動性の深度変動、プロトコル間のトランザクション順序の競合——どの変数も期待した利回りを損失に変える可能性があります。機関投資家は大口ポジションを実行する前にサンドボックス環境でシミュレーションを行います。個人ユーザーにはその選択肢がありませんでした——Ghost Runが登場するまでは。Ghost Runは、SolanaネイティブのsimulateTransaction RPCを使用してマルチステップ・クロスプロトコルDeFi戦略を完全に事前実行する世界初の消費者向けプロダクトです。1つのトランザクションも承認せず、1ドルも資本リスクにさらす前に、Ghost Runはすでにリアルなメインネット状態——リアルな流動性データ、リアルなコントラクトロジック——で戦略全体をリハーサルし、正確なtoken delta、ガスコスト、競合検出を返します。見たものがそのまま得られる——マーケティングの約束としてではなく、技術的保証として。",
-        steps: [
-          { step: "1", title: "自然言語戦略入力 · 三言語対応", desc: "日本語、英語、中国語でDeFi戦略の意図を自然に記述。例：「3 SOLをMarinadeにステークして流動性ステーキング収益を得ながら、100 USDCをKaminoに預けて貸付利息を得る」。スマートコントラクトアドレス、ABI形式、プロトコルパラメータの知識は不要。Sakuraがあなたの意図を理解します。" },
-          { step: "2", title: "Claude AI意図解析 · @solana/web3.jsトランザクション構築", desc: "Claude Sonnetが戦略の意図を解析し、関係するプロトコル（Marinade / Kamino / Jito / Jupiter）、操作タイプ（stake / lend / swap）、具体的な金額を正確に特定。対応する未署名Solanaトランザクションを@solana/web3.jsで直接構築します——ゴースト実行には未署名トランザクションの完全な制御が必要なため、SAKは使用しません。" },
-          { step: "3", title: "simulateTransactionゴースト実行 · 資本リスクゼロ", desc: "構築された各トランザクションをconnection.simulateTransaction(tx, { sigVerify: false })でリアルメインネット状態に対してゴースト実行。正確なtoken delta（例：2.994 mSOLを受け取ります、APY 7.2% = 年間+$21.3）、lamportコスト、完全な実行ログ、コントラクト競合やスリッページ警告を返します。すべての数値はリアルなオンチェーン状態に基づく——推定ではなく、正確な予測。" },
-          { step: "4", title: "ワンクリックSAK実行 · Memoオンチェーン証明", desc: "プレビューに満足したら「実行を確認」をクリック。Solana Agent Kit（SAK）のstakeWithJup() / lendAsset()が実際のトランザクションを実行してメインネットにブロードキャスト。不変の実行記録（戦略サマリー、token delta、tx signature）がSolana Memo Programを通じてオンチェーンに刻印。0.3%プラットフォーム料金はJupiter Platform Feeメカニズムで収集——完全透明、実際の実行時のみ課金。シミュレーションは常に無料。" },
+          { step: "1", title: "SDK をインストール · ウォレット provider を接続", desc: "yarn add @sakura/solana-sdk。IntentSigner React コンポーネントをインポートし、ウォレット provider（Phantom、Backpack、OKX のいずれでも）を渡す。SDK は既定で Solana mainnet-beta に接続。devnet への切替は 1 つの prop のみ。API キー不要、OAuth 不要、Sakura への登録不要。" },
+          { step: "2", title: "意図署名 UI をレンダリング", desc: "エージェントモード設定ページに <IntentSigner /> を配置。ユーザーは、エージェントの動作境界を自然言語で書き下す——たとえば「エージェントは Kamino に、1 回 \\$500 USDC、1 週間だけ貸せる」。SDK はこれを 7 つのポリシー値（意図テキスト、ウォレット、ノンス、金額上限、USD 上限、プロトコルビットマップ、アクションビットマップ）に解析する。元の値はブラウザに留まり、Sakura のサーバーには一切届かない。" },
+          { step: "3", title: "署名 · コミットメントをオンチェーンに定錨", desc: "ユーザーが確定すると、SDK は 7 つの値を 2 層 Poseidon ツリーで 32 バイトのコミットメントに畳み込み、sign_intent 命令を発行。コミットメントはユーザーのウォレットをシードとする PDA に書き込まれる。名目額の 0.1% の一回限り手数料は、approve された USDC から自動的に控除され、プロトコル金庫へルーティングされる——統合者の最初の \\$10M 分は免除。ユーザーの側から見えるのは、ただ 1 回のウォレット署名。" },
+          { step: "4", title: "統合監査 · リベートを受領", desc: "統合完了後、貴社ウォレットアドレスは Sakura のリベートホワイトリストに登録される。統合者の最初の \\$10M 分は、事前に宣言した USDC アドレスへ自動リベートされる。以降、0.1% はプロトコル金庫に流れる（運営 85%、プラットフォーム 15%）。各意図署名トランザクションは、Solscan 上に keccak256 指紋を残す——貴社、監査人、規制当局は、Sakura のサーバーを経由せずに、任意の 1 件を独立に復元できる。" },
         ],
         risks: [],
       },
       {
-        id: "liquidation-shield", badge: "プロトコル III · LIQUIDATION SHIELD — ACTIVE RESCUE", badgeColor: "#FF9F0A",
-        title: "⚡ Liquidation Shield", subtitle: "世界初のクロスプロトコルAI事前承認清算救済プロトコル",
-        intro: "SolanaのレンディングTVLは40億ドルを超え、Kamino、MarginFi、Solendの3大プロトコルに分散しています。この40億ドルの背後には数万人の普通のユーザーがいます——SOLやLSTを担保にUSDCを借り入れ、2〜3倍のレバレッジでDeFi利回りを得ようとしています。市場が10分間で15%下落すると、健康係数は1.3から0.95に急落します。共同設置インフラでマイクロ秒の反応時間を持つ清算ボットが、ほとんどのユーザーがプッシュ通知を受け取る前に清算を完了させます。損失は担保の5〜10%、秒単位で。Liquidation Shieldは普通のユーザーのためにこの問題を真に解決する初のプロトコルです。クロスプロトコル対応（Kamino / MarginFi / Solend）、SPL Token Approve事前承認ハード支出上限、simulateTransaction救済プレビュー、SAK自動実行400ミリ秒以内、Memo Programによる監査チェーン。ソフトウェアの約束ではありません——すべての制約がSolanaブロックチェーン層で強制実行されます。",
+        id: "agent-developer",
+        badge: "パス II · エージェント開発者",
+        badgeColor: "#B8932A",
+        title: "🤖 エージェント開発者",
+        subtitle: "AI エージェントが Groth16 証明を生成し、動作を提出する方法",
+        intro: "エージェントが何らかの動作を行う前に、その動作がユーザー署名済みの境界内にあることを証明せねばならない。Sakura クライアントは、ブラウザ内で 600ms 以内に Groth16 証明を生成する。オンチェーン検証器は、ペアリング検証を約 116k CU で完了する——呼び出し 1 回あたりおよそ \\$0.0001。プライベートなポリシー値は一切開示されない。開示されるのは、ただ一つの命題——「この動作は、境界内」。",
         steps: [
-          { step: "1", title: "SPL Token Approve · 越えられないハード救済支出上限の設定", desc: "Phantom / OKXウォレットでSPL Token createApproveInstructionを実行し、最大救済額（USDC）とトリガー健康係数閾値（推奨1.05〜1.15）を設定。この支出上限はSolana Token Programによってブロックチェーン層で強制実行——Sakuraの約束でも、スマートコントラクトのif文でもなく、token programのネイティブ制約です。AIはいかなる状況でも承認上限を超えてUSDCを転送できません。" },
-          { step: "2", title: "クロスプロトコル健康係数モニタリング · 完全無料", desc: "SakuraはgetProgramAccountsを使用してKamino / MarginFi / Solendの貸出ポジション健康係数を継続的にスキャン。モニタリングは永続的に無料、サブスクリプション不要。健康係数が設定した閾値（デフォルト< 1.05）に達すると救済モードが起動——清算後ではなく、清算前に。" },
-          { step: "3", title: "simulateTransaction救済プレビュー · 実行前に結果を確認", desc: "@solana/web3.jsがあなたの特定ポジションの返済トランザクションを構築。simulateTransactionがリアルなメインネット状態に対して正確に計算：返済後の健康係数回復値（例：1.02から1.45へ）、必要USDC額、ガスコスト、救済が事前承認上限内かの確認。コミット前に正確な結果を確認できます。" },
-          { step: "4", title: "SAK 400ms自動救済 · 完全なオンチェーン監査チェーン", desc: "SPL Token事前承認上限内で、SAK lendAsset()がUSDC返済を実行し、清算トリガー前に健康係数を安全域に回復。Solana Memo Programが完全な監査チェーンを刻印——rescue mandate tx signature、トリガー健康係数、実行額、救済後健康係数。成功時のみ1%サービス料をSPL Token transferで徴収。清算との比較でのユーザー純節約：4〜9%。曖昧な「お金を節約します」ではなく、具体的な数字です。" },
+          { step: "1", title: "SAK で未署名 DeFi 命令を組み立てる", desc: "Solana Agent Kit v2 のプラグイン面（Jupiter、Kamino、MarginFi、Marinade、すべて対応済み）を用いて、実行したい DeFi 命令を未署名状態で組み立てる。Sakura SDK は buildActionWitness() 関数を提供し、SAK の Instruction を受け取り、回路の public inputs として必要な 3 つのコア欄位——action_type、action_target、action_amount——を自動抽出する。" },
+          { step: "2", title: "ブラウザ内で Groth16 証明を生成", desc: "generateProof({ witness, privateValues }) を呼び出す。snarkjs がブラウザローカルで Groth16 証明を生成する。証明は「この動作は署名済みコミットメントの内側にある」ことだけを主張し、いかなるポリシー値も開示しない。回路が強制する制約は 5 項目——コミットメントハッシュの一致、金額上限、プロトコル許可リスト、動作タイプ許可リスト、USD 上限（Pyth の現行価格に基づく）。ブラウザ側の生成時間は約 600 ms。" },
+          { step: "3", title: "v0 アトミックトランザクションに束ねる", desc: "buildAtomicTx({ proof, defiIx }) を呼び出し、検証命令（execute_with_intent_proof）と DeFi 命令を、単一の Solana v0 トランザクションに束ねる。両者は運命を共にする——証明が検証に失敗するか、あるいは DeFi 命令が失敗した場合、トランザクション全体がリバートされる。「証明は通ったが動作は宙に浮いた」という隙間は、存在しない。各エージェント動作は \\$0.01 で決済され、オンチェーン検証コストを補填する。" },
+          { step: "4", title: "提出 · Solscan に監査指紋を残す", desc: "トランザクションをメインネットに提出する。成功すると、(intent_commitment, action_nonce) をシードとする ActionRecord PDA が作成され、動作の keccak256 指紋がオンチェーンに永久に定錨される。Solscan 上、ユーザー、監査人、取引相手は、各々独立にこの動作を復元できる——意図は何であったか、証明は通過したか、DeFi 命令は何であったか、いつ着地したか。Sakura は誰の信頼も保持しない。オンチェーンのゲートとしてのみ、機能する。" },
+        ],
+        risks: [],
+      },
+      {
+        id: "auditor-enterprise",
+        badge: "パス III · 監査 / コンプライアンス / 機関",
+        badgeColor: "#5A7A4A",
+        title: "🔍 監査 / コンプライアンス / 機関",
+        subtitle: "弁護士、監査人、機関コンプライアンスが独立に検証する方法",
+        intro: "Sakura の価値提案は「我々を信じよ」ではない。「我々を信じる必要はない」である。各エージェント動作は、Solana に keccak256 指紋を残す。各意図署名は、Poseidon コミットメントを残す。各 Groth16 証明は、その public inputs をオンチェーンに残す。Sakura のサーバーに一切アクセスせずとも、実行経路は完全に復元できる。これが Verifiable Compute のアーキテクチャ上の最高保証である。",
+        steps: [
+          { step: "1", title: "Solscan から ActionRecord PDA を取得", desc: "Solscan で監査対象のウォレットを検索し、Sakura のプログラム ID（AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp）でフィルタリングする。各 execute_with_intent_proof トランザクションは、(intent_commitment, action_nonce) をシードとする ActionRecord PDA を作成する。すべての ActionRecord アカウントデータをダウンロードする——これが、当該ウォレットにおけるエージェント動作の完全なタイムラインである。" },
+          { step: "2", title: "keccak256 動作指紋を解析", desc: "各 ActionRecord には以下が含まれる：32 バイト意図コミットメント、action_nonce、action_type、action_target、action_amount、着地 slot、keccak256 実行指紋。指紋は、(intent, nonce, type, target, amount, slot) の keccak256 ハッシュである。独立に計算して比較可能——いかなる不一致も、事後改竄の証拠である。" },
+          { step: "3", title: "公開 verifying key をダウンロード", desc: "Sakura の Groth16 検証鍵は、デプロイ時に zk_verifying_key.rs に焼き込まれる。再デプロイなしには変更できない。鍵は GitHub（MIT ライセンス）から、あるいはデプロイ済みのプログラムアカウントから直接取得できる。鍵の SHA-256 は、デプロイコミットに対する CI artifact のハッシュと一致するはずである——いかなる不一致も、レッドフラッグである。" },
+          { step: "4", title: "snarkjs で独立に検証", desc: "任意のバージョンの snarkjs を用いて、各監査対象動作について snarkjs.groth16.verify(vkey, publicSignals, proof) を実行する。貴方が再構成した Poseidon コミットメントがオンチェーンのものと一致し、証明が検証を通過し、かつ Pyth slot が 150 ブロックの新鮮度内にあれば——当該動作は数学的に、署名済みの境界内に収まっていた。この監査結論は、Sakura の任意のサーバーから、そしていかなるエージェント運営者からも、独立している。" },
         ],
         risks: [],
       },
     ],
-    feeTitle: "透明な料金体系 · 使用量課金、隠れた料金なし",
+    feeTitle: "透明な料金体系 · 従量課金、隠れコストなし、トークンなし",
     fees: [
-      { feature: "🛡️ Nonce Guardian", free: "✓ オンチェーンスキャン永続無料", paid: "AIリスクレポート $1.00 USDC（x402オンチェーン決済）" },
-      { feature: "👻 Ghost Run", free: "✓ ゴーストシミュレーション永続無料", paid: "0.3%実行手数料（Jupiter Platform Fee、txに組み込み済み、完全透明）" },
-      { feature: "⚡ Liquidation Shield", free: "✓ 健康係数モニタリング永続無料", paid: "成功時のみ1%救済手数料（SPL Token Transfer、失敗時は無料）" },
+      { feature: "🪪 意図署名", free: "統合者の最初の $10M 分は免除", paid: "名目額の 0.1%、一回限り、オンチェーンで徴収" },
+      { feature: "🤖 エージェント動作", free: "—", paid: "検証 1 回あたり $0.01、オンチェーンで徴収" },
+      { feature: "📮 x402 MCP 呼び出し", free: "—", paid: "$1 USDC / 回、HTTP 402 により原子決済" },
     ],
-    contact: "技術的な質問、提携、メディア取材：", contactHandle: "𝕏 @sakuraaijp",
+    contact: "統合サポート、技術的な質問、コンプライアンスの問い合わせ：",
+    contactHandle: "𝕏 @sakuraaijp",
   },
 };
 
@@ -219,7 +235,7 @@ export default function DocsPage() {
           </p>
         </div>
 
-        {/* Sakura intro block */}
+        {/* Sakura intro block — aligned to current product thesis */}
         <div style={{
           background: "var(--bg-card)", border: "1px solid var(--border)",
           borderLeft: "3px solid var(--accent)", borderRadius: 10,
@@ -234,19 +250,19 @@ export default function DocsPage() {
           }}>桜</div>
           <div>
             <div style={{ fontSize: 9, letterSpacing: "0.2em", color: "var(--accent)", fontFamily: "var(--font-mono)", marginBottom: 6, textTransform: "uppercase" }}>
-              🌸 Sakura AI Guardian · 備えあれば憂いなし · 匠の精神
+              🌸 Sakura · 為 AI 代理而建 · 由數學強制執行
             </div>
             <div style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", marginBottom: 8, fontFamily: "var(--font-heading)", letterSpacing: "0.04em" }}>
-              {lang === "zh" ? "三道 Solana 原生防線 · 以匠人精神應對三個真實威脅 · 每項 AI 決策鏈上可驗證" :
-               lang === "ja" ? "3つのSolanaネイティブ防衛ライン · 匠の精神で3つの現実の脅威に対応 · すべてのAI判断がオンチェーン検証可能" :
-               "Three Solana-native defenses against three real threats · Every AI decision independently verifiable on-chain"}
+              {lang === "zh" ? "每一家代理錢包都得蓋的這一層 · 做一次，給四家同時" :
+               lang === "ja" ? "どのエージェントウォレットも構築せねばならぬ層——一度だけ造り、4 社に同時に届ける" :
+               "The layer every agentic wallet will build — built once, for all four of them"}
             </div>
             <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.9 }}>
               {lang === "zh"
-                ? "對沖基金用 24 小時監控室守護倉位；普通用戶只能在手機通知響起的那一刻才知道已經太晚。Sakura 正是為了改變這個不平等而生。三個 Solana 原生 RPC 原語，三道不對稱防線：getProgramAccounts 以攻擊者的武器反守為攻，在 Nonce authority 被劫持的那一刻之前掃清威脅；simulateTransaction 是全球首個消費者級多步 DeFi 策略完整幽靈執行——在您承擔任何資本風險之前，精確返回每步 token delta、APY 與衝突檢測；SPL Token Approve 不是代碼承諾，是 Solana token program 在合約層面的硬性強制約束，AI 在任何情況下都無法超出您設定的上限。每條 AI 推理路徑 SHA-256 永久上鏈，tx signature 公開可查，無需信任 Sakura 的任何服務器。備えあれば憂いなし——匠人精神：表面優雅，底層嚴苛。"
+                ? "Sakura 是 Solana 原生的代理執行邊界層。用戶簽下一句自然語言邊界——Poseidon 壓縮為 32 位元組承諾上鏈；代理每一次動作都附 Groth16 證明，由鏈上 alt_bn128 配對 syscall 於 ~116k CU 驗證，然後 DeFi 指令才被允許動用用戶資金。零託管。無代幣。源碼 MIT。整合無需許可。用戶即是主權，數學不過是強制執行。"
                 : lang === "ja"
-                ? "ヘッジファンドは24時間の監視室でポジションを守ります。普通のユーザーは、スマートフォンの通知が鳴った瞬間に既に手遅れであることを知るだけです。Sakuraはこの不平等を変えるために生まれました。3つのSolanaネイティブRPCプリミティブ、3つの非対称防衛ライン：getProgramAccountsは攻撃者の武器を盾に変え、Nonce authorityが乗っ取られる前に脅威を一掃；simulateTransactionは世界初の消費者向けマルチステップDeFi戦略完全ゴースト実行——資本リスクを負う前に各ステップのtoken delta、APY、競合検出を正確に返す；SPL Token Approveはコードの約束ではなく、Solana token programがコントラクトレベルで強制するハード制約、AIはいかなる状況でも設定した上限を超えられない。すべてのAI推論経路はSHA-256で永続オンチェーン刻印、tx signatureは公開、Sakuraのサーバーを信頼する必要なし。備えあれば憂いなし——匠の精神：表面は優雅、底層は厳格。"
-                : "Hedge funds have 24-hour monitoring rooms guarding their positions. Ordinary users only discover what happened when the push notification arrives — and by then it is already too late. Sakura was built to end that inequality. Three Solana-native RPC primitives, three asymmetric defense lines: getProgramAccounts turns the attacker's own weapon into your shield, clearing Nonce authority threats before hijacking can occur; simulateTransaction is the world's first consumer-grade multi-step DeFi strategy full ghost pre-execution — returning exact token deltas, APY projections, and conflict detection for every step before you risk a single dollar of capital; SPL Token Approve is not a code promise but a hard constraint enforced at the Solana token-program contract layer — the AI cannot exceed your set limit under any circumstances. Every AI reasoning path SHA-256 permanently inscribed on-chain, tx signature publicly auditable, no trust in Sakura's servers required. 備えあれば憂いなし — Takumi spirit: elegant on the surface, ruthlessly precise underneath."}
+                ? "Sakura は、AI エージェントのための Solana ネイティブ実行境界層である。ユーザーは、自然言語で境界を 1 度だけ署名する——Poseidon が 32 バイトのコミットメントに圧縮し、オンチェーンに定錨する。エージェントの各動作には Groth16 証明が伴い、オンチェーンの alt_bn128 ペアリング syscall が約 116k CU で検証する——その後でなければ、DeFi 命令はユーザーの資金に触れることができない。ゼロカストディ。トークンなし。ソースは MIT。統合に許可は要らない。ユーザーこそが主権、数学はその執行にすぎぬ。"
+                : "Sakura is a Solana-native execution-bounds layer for AI agents. The user signs, once, a natural-language bound — Poseidon compresses it into a 32-byte commitment on-chain. Every agent action thereafter must ship with a Groth16 proof, verified on-chain by the alt_bn128 pairing syscall in ~116k CU, before the DeFi instruction is allowed to touch user funds. Zero custody. No token. MIT source. Permissionless integration. The user is the sovereign. The math, merely the enforcement."}
             </div>
           </div>
         </div>
