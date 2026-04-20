@@ -205,20 +205,20 @@ export default function WalletConnect({
             <HairlineDivider className="mb-5" width={180} />
 
             <p
-              className="fade-in-up fade-in-up-2 mb-6"
+              className="fade-in-up fade-in-up-2 mb-7 mx-auto"
               style={{
                 color: "var(--text-secondary)",
-                fontSize: "14px",
+                fontSize: "15px",
                 lineHeight: 2.0,
                 letterSpacing: "0.02em",
-                maxWidth: 520,
+                maxWidth: 560,
               }}
             >
               {t("heroSubtitle")}
             </p>
 
             {/* 信頼の証 Trust badges */}
-            <div className="mb-6 flex flex-wrap gap-2">
+            <div className="mb-7 flex flex-wrap justify-center gap-2">
               {(["trust1", "trust2", "trust3", "trust4"] as const).map((k) => (
                 <Badge
                   key={k}
@@ -230,13 +230,13 @@ export default function WalletConnect({
               ))}
             </div>
 
-            {/* CTA card — narrower than hero copy column for rhythm */}
-            <Card className="relative mb-2 overflow-hidden border-[var(--border)] bg-[var(--bg-card)]" style={{ maxWidth: 460 }}>
+            {/* CTA card — narrower than hero copy column, centered */}
+            <Card className="relative mb-2 w-full overflow-hidden border-[var(--border)] bg-[var(--bg-card)]" style={{ maxWidth: 480 }}>
               <div
                 className="absolute left-0 right-0 top-0 h-[2px]"
                 style={{ background: "var(--accent)" }}
               />
-              <CardContent className="p-6 text-left sm:p-7">
+              <CardContent className="p-6 text-center sm:p-7">
                 {walletAddress ? (
                   <>
                     <div className="mb-2.5 flex items-center gap-2">
@@ -272,7 +272,7 @@ export default function WalletConnect({
                     >
                       {t("ctaFreeDesc")}
                     </p>
-                    <div className="mb-4 flex flex-wrap gap-2">
+                    <div className="mb-4 flex flex-wrap justify-center gap-2">
                       {(["ctaFreeBadge1", "ctaFreeBadge2", "ctaFreeBadge3"] as const).map(
                         (key) => (
                           <Badge
@@ -669,7 +669,7 @@ function BijinSealComposition() {
     <div className="bijin-seal-composition" aria-hidden={false}>
       {/* 和美人 ukiyo-e — facing right, toward the seal */}
       <div className="bijin-frame">
-        <WaBijinSVG size={240} height={320} />
+        <WaBijinSVG size={280} height={360} />
       </div>
 
       {/* 視線 gaze-line connecting bijin → seal */}
@@ -681,7 +681,7 @@ function BijinSealComposition() {
 
       {/* 朱印 seal — the anchor she gazes toward */}
       <div className="bijin-seal">
-        <SakuraSeal size={260} />
+        <SakuraSeal size={300} />
       </div>
     </div>
   );
