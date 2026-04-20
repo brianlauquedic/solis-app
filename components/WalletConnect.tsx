@@ -26,6 +26,7 @@ import {
 import AnimatedNumber from "@/components/AnimatedNumber";
 import { useLang } from "@/contexts/LanguageContext";
 import WaBijinSVG from "@/components/WaBijinSVG";
+import SakuraSeal from "@/components/SakuraSeal";
 import { useWallet } from "@/contexts/WalletContext";
 import { Button } from "@/components/ui/button";
 import {
@@ -169,24 +170,58 @@ export default function WalletConnect({
           {t("hackathonBadge")}
         </Badge>
 
-        {/* 和美人 Wa-bijin brand art */}
-        <div className="hero-logo mx-auto mb-2" style={{ width: 150, height: 200 }}>
-          <WaBijinSVG size={150} height={200} />
+        {/* 朱印 + 和美人 — dramatic seal moment + ukiyo-e bijin */}
+        <div className="mx-auto mb-5 flex items-center justify-center gap-8">
+          {/* 和美人 ukiyo-e portrait */}
+          <div style={{ width: 140, height: 186 }} className="hero-logo flex-shrink-0">
+            <WaBijinSVG size={140} height={186} />
+          </div>
+
+          {/* 朱印 seal — the brand's defining anchor */}
+          <SakuraSeal size={190} />
         </div>
 
-        {/* 題字 Title */}
+        {/* 題字 Title — serif on cream, deep 墨 ink */}
         <h1
-          className="jp-heading fade-in-up fade-in-up-1 hero-title mb-2 text-[46px] font-light leading-[1.15] tracking-[0.08em]"
-          style={{ color: "var(--text-primary)" }}
+          className="jp-heading fade-in-up fade-in-up-1 hero-title mb-2 text-[52px] leading-[1.1] tracking-[0.06em]"
+          style={{ color: "var(--text-primary)", fontWeight: 400 }}
         >
           Sakura
         </h1>
 
         <div
-          className="fade-in-up fade-in-up-1 hero-tagline mb-3.5 text-[13px] tracking-[0.25em]"
-          style={{ color: "var(--accent)", fontFamily: "var(--font-heading)" }}
+          className="fade-in-up fade-in-up-1 hero-tagline mb-4 text-[13px] tracking-[0.32em]"
+          style={{
+            color: "var(--accent)",
+            fontFamily: "var(--font-heading)",
+            fontWeight: 500,
+          }}
         >
           {t("heroTagline")}
+        </div>
+
+        {/* 朱印 divider — fine gold hairline with seal dot */}
+        <div className="mx-auto mb-5 flex max-w-[240px] items-center gap-2">
+          <div
+            className="h-px flex-1"
+            style={{
+              background:
+                "linear-gradient(to right, transparent, var(--gold) 40%, var(--gold) 60%, transparent)",
+              opacity: 0.5,
+            }}
+          />
+          <span
+            className="inline-block h-1.5 w-1.5 rounded-full"
+            style={{ background: "var(--accent)" }}
+          />
+          <div
+            className="h-px flex-1"
+            style={{
+              background:
+                "linear-gradient(to right, transparent, var(--gold) 40%, var(--gold) 60%, transparent)",
+              opacity: 0.5,
+            }}
+          />
         </div>
 
         <p
@@ -422,17 +457,28 @@ export default function WalletConnect({
         </div>
         <KyokaiDivider className="mb-4" />
 
-        <div className="feature-grid relative grid grid-cols-1 gap-px overflow-hidden rounded-lg bg-[var(--border)] sm:grid-cols-2">
+        <div
+          className="feature-grid relative grid grid-cols-1 overflow-hidden rounded-lg border sm:grid-cols-2"
+          style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}
+        >
           <Shippo
             className="pointer-events-none absolute inset-0 z-0"
-            opacity={0.025}
+            opacity={0.04}
             size={40}
           />
-          {AGENT_KEYS.map((a) => (
+          {AGENT_KEYS.map((a, idx) => (
             <div
               key={a.tag}
-              className="relative z-10 bg-[var(--bg-card)] p-6 transition-colors hover:bg-[var(--bg-card-2)]/60"
-              style={{ borderTop: `2px solid ${a.color}` }}
+              className="relative z-10 p-6 transition-colors hover:bg-[var(--bg-card-2)]/60"
+              style={{
+                // Hairline dividers between cards — bottom border on top
+                // row, right border on left column. No top-border color
+                // bar (that was creating the red horizontal slice).
+                borderRight:
+                  idx % 2 === 0 ? "1px solid var(--border)" : "none",
+                borderBottom:
+                  idx < 2 ? "1px solid var(--border)" : "none",
+              }}
             >
               <div className="mb-3 flex items-center gap-2.5">
                 <div

@@ -5,84 +5,84 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ══════════════════════════════════════════════════════════════
-   和色 Wa-iro — Japanese Classical Color System
-   墨・朱・金・白磁・常磐
+   和紙 Washi Paper Theme — 京都寺院美學 Kyoto-temple aesthetic
+   和紙 background · 墨 ink text · 朱 seal vermillion · 金 gold leaf
+   Inspired by TAPEDRIVE (Solana Breakout grand prize), Muji, and
+   traditional kaiseki / temple signage.
    ══════════════════════════════════════════════════════════════ */
 :root {
-  /* 背景 */
-  --bg-base:      #0E0C0A;   /* 墨色 Sumi-iro  — warm ink black */
-  --bg-card:      #141210;   /* 鉄黒 Tetsu-guro */
-  --bg-card-2:    #1A1714;   /* 濡羽色 Nureba */
-  --bg-header:    rgba(14,12,10,0.93);
+  /* 背景 Washi paper layers (warm off-cream) */
+  --bg-base:      #EDE4D3;   /* 和紙 Washi — warm aged paper */
+  --bg-card:      #F5EEE0;   /* 薄紙 Usugami — lighter card surface */
+  --bg-card-2:    #E6DCC5;   /* 濃紙 Koshi — deeper paper tone */
+  --bg-header:    rgba(237, 228, 211, 0.95);
 
-  /* 境界線 Border (restored — Shadcn init overwrote; keep Japanese palette) */
-  --border:       #3A342C;   /* 煤竹色 Susu-take — brighter for visibility on dark */
-  --border-light: #52493F;   /* 焦茶 Kogecha */
+  /* 境界線 Hairline borders — aged paper edge, not heavy boxes */
+  --border:       #C8B896;   /* 古紙 Koshi — aged paper edge */
+  --border-light: #B8A880;   /* 砥粉色 Tonoko-iro — subtle hairline */
 
-  /* 文字 Text — WCAG AA compliant (4.5:1+ on --bg-base #0E0C0A) */
-  --text-primary:   #F5F1E8; /* 白磁 Hakuji — porcelain white (contrast 14.5:1) */
-  --text-secondary: #C4B49A; /* 白茶 Shiracha (contrast 8.2:1, bumped for legibility) */
-  --text-muted:     #8F8273; /* 利休鼠 Rikyu-nezumi (contrast 4.8:1, passes AA for small text) */
+  /* 文字 Text — rich ink on warm paper (WCAG AAA for primary) */
+  --text-primary:   #1C1612; /* 墨 Sumi — warm ink black (contrast 15.5:1) */
+  --text-secondary: #5A4A3A; /* 焦茶 Kogecha — dark tea brown (contrast 8.1:1) */
+  --text-muted:     #8F7E6A; /* 薄墨 Usuzumi — diluted ink (contrast 4.6:1, AA) */
 
-  /* 朱色 Shu-iro — vermillion seal red (restored; Shadcn clobbered with near-white) */
-  --accent:       #C9312A;  /* 朱色 — traditional Japanese vermillion */
-  --accent-soft:  rgba(201, 49, 42, 0.10);
-  --accent-mid:   rgba(201, 49, 42, 0.24);
+  /* 朱色 Shu-iro — vermillion SEAL ink on paper (the defining color) */
+  --accent:       #C9312A;
+  --accent-soft:  rgba(201, 49, 42, 0.08);
+  --accent-mid:   rgba(201, 49, 42, 0.20);
 
-  /* 金色 Kin-iro — gold for numbers */
-  --gold:         #C9A84C;
-  --gold-soft:    rgba(201, 168, 76, 0.10);
+  /* 金箔 Kimpaku — gold leaf, darker on cream than on dark */
+  --gold:         #B8932A;
+  --gold-soft:    rgba(184, 147, 42, 0.10);
 
-  /* 常磐色 Tokiwa — evergreen */
-  --green:        #3D7A5C;
-  --green-soft:   rgba(61, 122, 92, 0.12);
+  /* 常磐色 Tokiwa — evergreen, muted for cream */
+  --green:        #5A7A4A;
+  --green-soft:   rgba(90, 122, 74, 0.10);
 
   /* 紅 Kurenai — deep crimson */
   --red:          #A8293A;
-  --red-soft:     rgba(168, 41, 58, 0.12);
+  --red-soft:     rgba(168, 41, 58, 0.08);
 
   /* 黄朽葉 Ki-kuchiba */
   --orange:       #B8832A;
-  --orange-soft:  rgba(184, 131, 42, 0.12);
+  --orange-soft:  rgba(184, 131, 42, 0.10);
 
   /* 字体 Typography */
   --font-heading: 'Noto Serif JP', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
   --font-body:    'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
   --font-mono:    'JetBrains Mono', 'Osaka-Mono', 'Courier New', monospace;
 
-  /* ── Shadcn CSS variables, remapped to 和色 (dark-first) ── */
-  /* These drive Shadcn components (Button, Card, etc.) — pointed at
-     the Japanese palette above so Shadcn inherits 墨・朱・白磁 by default. */
-  --background:            #0E0C0A;  /* 墨色 */
-  --foreground:            #F5F1E8;  /* 白磁 */
-  --card:                  #141210;  /* 鉄黒 */
-  --card-foreground:       #F5F1E8;
-  --popover:               #1A1714;  /* 濡羽色 */
-  --popover-foreground:    #F5F1E8;
-  --primary:               #C9312A;  /* 朱色 — Japanese vermillion */
+  /* ── Shadcn CSS variables → 和紙 washi palette ── */
+  --background:            #EDE4D3;   /* 和紙 */
+  --foreground:            #1C1612;   /* 墨 */
+  --card:                  #F5EEE0;   /* 薄紙 */
+  --card-foreground:       #1C1612;
+  --popover:               #F5EEE0;
+  --popover-foreground:    #1C1612;
+  --primary:               #C9312A;   /* 朱印紅 */
   --primary-foreground:    #FFFFFF;
-  --secondary:             #1A1714;
-  --secondary-foreground:  #F5F1E8;
-  --muted:                 #1A1714;
-  --muted-foreground:      #C4B49A;  /* 白茶 Shiracha */
+  --secondary:             #E6DCC5;   /* 濃紙 */
+  --secondary-foreground:  #1C1612;
+  --muted:                 #E6DCC5;
+  --muted-foreground:      #5A4A3A;   /* 焦茶 */
   --accent-foreground:     #FFFFFF;
-  --destructive:           #A8293A;  /* 紅 Kurenai */
-  --input:                 #3A342C;  /* 煤竹色 */
-  --ring:                  rgba(201, 49, 42, 0.45);  /* 朱色 focus ring */
+  --destructive:           #A8293A;
+  --input:                 #C8B896;
+  --ring:                  rgba(201, 49, 42, 0.40);
   --chart-1:               #C9312A;
-  --chart-2:               #C9A84C;  /* 金 */
-  --chart-3:               #3D7A5C;  /* 常磐 */
-  --chart-4:               #B8832A;  /* 黄朽葉 */
-  --chart-5:               #A89880;
+  --chart-2:               #B8932A;
+  --chart-3:               #5A7A4A;
+  --chart-4:               #B8832A;
+  --chart-5:               #8F7E6A;
   --radius:                0.5rem;
-  --sidebar:               #141210;
-  --sidebar-foreground:    #F5F1E8;
+  --sidebar:               #F5EEE0;
+  --sidebar-foreground:    #1C1612;
   --sidebar-primary:       #C9312A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent:        #1A1714;
-  --sidebar-accent-foreground:  #F5F1E8;
-  --sidebar-border:        #3A342C;
-  --sidebar-ring:          rgba(201, 49, 42, 0.45);
+  --sidebar-accent:        #E6DCC5;
+  --sidebar-accent-foreground:  #1C1612;
+  --sidebar-border:        #C8B896;
+  --sidebar-ring:          rgba(201, 49, 42, 0.40);
 }
 
 * {
@@ -95,16 +95,39 @@ body {
   background: var(--bg-base);
   color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: 15px;                /* bumped from 14 — 14 felt muddy on dark */
-  line-height: 1.75;              /* slightly tighter to compensate for larger size */
-  font-weight: 400;               /* explicit — Noto Sans JP needs 400+ on dark */
-  letter-spacing: 0.005em;        /* subtle micro-tracking for CJK clarity */
+  font-size: 15px;
+  line-height: 1.8;               /* more breathing room on cream */
+  font-weight: 400;
+  letter-spacing: 0.005em;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overflow-x: clip;
   width: 100%;
+  position: relative;
+}
+
+/* 和紙 Washi paper texture — subtle fiber grain overlay
+   Uses an SVG turbulence filter to simulate paper grain. Very low
+   opacity so content stays readable; just enough to feel organic
+   rather than flat digital cream. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.45  0 0 0 0 0.30  0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 260px 260px;
+}
+
+/* Ensure all content sits above the paper texture layer */
+#__next, main, header, footer {
+  position: relative;
+  z-index: 2;
 }
 
 /* CJK-specific hinting — keeps Chinese/Japanese strokes crisp on Retina */
@@ -112,12 +135,13 @@ body {
   font-feature-settings: "palt" 1;  /* proportional Japanese alternate — tighter kerning */
 }
 
-/* Headings snap to Noto Serif JP with meaningful weight */
+/* Headings — Noto Serif JP (明朝体). On cream/light, 400 reads as
+   refined; heavier weight would feel cramped. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 500;                /* 500 reads clearly on dark; 300 is too thin */
+  font-weight: 400;
   color: var(--text-primary);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 }
 
 /* ── 等幅数字 Monospace numbers ── */
@@ -188,6 +212,49 @@ textarea:focus-visible,
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50%       { transform: translateY(-4px); }
+}
+
+/* 朱印を押す瞬間 — the moment of pressing a shuin seal.
+   Starts above the paper, rotated and blurred, then lands with a
+   subtle bounce and residual wobble — like a hanko stamp released. */
+@keyframes seal-press {
+  0% {
+    transform: translateY(-24px) scale(1.18) rotate(-4deg);
+    opacity: 0;
+    filter: blur(6px);
+  }
+  55% {
+    transform: translateY(3px) scale(1.03) rotate(1.5deg);
+    opacity: 1;
+    filter: blur(0);
+  }
+  75% {
+    transform: translateY(-1px) scale(0.985) rotate(-0.5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+.animate-seal-press {
+  animation: seal-press 1100ms cubic-bezier(0.18, 0.9, 0.32, 1.02) both;
+  transform-origin: center center;
+}
+
+/* 筆触 Brush-stroke sweep — an SVG path that draws itself. Applied
+   to decorative accent strokes: red ink trails beneath the hero, gold
+   flourish lines around stats, etc. Uses stroke-dashoffset. */
+@keyframes brush-sweep {
+  from { stroke-dashoffset: 1000; }
+  to   { stroke-dashoffset: 0; }
+}
+
+.animate-brush-sweep {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: brush-sweep 1600ms cubic-bezier(0.25, 0.1, 0.25, 1) 300ms both;
 }
 
 /* 朱色の境界線が呼吸する — vermillion border breathes */
