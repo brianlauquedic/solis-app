@@ -340,53 +340,54 @@ export default function WalletConnect({
             ═══════════════════════════════════════════════════════════════ */}
         <SectionHeading numeral="壱" title={t("agentsTitle")} />
 
-        <div
-          className="landing-agents relative grid overflow-hidden rounded-lg border"
-          style={{ borderColor: "var(--border)", background: "var(--bg-card)" }}
-        >
+        <div className="temple-card no-pad">
+          <span className="temple-dot tr" aria-hidden />
+          <span className="temple-dot bl" aria-hidden />
           <Shippo
             className="pointer-events-none absolute inset-0 z-0"
             opacity={0.04}
             size={40}
           />
-          {AGENT_KEYS.map((a) => (
-            <div
-              key={a.tag}
-              className="landing-agent-cell relative z-10 p-6 transition-colors hover:bg-[var(--bg-card-2)]/60"
-            >
-              <div className="mb-3 flex items-center gap-2.5">
-                <div
-                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md font-serif text-[14px]"
-                  style={{
-                    background: `${a.color}14`,
-                    border: `1px solid ${a.color}30`,
-                    color: a.color,
-                  }}
-                >
-                  {a.kanji}
+          <div className="landing-agents relative z-[1] grid">
+            {AGENT_KEYS.map((a) => (
+              <div
+                key={a.tag}
+                className="landing-agent-cell relative z-[2] transition-colors hover:bg-[var(--bg-card-2)]/60"
+              >
+                <div className="mb-4 flex items-center gap-2.5">
+                  <div
+                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md font-serif text-[15px]"
+                    style={{
+                      background: `${a.color}14`,
+                      border: `1px solid ${a.color}30`,
+                      color: a.color,
+                    }}
+                  >
+                    {a.kanji}
+                  </div>
+                  <span
+                    className="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.18em]"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    <a.Icon className="h-3 w-3" style={{ color: a.color }} />
+                    {a.tag}
+                  </span>
                 </div>
-                <span
-                  className="inline-flex items-center gap-1.5 font-mono text-[9.5px] tracking-[0.15em]"
-                  style={{ color: "var(--text-muted)" }}
+                <h3
+                  className="jp-heading mb-2 text-[14px] font-normal tracking-[0.04em]"
+                  style={{ color: "var(--text-primary)" }}
                 >
-                  <a.Icon className="h-3 w-3" style={{ color: a.color }} />
-                  {a.tag}
-                </span>
+                  {t(a.titleKey)}
+                </h3>
+                <p
+                  className="text-[12px] leading-[1.95]"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {t(a.descKey)}
+                </p>
               </div>
-              <h3
-                className="jp-heading mb-1.5 text-[14px] font-normal tracking-[0.04em]"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {t(a.titleKey)}
-              </h3>
-              <p
-                className="text-[12px] leading-[1.9]"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                {t(a.descKey)}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
@@ -394,103 +395,96 @@ export default function WalletConnect({
             ═══════════════════════════════════════════════════════════════ */}
         <SectionHeading numeral="弐" title={t("sakuraOriginBadge")} />
 
-        <div className="landing-origin grid gap-5">
-          <Card className="relative overflow-hidden border-[var(--border)] bg-[var(--bg-card)]">
-            <div
-              className="absolute left-0 top-0 h-full w-[3px]"
-              style={{ background: "var(--accent)" }}
-            />
+        <div className="landing-origin grid gap-6">
+          <div className="temple-card">
+            <span className="temple-dot tr" aria-hidden />
+            <span className="temple-dot bl" aria-hidden />
             <Seigaiha
               className="pointer-events-none absolute inset-0"
               opacity={0.035}
               size={44}
             />
-            <CardContent className="relative z-10 p-7">
-              <div className="flex items-start gap-5">
+            <div className="relative z-[1] flex items-start gap-6">
+              <div
+                className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[10px] font-serif text-[26px]"
+                style={{
+                  background: "var(--accent-soft)",
+                  border: "1px solid var(--accent-mid)",
+                  color: "var(--accent)",
+                  boxShadow: "0 2px 12px rgba(201,49,42,0.1)",
+                }}
+              >
+                桜
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2
+                  className="jp-heading mb-4 text-[16px] font-normal tracking-[0.07em]"
+                  style={{ color: "var(--text-primary)" }}
+                >
+                  {t("sakuraWho")}
+                </h2>
+                <p
+                  className="mb-5 whitespace-pre-line text-[13px] leading-[2.0] tracking-[0.015em]"
+                  style={{ color: "var(--text-secondary)" }}
+                >
+                  {t("sakuraCharacterDesc")}
+                </p>
                 <div
-                  className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[10px] font-serif text-[22px]"
+                  className="mb-5 rounded-md border px-5 py-3 font-serif text-[13px] tracking-[0.05em]"
                   style={{
                     background: "var(--accent-soft)",
-                    border: "1px solid var(--accent-mid)",
+                    borderColor: "var(--accent-mid)",
                     color: "var(--accent)",
-                    boxShadow: "0 2px 12px rgba(255,75,75,0.1)",
                   }}
                 >
-                  桜
+                  ◈ {t("sakuraMission")}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h2
-                    className="jp-heading mb-3 text-[16px] font-normal tracking-[0.07em]"
-                    style={{ color: "var(--text-primary)" }}
-                  >
-                    {t("sakuraWho")}
-                  </h2>
-                  <p
-                    className="mb-4 whitespace-pre-line text-[13px] leading-[2.0] tracking-[0.015em]"
+                <div className="flex flex-wrap gap-2">
+                  {(["sakuraJapanValue1", "sakuraJapanValue2", "sakuraJapanValue3"] as const).map(
+                    (k) => (
+                      <Badge
+                        key={k}
+                        variant="outline"
+                        className="border-[var(--border)] bg-[var(--bg-base)] px-3 py-1.5 font-sans text-[11px] font-normal tracking-[0.03em]"
+                        style={{ color: "var(--text-secondary)" }}
+                      >
+                        {t(k)}
+                      </Badge>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="temple-card">
+            <span className="temple-dot tr" aria-hidden />
+            <span className="temple-dot bl" aria-hidden />
+            <div className="temple-caption text-[10.5px]">
+              {lang === "zh"
+                ? "Technical Primitives · 技術根幹"
+                : lang === "ja"
+                  ? "Technical Primitives · 技術の根幹"
+                  : "Technical Primitives"}
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {(["sakuraTech1", "sakuraTech2", "sakuraTech3", "sakuraTech4"] as const).map(
+                (k) => (
+                  <div
+                    key={k}
+                    className="flex items-center gap-3 rounded border border-[var(--border)] bg-[var(--bg-base)] px-4 py-3 font-mono text-[11.5px] leading-[1.7] tracking-[0.015em]"
                     style={{ color: "var(--text-secondary)" }}
                   >
-                    {t("sakuraCharacterDesc")}
-                  </p>
-                  <div
-                    className="mb-4 rounded-md border px-4 py-2.5 font-serif text-[13px] tracking-[0.05em]"
-                    style={{
-                      background: "var(--accent-soft)",
-                      borderColor: "var(--accent-mid)",
-                      color: "var(--accent)",
-                    }}
-                  >
-                    ◈ {t("sakuraMission")}
+                    <ArrowRight
+                      className="h-3.5 w-3.5 flex-shrink-0"
+                      style={{ color: "var(--accent)", opacity: 0.7 }}
+                    />
+                    <span>{t(k)}</span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {(["sakuraJapanValue1", "sakuraJapanValue2", "sakuraJapanValue3"] as const).map(
-                      (k) => (
-                        <Badge
-                          key={k}
-                          variant="outline"
-                          className="border-[var(--border)] bg-[var(--bg-base)] px-2.5 py-1 font-sans text-[11px] font-normal tracking-[0.03em]"
-                          style={{ color: "var(--text-secondary)" }}
-                        >
-                          {t(k)}
-                        </Badge>
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-[var(--border)] bg-[var(--bg-card)]">
-            <CardContent className="p-7">
-              <div
-                className="jp-heading mb-4 text-[11px] font-normal uppercase tracking-[0.2em]"
-                style={{ color: "var(--text-muted)" }}
-              >
-                {lang === "zh"
-                  ? "技術根幹 / Technical Primitives"
-                  : lang === "ja"
-                    ? "技術の根幹 / Technical Primitives"
-                    : "Technical Primitives"}
-              </div>
-              <div className="flex flex-col gap-2">
-                {(["sakuraTech1", "sakuraTech2", "sakuraTech3", "sakuraTech4"] as const).map(
-                  (k) => (
-                    <div
-                      key={k}
-                      className="flex items-center gap-2 rounded border border-[var(--border)] bg-[var(--bg-base)] px-3 py-2 font-mono text-[11.5px] leading-[1.7] tracking-[0.015em]"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      <ArrowRight
-                        className="h-3.5 w-3.5 flex-shrink-0"
-                        style={{ color: "var(--accent)", opacity: 0.7 }}
-                      />
-                      <span>{t(k)}</span>
-                    </div>
-                  )
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                )
+              )}
+            </div>
+          </div>
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════
@@ -498,14 +492,12 @@ export default function WalletConnect({
             ═══════════════════════════════════════════════════════════════ */}
         <SectionHeading numeral="参" title={t("diffTitle")} />
 
-        <Card className="relative border-[var(--border)] bg-[var(--bg-card)]">
-          <div
-            className="absolute left-0 top-0 h-full w-[3px]"
-            style={{ background: "var(--accent)" }}
-          />
-          <CardContent className="relative flex items-start gap-5 p-7">
+        <div className="temple-card">
+          <span className="temple-dot tr" aria-hidden />
+          <span className="temple-dot bl" aria-hidden />
+          <div className="flex items-start gap-6">
             <div
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md font-serif text-[15px]"
+              className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md font-serif text-[18px]"
               style={{
                 background: "var(--accent-soft)",
                 border: "1px solid var(--accent-mid)",
@@ -522,28 +514,26 @@ export default function WalletConnect({
                 {t("diffDesc")}
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ═══════════════════════════════════════════════════════════════
             肆 · x402 — Stripe MPP
             ═══════════════════════════════════════════════════════════════ */}
         <SectionHeading numeral="肆" title={t("stripeSectionTitle")} />
 
-        <Card className="relative overflow-hidden border-[var(--border)] bg-[var(--bg-card)]">
-          <div
-            className="absolute left-0 top-0 h-full w-[3px]"
-            style={{ background: "#635BFF" }}
-          />
+        <div className="temple-card">
+          <span className="temple-dot tr" aria-hidden />
+          <span className="temple-dot bl" aria-hidden />
           <Asanoha
             className="pointer-events-none absolute inset-0 z-0"
             opacity={0.025}
             size={52}
           />
-          <CardContent className="relative z-10 p-7">
-            <div className="mb-3 flex items-center gap-2.5">
+          <div className="relative z-[1]">
+            <div className="mb-5 flex items-center gap-3">
               <div
-                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md"
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md"
                 style={{
                   background: "#635BFF20",
                   border: "1px solid #635BFF40",
@@ -553,23 +543,23 @@ export default function WalletConnect({
                 <FileBadge className="h-4 w-4" />
               </div>
               <span
-                className="font-mono text-[10.5px] tracking-[0.2em]"
+                className="font-mono text-[11px] tracking-[0.22em]"
                 style={{ color: "#8B87FF" }}
               >
                 HTTP 402 · STRIPE MPP
               </span>
             </div>
             <p
-              className="mb-4 text-[13px] leading-[2.0] tracking-[0.02em]"
+              className="mb-6 text-[13px] leading-[2.0] tracking-[0.02em]"
               style={{ color: "var(--text-secondary)", maxWidth: 720 }}
             >
               {t("stripeSectionDesc")}
             </p>
-            <div className="mb-3 grid gap-2 sm:grid-cols-3">
+            <div className="mb-5 grid gap-3 sm:grid-cols-3">
               {(["stripeFeature1", "stripeFeature2", "stripeFeature3"] as const).map((k) => (
                 <div
                   key={k}
-                  className="rounded border border-[var(--border)] bg-transparent px-3 py-2 text-[11.5px] leading-[1.7] tracking-[0.03em]"
+                  className="rounded border border-[var(--border)] bg-transparent px-4 py-3 text-[11.5px] leading-[1.7] tracking-[0.03em]"
                   style={{ color: "var(--text-secondary)" }}
                 >
                   {t(k)}
@@ -577,23 +567,23 @@ export default function WalletConnect({
               ))}
             </div>
             <div
-              className="mt-4 rounded border border-[var(--border)] bg-[var(--bg-base)] px-3 py-2 font-mono text-[11px] tracking-[0.05em]"
+              className="rounded border border-[var(--border)] bg-[var(--bg-base)] px-4 py-3 font-mono text-[11px] tracking-[0.05em]"
               style={{ color: "var(--text-muted)" }}
             >
               POST /api/mcp · HTTP 402 · x402-payment: 1.00 USDC · Solana Mainnet
             </div>
-            <div className="mt-4 flex justify-end">
+            <div className="mt-5 flex justify-end">
               <a
                 href="/mcp"
-                className="inline-flex items-center gap-1 font-mono text-[11.5px] tracking-[0.08em] transition-opacity hover:opacity-80"
+                className="inline-flex items-center gap-1.5 font-mono text-[11.5px] tracking-[0.08em] transition-opacity hover:opacity-80"
                 style={{ color: "#8B87FF" }}
               >
                 MCP API 文檔 / Docs / ドキュメント
                 <ArrowRight className="h-3 w-3" />
               </a>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* ═══════════════════════════════════════════════════════════════
             伍 · Stats + 陸 · Protocols — two columns on desktop
@@ -604,14 +594,16 @@ export default function WalletConnect({
           : "By the Numbers"
         } />
 
-        <div className="landing-stats-row grid gap-5">
-          <div className="landing-stats grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-[var(--border)] sm:grid-cols-4">
+        <div className="temple-card no-pad">
+          <span className="temple-dot tr" aria-hidden />
+          <span className="temple-dot bl" aria-hidden />
+          <div className="landing-stats grid grid-cols-2 gap-px bg-[var(--border)] sm:grid-cols-4">
             {STATS.map((s) => (
               <div
                 key={s.labelKey}
-                className="bg-[var(--bg-card)] px-4 py-6 text-center transition-colors hover:bg-[var(--bg-card-2)]/60"
+                className="bg-[var(--bg-card)] px-6 py-9 text-center transition-colors hover:bg-[var(--bg-card-2)]/60"
               >
-                <div className="jp-mono text-[26px] font-bold">
+                <div className="jp-mono text-[28px] font-bold">
                   <AnimatedNumber
                     value={s.numValue}
                     suffix={s.suffix}
@@ -621,7 +613,7 @@ export default function WalletConnect({
                   />
                 </div>
                 <div
-                  className="mt-2 text-[11px] leading-[1.5] tracking-[0.08em]"
+                  className="mt-3 text-[11px] leading-[1.6] tracking-[0.1em]"
                   style={{ color: "var(--text-muted)" }}
                 >
                   {t(s.labelKey)}
@@ -633,22 +625,22 @@ export default function WalletConnect({
 
         <SectionHeading numeral="陸" title={t("integratedProtocols")} />
 
-        <Card className="border-[var(--border)] bg-[var(--bg-card)]">
-          <CardContent className="p-6">
-            <div className="flex flex-wrap gap-2">
-              {PROTOCOLS.map((name) => (
-                <Badge
-                  key={name}
-                  variant="outline"
-                  className="border-[var(--border)] bg-[var(--bg-base)] px-3 py-1.5 font-sans text-[12px] font-normal tracking-[0.03em]"
-                  style={{ color: "var(--text-secondary)" }}
-                >
-                  {name}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="temple-card">
+          <span className="temple-dot tr" aria-hidden />
+          <span className="temple-dot bl" aria-hidden />
+          <div className="flex flex-wrap gap-2.5">
+            {PROTOCOLS.map((name) => (
+              <Badge
+                key={name}
+                variant="outline"
+                className="border-[var(--border)] bg-[var(--bg-base)] px-4 py-2 font-sans text-[12px] font-normal tracking-[0.04em]"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {name}
+              </Badge>
+            ))}
+          </div>
+        </div>
 
         {/* Closing mark */}
         <div

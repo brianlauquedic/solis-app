@@ -710,6 +710,139 @@ textarea:focus-visible,
   .cta-panel::after { width: 16px; height: 16px; }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Temple Card — reusable 寺院技術風 frame.
+   Used for every numbered section (壱 弐 参 肆 伍 陸). Shares the
+   鉤括弧 + 金箔 language of the CTA panel so the whole page reads
+   as one design system.
+
+   Variants:
+     .temple-card            — padded (for prose content)
+     .temple-card.no-pad     — no inner padding (for grids that supply
+                               their own cell padding, e.g. agent 4-col,
+                               stats 4-col)
+   Decorations (as child spans):
+     .temple-dot.tr / .bl    — gold bead at opposing corner
+   ═══════════════════════════════════════════════════════════════ */
+.temple-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 44px 48px;
+  overflow: hidden;
+}
+.temple-card.no-pad {
+  padding: 0;
+}
+
+/* 鉤括弧 — 朱色 L-shaped corner brackets at top-left + bottom-right */
+.temple-card::before,
+.temple-card::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--accent);
+  pointer-events: none;
+  z-index: 3;
+}
+.temple-card::before {
+  top: -1px;
+  left: -1px;
+  border-right: none;
+  border-bottom: none;
+}
+.temple-card::after {
+  bottom: -1px;
+  right: -1px;
+  border-left: none;
+  border-top: none;
+}
+
+/* 金箔 gold bead at the opposing corners */
+.temple-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold);
+  opacity: 0.7;
+  z-index: 3;
+}
+.temple-dot.tr { top: 10px; right: 10px; }
+.temple-dot.bl { bottom: 10px; left: 10px; }
+
+/* Caption strap — small mono caption above card title
+   e.g. 「◎ FOUR GUARDIANS · 意 証 鎖 価」 */
+.temple-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.temple-caption::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.7;
+}
+
+/* Gold hairline rule with 朱色 mid-dot — for splitting content inside a card */
+.temple-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 28px 0;
+  max-width: 100%;
+}
+.temple-rule::before,
+.temple-rule::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(to right, transparent, var(--gold) 30%, var(--gold) 70%, transparent);
+  opacity: 0.5;
+}
+.temple-rule-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(201,49,42,0.10);
+}
+
+/* ── Agent grid — cell padding, no outer bracket padding ── */
+.temple-card.no-pad .landing-agents {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+.temple-card.no-pad .landing-agent-cell {
+  padding: 32px 28px;
+}
+
+/* ── Stats grid within a temple-card ── */
+.temple-card.no-pad .landing-stats {
+  border-radius: 0;
+}
+
+@media (max-width: 1023px) {
+  .temple-card { padding: 36px 32px; }
+  .temple-card.no-pad .landing-agent-cell { padding: 26px 22px; }
+}
+@media (max-width: 640px) {
+  .temple-card { padding: 28px 20px; }
+  .temple-card::before,
+  .temple-card::after { width: 16px; height: 16px; }
+}
+
 /* ── Closing mark ── */
 .landing-closing {
   padding-top: 24px;
