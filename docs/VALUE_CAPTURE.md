@@ -24,11 +24,28 @@ activate. Nothing is contingent on a future governance vote.
 
 | # | Operation | Who pays | Price | Live today? |
 |---|---|---|---|---|
-| 1 | `sign_intent` | End user | **0.1% of the intent's `max_usd_value`** | Parameter exists; fee-transfer CPI not yet wired |
-| 2 | `revoke_intent` | End user | **0.1% of the intent's `max_usd_value`** | Parameter exists; fee-transfer CPI not yet wired |
-| 3 | `execute_with_intent_proof` | Wallet integrator (or end user) | **$0.01 flat per verified action** | Parameter exists; fee-transfer CPI not yet wired |
-| 4 | `/api/mcp` tool call (x402) | Developer / AI framework | **$1.00 USDC per call** | **Live on devnet, payment verification operational** |
+| 1 | `sign_intent` | End user | **0.1% of the intent's `max_usd_value`** | **Live on devnet — verified at program `AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp`** |
+| 2 | `revoke_intent` | End user | **0.1% of the intent's `max_usd_value`** | **Live on devnet** |
+| 3 | `execute_with_intent_proof` | Wallet integrator (or end user) | **$0.01 flat per verified action** | **Live on devnet — flat fee hard-coded at `EXECUTE_ACTION_FEE_MICRO = 10_000`** |
+| 4 | `/api/mcp` tool call (x402) | Developer / AI framework | **$1.00 USDC per call** | Live on devnet, payment verification operational |
 | 5 | Enterprise infrastructure tier | Large wallet / institutional integrator | **$10,000–$38,000 per month** | Not yet available — deferred until integration demand materializes |
+
+End-to-end verification transcript (devnet, fresh run):
+
+```
+sign_intent    → $20.00 USDC debited from user ATA, credited to fee vault
+                 (0.1% × $20,000 max_usd_value). Tx signature
+                 3vhv8skdJ67nbg4ibXyer7yzDoxAbfjiHMcZuxq2eoGMeMcFTemv…
+
+execute_with_  → $0.01 USDC debited, credited to fee vault (exactly the
+  intent_proof   program constant EXECUTE_ACTION_FEE_MICRO). Tx signature
+                 242otJNvCdj2qCUiVaYsDPno14FSLmYj21vhMD3oBdgZ6ArKiXkjY…
+
+Fee vault      → $20.01 total, at account
+                 Cqnbz31KJnJJgi4fCVUu9N8NsGMq7qoBAhbzY5SeVsqc
+```
+
+Reproduce locally: `npx tsx scripts/e2e-intent-execute.ts`
 
 ### Worked example — one retail user's full lifecycle
 
