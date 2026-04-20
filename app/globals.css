@@ -148,6 +148,38 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
 
+/* ── Selection — 朱色 vermillion highlight ── */
+::selection {
+  background: var(--accent-mid);
+  color: var(--text-primary);
+}
+
+/* ── Focus rings — Japanese-red accent on all interactive surfaces ── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Shadcn components handle their own focus — don't double up */
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[data-slot="button"]:focus-visible {
+  outline: none;
+}
+
+/* ── Reduced-motion accessibility ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════
    動作 Animations — 静寂 Seijaku (tranquil, unhurried)
    ══════════════════════════════════════════════════════════════ */
