@@ -217,76 +217,80 @@ export default function WalletConnect({
               {t("heroSubtitle")}
             </p>
 
-            {/* 信頼の証 Trust badges */}
-            <div className="mb-7 flex flex-wrap justify-center gap-2">
-              {(["trust1", "trust2", "trust3", "trust4"] as const).map((k) => (
-                <Badge
-                  key={k}
-                  variant="outline"
-                  className="border-[var(--border)] bg-[var(--bg-card)]/60 px-3 py-1 font-sans text-[11px] font-normal tracking-[0.03em] text-[var(--text-secondary)]"
-                >
-                  {t(k)}
-                </Badge>
+            {/* 信頼の証 Trust row — single centered 清水寺 caption line
+                with gold · separators, replacing pill chips. */}
+            <div className="trust-row text-[11px]">
+              {(["trust1", "trust2", "trust3", "trust4"] as const).map((k, i) => (
+                <span key={k} className="inline-flex items-center gap-3">
+                  {i > 0 && <span className="trust-row-sep">·</span>}
+                  <span>{t(k)}</span>
+                </span>
               ))}
             </div>
 
-            {/* CTA card — narrower than hero copy column, centered */}
-            <Card className="relative mb-2 w-full overflow-hidden border-[var(--border)] bg-[var(--bg-card)]" style={{ maxWidth: 480 }}>
-              <div
-                className="absolute left-0 right-0 top-0 h-[2px]"
-                style={{ background: "var(--accent)" }}
-              />
-              <CardContent className="p-6 text-center sm:p-7">
-                {walletAddress ? (
-                  <>
-                    <div className="mb-2.5 flex items-center gap-2">
-                      <span className="inline-block h-[7px] w-[7px] rounded-full bg-[var(--green)]" />
-                      <span className="jp-heading text-[14px] tracking-[0.06em] text-[var(--text-primary)]">
-                        {t("connectedWallet")}
-                      </span>
-                    </div>
-                    <div
-                      className="mb-5 font-mono text-[12px] tracking-[0.05em]"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {walletAddress.slice(0, 6)}…{walletAddress.slice(-6)}
-                    </div>
-                    <Button
-                      onClick={onEnterApp}
-                      size="lg"
-                      className="w-full font-serif tracking-[0.06em]"
-                      style={{ background: "var(--accent)", color: "#fff" }}
-                    >
-                      {t("enterApp")}
-                      <ArrowRight className="ml-1.5 h-4 w-4" />
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <div className="jp-heading mb-1.5 text-[14px] tracking-[0.06em] text-[var(--text-primary)]">
-                      {t("ctaFreeLabel")}
-                    </div>
-                    <p
-                      className="mb-4 text-[12px] leading-[1.8] tracking-[0.02em]"
-                      style={{ color: "var(--text-secondary)" }}
-                    >
-                      {t("ctaFreeDesc")}
-                    </p>
-                    <div className="mb-4 flex flex-wrap justify-center gap-2">
-                      {(["ctaFreeBadge1", "ctaFreeBadge2", "ctaFreeBadge3"] as const).map(
-                        (key) => (
-                          <Badge
-                            key={key}
-                            variant="outline"
-                            className="gap-1 border-[var(--border-light)] bg-transparent px-2.5 py-1 font-sans text-[11px] font-normal tracking-[0.04em] text-[var(--text-secondary)]"
-                          >
-                            <CheckCircle2 className="h-3 w-3" style={{ color: "var(--green)" }} />
-                            {t(key)}
-                          </Badge>
-                        )
-                      )}
-                    </div>
+            {/* 和式科技感 CTA panel — 鉤括弧 corner brackets, gold
+                hairline dividers, generous padding. */}
+            <div className="cta-panel">
+              <span className="cta-panel-dot tr" aria-hidden />
+              <span className="cta-panel-dot bl" aria-hidden />
 
+              {walletAddress ? (
+                <>
+                  <div className="cta-label">
+                    <span className="inline-block h-[7px] w-[7px] rounded-full bg-[var(--green)]" aria-hidden />
+                    <span className="cta-label-text text-[14px]">
+                      {t("connectedWallet")}
+                    </span>
+                  </div>
+                  <div
+                    className="cta-subnote mb-6 text-[12px]"
+                    style={{ color: "var(--text-muted)" }}
+                  >
+                    {walletAddress.slice(0, 6)}…{walletAddress.slice(-6)}
+                  </div>
+                  <Button
+                    onClick={onEnterApp}
+                    size="lg"
+                    className="w-full font-serif tracking-[0.06em]"
+                    style={{ background: "var(--accent)", color: "#fff" }}
+                  >
+                    {t("enterApp")}
+                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="cta-label">
+                    <span className="cta-label-mark" aria-hidden>◈</span>
+                    <span className="cta-label-text text-[14px]">
+                      {t("ctaFreeLabel")}
+                    </span>
+                  </div>
+
+                  <p className="cta-desc text-[12px] leading-[1.95]">
+                    {t("ctaFreeDesc")}
+                  </p>
+
+                  <div className="cta-rule" aria-hidden>
+                    <span className="cta-rule-dot" />
+                  </div>
+
+                  <div className="cta-specs text-[11px]">
+                    {(["ctaFreeBadge1", "ctaFreeBadge2", "ctaFreeBadge3"] as const).map(
+                      (key) => (
+                        <span key={key} className="cta-spec">
+                          <CheckCircle2 className="cta-spec-check" />
+                          {t(key)}
+                        </span>
+                      )
+                    )}
+                  </div>
+
+                  <div className="cta-rule" aria-hidden>
+                    <span className="cta-rule-dot" />
+                  </div>
+
+                  <div className="cta-buttons">
                     {showMobileDeepLinks ? (
                       <MobileDeepLinks lang={lang} />
                     ) : (
@@ -298,20 +302,22 @@ export default function WalletConnect({
                         phantomLabel={t("ctaFreeBtn")}
                       />
                     )}
+                  </div>
 
-                    <p
-                      className="mt-2.5 text-[10px] tracking-[0.03em]"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {t("ctaSubNote")}
-                    </p>
+                  <p className="cta-subnote text-[10px]">
+                    {t("ctaSubNote")}
+                  </p>
 
-                    {onTryDemo && (
+                  {onTryDemo && (
+                    <>
+                      <div className="cta-rule" aria-hidden>
+                        <span className="cta-rule-dot" />
+                      </div>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={onTryDemo}
-                        className="mt-3.5 w-full border-dashed border-[var(--border)] bg-transparent text-[12px] font-normal tracking-[0.06em]"
+                        className="w-full border-dashed border-[var(--border)] bg-transparent text-[12px] font-normal tracking-[0.06em]"
                         style={{ color: "var(--text-muted)" }}
                       >
                         <PlayCircle className="mr-1.5 h-3.5 w-3.5" />
@@ -321,11 +327,11 @@ export default function WalletConnect({
                             ? "ウォレット不要でデモを体験"
                             : "Try Demo (no wallet needed)"}
                       </Button>
-                    )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </section>
 
