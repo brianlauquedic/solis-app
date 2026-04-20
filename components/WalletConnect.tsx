@@ -170,9 +170,9 @@ export default function WalletConnect({
             {/* 勲章 Hackathon badge */}
             <Badge
               variant="outline"
-              className="fade-in-up fade-in-up-1 mb-5 border-[var(--accent-mid)] bg-[var(--accent-soft)] font-mono text-[11px] tracking-[0.14em] text-[var(--accent)]"
+              className="fade-in-up fade-in-up-1 mb-5 border-[var(--accent-mid)] bg-[var(--accent-soft)] font-mono text-[11px] tracking-[0.14em] text-[var(--accent)] !h-auto !whitespace-normal max-w-full text-center leading-[1.5] py-1"
             >
-              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+              <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)] flex-shrink-0" />
               {t("hackathonBadge")}
             </Badge>
 
@@ -482,7 +482,7 @@ export default function WalletConnect({
                       <Badge
                         key={k}
                         variant="outline"
-                        className="border-[var(--border)] bg-[var(--bg-base)] px-3 py-1.5 font-sans text-[11px] font-normal tracking-[0.03em]"
+                        className="border-[var(--border)] bg-[var(--bg-base)] px-3 py-1.5 font-sans text-[11px] font-normal tracking-[0.03em] !h-auto !whitespace-normal max-w-full leading-[1.55]"
                         style={{ color: "var(--text-secondary)" }}
                       >
                         {t(k)}

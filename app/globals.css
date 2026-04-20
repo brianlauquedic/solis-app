@@ -443,7 +443,14 @@ textarea:focus-visible,
   justify-content: center;
   width: 280px;
   height: 360px;
+  overflow: hidden;
   /* Gold-leaf 金箔 frame corners */
+}
+/* Constrain the WaBijinSVG inner wrapper to the frame — prevents the
+   intrinsic 280×360 image from bleeding out of the 140×180 mobile frame. */
+.bijin-frame > div {
+  width: 100% !important;
+  height: 100% !important;
 }
 .bijin-frame::before,
 .bijin-frame::after {
@@ -970,8 +977,12 @@ textarea:focus-visible,
   letter-spacing: 0.01em;
   color: var(--text-secondary);
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 100%;
   overflow-x: auto;
 }
+.landing-ceiling { max-width: 100%; overflow: hidden; box-sizing: border-box; }
 
 /* ── 訓 · FOUNDER VOICE — operator voice, centered, serif display ── */
 .landing-founder {
