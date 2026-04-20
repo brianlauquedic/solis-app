@@ -14,6 +14,18 @@ export const translations = {
     ja: "⛩️ 証明を検証",
   },
 
+  // ── Top nav (Kiyomizu-style serif labels) ─────────────────────────
+  navDocs: {
+    zh: "文檔",
+    en: "Docs",
+    ja: "資料",
+  },
+  navUseCases: {
+    zh: "用例",
+    en: "Use Cases",
+    ja: "事例",
+  },
+
   // ── Hero badge ───────────────────────────────────────────────────
   hackathonBadge: {
     zh: "SAKURA · AI SECURITY · VERIFIABLE COMPUTE · SOLANA",
@@ -79,9 +91,9 @@ export const translations = {
     ja: "桜 Sakura — AI エージェントのために作られた、Solana ネイティブの実行境界層",
   },
   sakuraOriginBadge: {
-    zh: "Sakura · Groth16 Pairing Verifier on Solana alt_bn128 · Protocol 1.17+",
-    en: "Sakura · Groth16 Pairing Verifier on Solana alt_bn128 · Protocol 1.17+",
-    ja: "Sakura · Solana alt_bn128 上の Groth16 ペアリング検証器 · プロトコル 1.17+",
+    zh: "起源 · ORIGIN",
+    en: "ORIGIN",
+    ja: "起源 · ORIGIN",
   },
   sakuraCharacterDesc: {
     zh: "規則可被覆蓋之處，遲早會被覆蓋。Mt.Gox、OKEx、FTX——亞洲散戶用三次本金買來的定律。\n\nAI 代理走到同一岔口。會話金鑰、白名單、彈窗——皆運營層承諾，皆可被運營方覆蓋。\n\nSakura 交給密碼學。一句邊界，Poseidon 壓為承諾上鏈；代理每一動作附 Groth16 證明，越界不落地。\n\nSWIFT 之於跨境清算，HTTPS 之於加密連線，黃金保管之於兆級財富——皆機制自鎖。運營方、維護者、治理機構，皆動不了。\n\n不是約束越界。是越不了界。有備無患。",
@@ -114,7 +126,7 @@ export const translations = {
   trust1: { zh: "⛩️ 私鑰永不離開你的設備", en: "⛩️ Your private key never leaves your device", ja: "⛩️ 秘密鍵はあなたのデバイスから出ない" },
   trust2: { zh: "⛓️ 你的規則細節只有你知道，鏈上只存一個雜湊", en: "⛓️ Only you know the rule details — only a hash reaches the chain", ja: "⛓️ ルールの詳細を知るのはあなただけ — チェーンに届くのはハッシュだけ" },
   trust3: { zh: "🛡️ 越界不是被「阻止」，是根本做不到", en: "🛡️ Exceeding the rule is not blocked — it is unreachable", ja: "🛡️ 規則超過は「ブロック」されるのではなく、到達不可能" },
-  trust4: { zh: "⚡ MIT 授權、源碼公開 · 錢包一行代碼接入 · 無需許可", en: "⚡ MIT-licensed, source-public · one-line wallet integration · permissionless", ja: "⚡ MIT ライセンス、ソース公開 · ウォレット 1 行統合 · 許可不要" },
+  trust4: { zh: "⚡ MIT 開源 · 無需許可", en: "⚡ MIT · open-source · permissionless", ja: "⚡ MIT · オープンソース · 許可不要" },
 
   // ── CTA (new) ──────────────────────────────────────────────────────
   ctaFreeLabel: {

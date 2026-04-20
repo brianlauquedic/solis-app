@@ -96,7 +96,7 @@ body {
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 15px;
-  line-height: 1.8;               /* more breathing room on cream */
+  line-height: 1.8;
   font-weight: 400;
   letter-spacing: 0.005em;
   min-height: 100vh;
@@ -106,6 +106,30 @@ body {
   overflow-x: clip;
   width: 100%;
   position: relative;
+}
+
+/* ── 清水寺 Kiyomizu-dera reference: Mincho 明朝体 + airy leading + wide
+   tracking are what make Japanese text feel classical. We apply the
+   same discipline to zh/ja content: Noto Serif JP throughout, 2.0+
+   line-height, 0.06em letter-spacing. English stays sans-serif for
+   international legibility — matching Kiyomizu's own mixed typography
+   (Mincho JP + Times EN). */
+:lang(ja),
+:lang(zh) {
+  font-family: var(--font-heading);
+  letter-spacing: 0.06em;
+  line-height: 2.0;
+  font-feature-settings: "palt" 1;
+}
+
+/* Minimum readable body text — Kiyomizu floors at 12px. Anything
+   smaller in our UI was legacy density leftovers; enforce 12px on
+   small helper text, inline captions, badges, nav pills. */
+.text-\[10px\],
+.text-\[10\.5px\],
+.text-\[11px\],
+.text-\[11\.5px\] {
+  font-size: 12px !important;
 }
 
 /* 和紙 Washi paper texture — subtle fiber grain overlay
@@ -130,18 +154,14 @@ body::before {
   z-index: 2;
 }
 
-/* CJK-specific hinting — keeps Chinese/Japanese strokes crisp on Retina */
-:lang(zh), :lang(ja) {
-  font-feature-settings: "palt" 1;  /* proportional Japanese alternate — tighter kerning */
-}
-
 /* Headings — Noto Serif JP (明朝体). On cream/light, 400 reads as
-   refined; heavier weight would feel cramped. */
+   refined; heavier weight would feel cramped. Kiyomizu-style airy
+   tracking on all heading levels. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 400;
   color: var(--text-primary);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
 }
 
 /* ── 等幅数字 Monospace numbers ── */

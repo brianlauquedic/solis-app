@@ -10,8 +10,6 @@
 import { useState, useEffect } from "react";
 import {
   Sparkles,
-  BookText,
-  Layers,
   Wallet,
   ExternalLink,
   PlayCircle,
@@ -145,16 +143,16 @@ export default function WalletConnect({
 
   return (
     <div className="mx-auto max-w-[760px]">
-      {/* ── Top nav ── */}
-      <nav className="mb-10 flex items-center justify-end gap-2">
-        <NavLink href="/docs" icon={<BookText className="h-3 w-3" />} label="Docs" />
-        <NavLink href="/use-cases" icon={<Layers className="h-3 w-3" />} label="Use Cases" />
-        <NavLink
-          href="/mcp"
-          icon={<Zap className="h-3 w-3" />}
-          label="MCP API"
-          accent
-        />
+      {/* ── 上部ナビ Top nav — 清水寺風 Kiyomizu-style horizontal serif
+          links. No pills, no borders, just spaced 明朝 text with a
+          single hairline rule underneath. ── */}
+      <nav
+        className="mb-14 flex items-center justify-center gap-10 border-b pb-4 pt-2"
+        style={{ borderColor: "var(--border)" }}
+      >
+        <NavLink href="/docs" label={t("navDocs")} />
+        <NavLink href="/use-cases" label={t("navUseCases")} />
+        <NavLink href="/mcp" label="MCP API" accent />
       </nav>
 
       {/* ═══════════════════════════════════════════════════════════════
@@ -694,12 +692,10 @@ export default function WalletConnect({
 
 function NavLink({
   href,
-  icon,
   label,
   accent,
 }: {
   href: string;
-  icon: React.ReactNode;
   label: string;
   accent?: boolean;
 }) {
@@ -707,14 +703,12 @@ function NavLink({
     <a
       href={href}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1",
-        "font-mono text-[11px] tracking-[0.06em] transition-colors",
+        "jp-heading text-[14px] tracking-[0.18em] transition-colors",
         accent
-          ? "border-[var(--accent-mid)] bg-[var(--accent-soft)] text-[var(--accent)] hover:bg-[var(--accent-soft)]/70"
-          : "border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          ? "text-[var(--accent)] hover:opacity-75"
+          : "text-[var(--text-primary)] hover:text-[var(--accent)]"
       )}
     >
-      {icon}
       {label}
     </a>
   );
