@@ -38,6 +38,37 @@ pub const EXECUTE_ACTION_FEE_MICRO: u64 = 10_000; // $0.01
 /// any realistic intent cap ($1M intent × 0.1% = $1,000).
 pub const MAX_DECLARED_FEE_MICRO: u64 = 1_000_000_000; // $1,000
 
+// ════════════════════════════════════════════════════════════════════════════
+// Trust hardening (added 2026-04) — time-lock + guardian + oracle sanity
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Mandatory delay in slots between `propose_admin_action` and
+/// `execute_admin_action`. 216,000 slots ≈ 24h at 2.5 slots/sec on mainnet.
+/// Gives the community + guardian a window to detect and veto malicious
+/// admin actions before they land on-chain.
+pub const ADMIN_ACTION_DELAY_SLOTS: u64 = 216_000;
+
+/// Maximum allowed divergence between Pyth `price` and `ema_price` in the
+/// SAME PriceUpdateV2 account, expressed in basis points. 200 = 2%.
+/// Above this, execute_with_intent_proof reverts with `OracleSpotEmaDeviation`
+/// — catches flash oracle manipulation (the publisher reports an extreme spot
+/// while the EMA — smoothed over ~30s — is unchanged).
+///
+/// Defense-in-depth only. A sustained compromise of the Pyth publisher
+/// network would push both spot and EMA together and would not trip this
+/// check. See docs/DUAL_ORACLE_SPEC.md for the Switchboard integration that
+/// defends against publisher-network compromise.
+pub const MAX_PYTH_EMA_DEVIATION_BPS: u64 = 200;
+
+/// Admin action type codes stored in `PendingAdminAction.action_type`.
+pub const ADMIN_ACTION_SET_PAUSED:  u8 = 1;
+pub const ADMIN_ACTION_UPDATE_FEES: u8 = 2;
+// Intentionally NOT including RotateAdmin — the IntentProtocol PDA seed
+// is derived from `admin.key()` (see `InitializeProtocol` at
+// `seeds = [b"sakura_intent_v3", admin.key().as_ref()]`), so rotating
+// admin would orphan the account. Fixing this requires a separate PDA
+// migration documented in docs/TRUST_HARDENING_DEPLOY.md.
+
 /// Sakura — The Agentic Consumer Protocol (v0.3)
 ///
 /// An intent-execution protocol for Solana DeFi. Users sign an intent once
@@ -353,9 +384,41 @@ pub mod sakura_insurance {
                 data[o..o + 4].try_into().map_err(|_| error!(IntentErr::PythAccountInvalid))?,
             );
             o += 4;
-            o += 32; // publish_time + prev_publish_time + ema_price + ema_conf
+            // publish_time (8) + prev_publish_time (8) — skip
+            o += 16;
+            // ema_price (i64 LE, 8) — READ for C-lite sanity check
+            let ema_price_i64 = i64::from_le_bytes(
+                data[o..o + 8].try_into().map_err(|_| error!(IntentErr::PythAccountInvalid))?,
+            );
+            o += 8;
+            // ema_conf (8) — skip
+            o += 8;
             let posted_slot = u64::from_le_bytes(
                 data[o..o + 8].try_into().map_err(|_| error!(IntentErr::PythAccountInvalid))?,
+            );
+
+            // ── C-lite · spot-vs-EMA deviation sanity ──
+            // Defense-in-depth against flash oracle manipulation: a publisher
+            // that reports an extreme spot (while the ~30s EMA lags) gets
+            // rejected. Does NOT defend against sustained publisher-network
+            // compromise; see docs/DUAL_ORACLE_SPEC.md for that.
+            require!(ema_price_i64 > 0, IntentErr::OraclePriceMismatch);
+            let ema_abs = ema_price_i64 as u64;
+            // spot vs ema deviation: |price - ema| * 10_000 / max(price, ema) ≤ MAX_BPS
+            let diff = if price_i64 as u64 > ema_abs {
+                (price_i64 as u64) - ema_abs
+            } else {
+                ema_abs - (price_i64 as u64)
+            };
+            let max_side = core::cmp::max(price_i64 as u64, ema_abs);
+            let deviation_bps = diff
+                .checked_mul(10_000)
+                .ok_or(IntentErr::Overflow)?
+                .checked_div(max_side.max(1))
+                .unwrap_or(0);
+            require!(
+                deviation_bps <= MAX_PYTH_EMA_DEVIATION_BPS,
+                IntentErr::OracleSpotEmaDeviation
             );
 
             require!(posted_slot == oracle_slot, IntentErr::OraclePriceMismatch);
@@ -481,6 +544,121 @@ pub mod sakura_insurance {
             actions_executed: intent.actions_executed,
             fee_micro: EXECUTE_ACTION_FEE_MICRO,
         });
+        Ok(())
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // TRUST HARDENING — guardian registration + time-locked admin actions
+    // ──────────────────────────────────────────────────────────────────
+
+    /// One-time setup: register a guardian Pubkey who can veto any
+    /// pending admin action within the delay window. Guardian should be
+    /// held by a different principal than the admin keypair/multisig —
+    /// otherwise the veto is cosmetic.
+    pub fn initialize_guardian(
+        ctx: Context<InitializeGuardian>,
+        guardian: Pubkey,
+    ) -> Result<()> {
+        let g = &mut ctx.accounts.guardian_pda;
+        g.protocol = ctx.accounts.protocol.key();
+        g.guardian = guardian;
+        g.bump = ctx.bumps.guardian_pda;
+        emit!(GuardianInitialized { guardian });
+        Ok(())
+    }
+
+    /// Admin proposes a sensitive action. Creates a `PendingAdminAction`
+    /// PDA; the action can only be executed after ADMIN_ACTION_DELAY_SLOTS
+    /// slots (~24h). The delay window gives the guardian + the wider
+    /// community a chance to detect and cancel malicious proposals.
+    pub fn propose_admin_action(
+        ctx: Context<ProposeAdminAction>,
+        action_id: u64,
+        action_type: u8,
+        payload: [u8; 32],
+    ) -> Result<()> {
+        require!(
+            action_type == ADMIN_ACTION_SET_PAUSED
+                || action_type == ADMIN_ACTION_UPDATE_FEES,
+            IntentErr::InvalidActionType
+        );
+        let now_slot = Clock::get()?.slot;
+        let p = &mut ctx.accounts.pending;
+        p.protocol          = ctx.accounts.protocol.key();
+        p.action_id         = action_id;
+        p.action_type       = action_type;
+        p.payload           = payload;
+        p.proposed_at_slot  = now_slot;
+        p.effective_slot    = now_slot
+            .checked_add(ADMIN_ACTION_DELAY_SLOTS)
+            .ok_or(IntentErr::Overflow)?;
+        p.executed          = false;
+        p.cancelled         = false;
+        p.bump              = ctx.bumps.pending;
+        emit!(AdminActionProposed {
+            action_id,
+            action_type,
+            effective_slot: p.effective_slot,
+        });
+        Ok(())
+    }
+
+    /// Admin executes a previously-proposed action. Only succeeds after
+    /// `effective_slot` is reached and neither `executed` nor `cancelled`
+    /// flags are set.
+    pub fn execute_admin_action(
+        ctx: Context<ExecuteAdminAction>,
+        action_id: u64,
+    ) -> Result<()> {
+        let now_slot = Clock::get()?.slot;
+        let p = &mut ctx.accounts.pending;
+        require!(!p.cancelled, IntentErr::ActionCancelled);
+        require!(!p.executed,  IntentErr::ActionAlreadyExecuted);
+        require!(now_slot >= p.effective_slot, IntentErr::ActionNotEffective);
+        require!(p.action_id == action_id, IntentErr::InvalidParam);
+
+        let protocol = &mut ctx.accounts.protocol;
+        match p.action_type {
+            ADMIN_ACTION_SET_PAUSED => {
+                let new_paused = p.payload[0] != 0;
+                protocol.paused = new_paused;
+                emit!(ProtocolPauseToggled { paused: new_paused });
+            }
+            ADMIN_ACTION_UPDATE_FEES => {
+                // payload layout: bytes [0..2] = execution_fee_bps (u16 LE),
+                //                  bytes [2..4] = platform_fee_bps  (u16 LE)
+                let exec_bps = u16::from_le_bytes(
+                    p.payload[0..2].try_into().map_err(|_| error!(IntentErr::InvalidParam))?
+                );
+                let plat_bps = u16::from_le_bytes(
+                    p.payload[2..4].try_into().map_err(|_| error!(IntentErr::InvalidParam))?
+                );
+                require!(exec_bps <= 200,    IntentErr::InvalidParam);
+                require!(plat_bps <= 10_000, IntentErr::InvalidParam);
+                protocol.execution_fee_bps = exec_bps;
+                protocol.platform_fee_bps  = plat_bps;
+            }
+            _ => return err!(IntentErr::InvalidActionType),
+        }
+        p.executed = true;
+        emit!(AdminActionExecuted { action_id });
+        Ok(())
+    }
+
+    /// Guardian (and only guardian) cancels a pending admin action.
+    /// Useful as an emergency brake if admin key is compromised and a
+    /// malicious action is proposed — guardian stops it before the delay
+    /// window elapses.
+    pub fn cancel_admin_action(
+        ctx: Context<CancelAdminAction>,
+        action_id: u64,
+    ) -> Result<()> {
+        let p = &mut ctx.accounts.pending;
+        require!(!p.executed,  IntentErr::ActionAlreadyExecuted);
+        require!(!p.cancelled, IntentErr::ActionCancelled);
+        require!(p.action_id == action_id, IntentErr::InvalidParam);
+        p.cancelled = true;
+        emit!(AdminActionCancelled { action_id });
         Ok(())
     }
 }
@@ -670,6 +848,106 @@ pub struct ExecuteWithIntentProof<'info> {
 }
 
 // ══════════════════════════════════════════════════════════════════════════
+// Trust-hardening accounts (Guardian + time-locked admin actions)
+// ══════════════════════════════════════════════════════════════════════════
+
+#[derive(Accounts)]
+pub struct InitializeGuardian<'info> {
+    #[account(
+        seeds = [b"sakura_intent_v3", protocol.admin.as_ref()],
+        bump = protocol.bump,
+        has_one = admin,
+    )]
+    pub protocol: Account<'info, IntentProtocol>,
+
+    #[account(mut)]
+    pub admin: Signer<'info>,
+
+    #[account(
+        init,
+        payer = admin,
+        space = 8 + Guardian::LEN,
+        seeds = [b"sakura_guardian", protocol.key().as_ref()],
+        bump,
+    )]
+    pub guardian_pda: Account<'info, Guardian>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(action_id: u64)]
+pub struct ProposeAdminAction<'info> {
+    #[account(
+        seeds = [b"sakura_intent_v3", protocol.admin.as_ref()],
+        bump = protocol.bump,
+        has_one = admin,
+    )]
+    pub protocol: Account<'info, IntentProtocol>,
+
+    #[account(mut)]
+    pub admin: Signer<'info>,
+
+    #[account(
+        init,
+        payer = admin,
+        space = 8 + PendingAdminAction::LEN,
+        seeds = [b"sakura_pending", protocol.key().as_ref(), &action_id.to_le_bytes()],
+        bump,
+    )]
+    pub pending: Account<'info, PendingAdminAction>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(action_id: u64)]
+pub struct ExecuteAdminAction<'info> {
+    #[account(
+        mut,
+        seeds = [b"sakura_intent_v3", protocol.admin.as_ref()],
+        bump = protocol.bump,
+        has_one = admin,
+    )]
+    pub protocol: Account<'info, IntentProtocol>,
+
+    pub admin: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"sakura_pending", protocol.key().as_ref(), &action_id.to_le_bytes()],
+        bump = pending.bump,
+    )]
+    pub pending: Account<'info, PendingAdminAction>,
+}
+
+#[derive(Accounts)]
+#[instruction(action_id: u64)]
+pub struct CancelAdminAction<'info> {
+    #[account(
+        seeds = [b"sakura_intent_v3", protocol.admin.as_ref()],
+        bump = protocol.bump,
+    )]
+    pub protocol: Account<'info, IntentProtocol>,
+
+    #[account(
+        seeds = [b"sakura_guardian", protocol.key().as_ref()],
+        bump = guardian_pda.bump,
+        constraint = guardian_pda.guardian == guardian_signer.key() @ IntentErr::NotGuardian,
+    )]
+    pub guardian_pda: Account<'info, Guardian>,
+
+    pub guardian_signer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"sakura_pending", protocol.key().as_ref(), &action_id.to_le_bytes()],
+        bump = pending.bump,
+    )]
+    pub pending: Account<'info, PendingAdminAction>,
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // State
 // ══════════════════════════════════════════════════════════════════════════
 
@@ -719,6 +997,32 @@ pub struct ActionRecord {
 }
 impl ActionRecord {
     pub const LEN: usize = 32 + 8 + 1 + 8 + 1 + 8 + 8 + 8 + 32 + 1;
+}
+
+#[account]
+pub struct Guardian {
+    pub protocol: Pubkey,                // 32 — which protocol this guards
+    pub guardian: Pubkey,                // 32 — the guardian keypair / vault
+    pub bump: u8,                        // 1
+}
+impl Guardian {
+    pub const LEN: usize = 32 + 32 + 1;
+}
+
+#[account]
+pub struct PendingAdminAction {
+    pub protocol: Pubkey,                // 32
+    pub action_id: u64,                  // 8
+    pub action_type: u8,                 // 1 (ADMIN_ACTION_*)
+    pub payload: [u8; 32],               // 32 — action-specific data
+    pub proposed_at_slot: u64,           // 8
+    pub effective_slot: u64,             // 8
+    pub executed: bool,                  // 1
+    pub cancelled: bool,                 // 1
+    pub bump: u8,                        // 1
+}
+impl PendingAdminAction {
+    pub const LEN: usize = 32 + 8 + 1 + 32 + 8 + 8 + 1 + 1 + 1;
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -772,6 +1076,28 @@ pub struct ActionExecuted {
     pub fee_micro: u64,
 }
 
+#[event]
+pub struct GuardianInitialized {
+    pub guardian: Pubkey,
+}
+
+#[event]
+pub struct AdminActionProposed {
+    pub action_id: u64,
+    pub action_type: u8,
+    pub effective_slot: u64,
+}
+
+#[event]
+pub struct AdminActionExecuted {
+    pub action_id: u64,
+}
+
+#[event]
+pub struct AdminActionCancelled {
+    pub action_id: u64,
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 // Errors
 // ══════════════════════════════════════════════════════════════════════════
@@ -793,4 +1119,11 @@ pub enum IntentErr {
     #[msg("Pyth feed_id does not match expected SOL/USD feed")] PythFeedIdMismatch,
     #[msg("oracle_price / oracle_slot does not match Pyth")]    OraclePriceMismatch,
     #[msg("Token account owner mismatch")]                      WrongOwner,
+    #[msg("Pyth spot vs EMA deviation exceeds 2%")]             OracleSpotEmaDeviation,
+    #[msg("Guardian PDA already initialized")]                  GuardianAlreadyInit,
+    #[msg("Caller is not the registered guardian")]             NotGuardian,
+    #[msg("Admin action not yet effective (delay not reached)")] ActionNotEffective,
+    #[msg("Admin action already executed")]                     ActionAlreadyExecuted,
+    #[msg("Admin action cancelled")]                            ActionCancelled,
+    #[msg("Unknown admin action_type")]                         InvalidActionType,
 }

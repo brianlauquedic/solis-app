@@ -150,6 +150,30 @@ export function deriveActionRecordPDA(
   );
 }
 
+// ── Trust-hardening PDAs (Guardian + PendingAdminAction) ────────────
+export function deriveGuardianPDA(
+  protocol: PublicKey,
+  programId: PublicKey = SAKURA_INSURANCE_PROGRAM_ID
+): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("sakura_guardian"), protocol.toBuffer()],
+    programId
+  );
+}
+
+export function derivePendingAdminActionPDA(
+  protocol: PublicKey,
+  actionId: bigint,
+  programId: PublicKey = SAKURA_INSURANCE_PROGRAM_ID
+): [PublicKey, number] {
+  const idBuf = Buffer.alloc(8);
+  idBuf.writeBigUInt64LE(actionId, 0);
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("sakura_pending"), protocol.toBuffer(), idBuf],
+    programId
+  );
+}
+
 // ── Back-compat PDA aliases (so old callers don't break hard) ─────────
 export const derivePoolPDA = deriveProtocolPDA;
 export const deriveVaultPDA = deriveFeeVaultPDA;
@@ -181,6 +205,15 @@ const IX_ROTATE_ADMIN = anchorIxDiscriminator("rotate_admin");
 const IX_SET_PAUSED = anchorIxDiscriminator("set_paused");
 const IX_SIGN_INTENT = anchorIxDiscriminator("sign_intent");
 const IX_REVOKE_INTENT = anchorIxDiscriminator("revoke_intent");
+const IX_INIT_GUARDIAN = anchorIxDiscriminator("initialize_guardian");
+const IX_PROPOSE_ADMIN_ACTION = anchorIxDiscriminator("propose_admin_action");
+const IX_EXECUTE_ADMIN_ACTION = anchorIxDiscriminator("execute_admin_action");
+const IX_CANCEL_ADMIN_ACTION = anchorIxDiscriminator("cancel_admin_action");
+
+// Admin action type codes — must match lib.rs ADMIN_ACTION_* constants.
+export const ADMIN_ACTION_SET_PAUSED = 1;
+export const ADMIN_ACTION_UPDATE_FEES = 2;
+
 const IX_EXECUTE_WITH_INTENT_PROOF = anchorIxDiscriminator(
   "execute_with_intent_proof"
 );
@@ -610,4 +643,149 @@ export async function checkClaimEligibility(params: {
     return { eligible: false, reason: "intent expired" };
   }
   return { eligible: true };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// Trust-hardening instruction builders
+//
+//   initialize_guardian   — admin registers a guardian pubkey (one-time)
+//   propose_admin_action  — admin queues a time-locked action
+//   execute_admin_action  — admin executes after 24h delay
+//   cancel_admin_action   — guardian vetoes during the delay window
+//
+// See programs/sakura-insurance/src/lib.rs for on-chain semantics and
+// docs/TRUST_HARDENING_DEPLOY.md for deploy order.
+// ══════════════════════════════════════════════════════════════════════
+
+export function buildInitializeGuardianIx(params: {
+  admin: PublicKey;
+  guardian: PublicKey;
+}): TransactionInstruction {
+  const [protocol] = deriveProtocolPDA(params.admin);
+  const [guardianPda] = deriveGuardianPDA(protocol);
+
+  const data = Buffer.alloc(8 + 32);
+  IX_INIT_GUARDIAN.copy(data, 0);
+  params.guardian.toBuffer().copy(data, 8);
+
+  return new TransactionInstruction({
+    programId: SAKURA_INSURANCE_PROGRAM_ID,
+    keys: [
+      { pubkey: protocol, isSigner: false, isWritable: false },
+      { pubkey: params.admin, isSigner: true, isWritable: true },
+      { pubkey: guardianPda, isSigner: false, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data,
+  });
+}
+
+export function buildProposeAdminActionIx(params: {
+  admin: PublicKey;
+  actionId: bigint;        // u64 — caller-supplied unique identifier
+  actionType: number;      // ADMIN_ACTION_SET_PAUSED | ADMIN_ACTION_UPDATE_FEES
+  payload: Buffer;         // 32 bytes — action-specific data
+}): TransactionInstruction {
+  if (params.payload.length !== 32) {
+    throw new Error(`payload must be 32 bytes, got ${params.payload.length}`);
+  }
+  const [protocol] = deriveProtocolPDA(params.admin);
+  const [pending] = derivePendingAdminActionPDA(protocol, params.actionId);
+
+  // Data: 8 disc + 8 actionId + 1 actionType + 32 payload
+  const data = Buffer.alloc(8 + 8 + 1 + 32);
+  let o = 0;
+  IX_PROPOSE_ADMIN_ACTION.copy(data, o); o += 8;
+  data.writeBigUInt64LE(params.actionId, o); o += 8;
+  data.writeUInt8(params.actionType, o); o += 1;
+  params.payload.copy(data, o);
+
+  return new TransactionInstruction({
+    programId: SAKURA_INSURANCE_PROGRAM_ID,
+    keys: [
+      { pubkey: protocol, isSigner: false, isWritable: false },
+      { pubkey: params.admin, isSigner: true, isWritable: true },
+      { pubkey: pending, isSigner: false, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data,
+  });
+}
+
+export function buildExecuteAdminActionIx(params: {
+  admin: PublicKey;
+  actionId: bigint;
+}): TransactionInstruction {
+  const [protocol] = deriveProtocolPDA(params.admin);
+  const [pending] = derivePendingAdminActionPDA(protocol, params.actionId);
+
+  const data = Buffer.alloc(8 + 8);
+  IX_EXECUTE_ADMIN_ACTION.copy(data, 0);
+  data.writeBigUInt64LE(params.actionId, 8);
+
+  return new TransactionInstruction({
+    programId: SAKURA_INSURANCE_PROGRAM_ID,
+    keys: [
+      { pubkey: protocol, isSigner: false, isWritable: true },
+      { pubkey: params.admin, isSigner: true, isWritable: false },
+      { pubkey: pending, isSigner: false, isWritable: true },
+    ],
+    data,
+  });
+}
+
+export function buildCancelAdminActionIx(params: {
+  admin: PublicKey;          // only used to derive protocol PDA — NOT a signer
+  guardianSigner: PublicKey;
+  actionId: bigint;
+}): TransactionInstruction {
+  const [protocol] = deriveProtocolPDA(params.admin);
+  const [guardianPda] = deriveGuardianPDA(protocol);
+  const [pending] = derivePendingAdminActionPDA(protocol, params.actionId);
+
+  const data = Buffer.alloc(8 + 8);
+  IX_CANCEL_ADMIN_ACTION.copy(data, 0);
+  data.writeBigUInt64LE(params.actionId, 8);
+
+  return new TransactionInstruction({
+    programId: SAKURA_INSURANCE_PROGRAM_ID,
+    keys: [
+      { pubkey: protocol, isSigner: false, isWritable: false },
+      { pubkey: guardianPda, isSigner: false, isWritable: false },
+      { pubkey: params.guardianSigner, isSigner: true, isWritable: false },
+      { pubkey: pending, isSigner: false, isWritable: true },
+    ],
+    data,
+  });
+}
+
+/**
+ * Helper · build a 32-byte payload for `ADMIN_ACTION_SET_PAUSED`.
+ * Layout: byte[0] = paused flag (0 = unpause, 1 = pause); rest zero.
+ */
+export function encodeSetPausedPayload(paused: boolean): Buffer {
+  const buf = Buffer.alloc(32);
+  buf.writeUInt8(paused ? 1 : 0, 0);
+  return buf;
+}
+
+/**
+ * Helper · build a 32-byte payload for `ADMIN_ACTION_UPDATE_FEES`.
+ * Layout: u16 LE executionFeeBps (≤200) + u16 LE platformFeeBps (≤10_000)
+ * at bytes [0..4]; remaining 28 bytes zero.
+ */
+export function encodeUpdateFeesPayload(
+  executionFeeBps: number,
+  platformFeeBps: number
+): Buffer {
+  if (executionFeeBps < 0 || executionFeeBps > 200) {
+    throw new Error(`executionFeeBps out of range: ${executionFeeBps}`);
+  }
+  if (platformFeeBps < 0 || platformFeeBps > 10_000) {
+    throw new Error(`platformFeeBps out of range: ${platformFeeBps}`);
+  }
+  const buf = Buffer.alloc(32);
+  buf.writeUInt16LE(executionFeeBps, 0);
+  buf.writeUInt16LE(platformFeeBps, 2);
+  return buf;
 }
