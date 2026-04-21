@@ -9,7 +9,6 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "devnet:e2e": "tsx scripts/devnet-e2e.ts",
     "bench:verify-cu": "tsx scripts/bench-verify-cu.ts"
   },
   "dependencies": {

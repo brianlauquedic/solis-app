@@ -40,8 +40,10 @@ commitment stored in a Program Derived Address on the Solana chain.
 Every subsequent action the agent attempts must produce a Groth16
 zero-knowledge proof establishing that the action falls inside the
 commitment. Solana's `alt_bn128` pairing syscall, merged in protocol
-version 1.17, verifies the proof in 116,000 compute units — roughly
-one hundredth of a cent per call. A failing proof reverts the
+version 1.17, verifies the proof in 126,221 compute units (measured
+on devnet, 5 of 5 runs, 2026-04-21; see
+[`docs/bench/2026-04-21-cu.json`](docs/bench/2026-04-21-cu.json)) —
+roughly one hundredth of a cent per call. A failing proof reverts the
 surrounding transaction before the underlying DeFi instruction is
 allowed to touch user funds.
 
