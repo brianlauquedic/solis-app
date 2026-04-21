@@ -289,6 +289,145 @@ textarea:focus-visible,
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ══════════════════════════════════════════════════════════
+   SealStampOverlay · 朱印の落下 (intent-signed finality moment)
+   Pure CSS, plays for ~1.4s after mount. Auto-removed by the React
+   component after ~2.2s via setTimeout.
+   ══════════════════════════════════════════════════════════ */
+.seal-stamp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: seal-overlay-fade 2200ms ease-out forwards;
+}
+@keyframes seal-overlay-fade {
+  0%   { background: rgba(28,20,16,0);    }
+  8%   { background: rgba(28,20,16,0.35); }
+  85%  { background: rgba(28,20,16,0.28); }
+  100% { background: rgba(28,20,16,0);    }
+}
+
+/* 朱色 flash at impact — 80ms bloom, peaks at ~520ms (when seal lands) */
+.seal-stamp-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(201, 49, 42, 0.28) 0%,
+    rgba(201, 49, 42, 0.08) 30%,
+    transparent 60%
+  );
+  opacity: 0;
+  animation: seal-flash 2200ms ease-out forwards;
+}
+@keyframes seal-flash {
+  0%, 38%  { opacity: 0;    }
+  42%      { opacity: 1;    }
+  55%      { opacity: 0.55; }
+  100%     { opacity: 0;    }
+}
+
+/* Wrapper for seal + shock ring, both center-anchored */
+.seal-stamp-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 320px;
+  height: 320px;
+}
+
+/* 朱印 落下 — seal falls from above with overshoot landing.
+   Timing:
+     0%     starts high, tilted, small, transparent
+     42%    near contact, growing
+     50%    impact — overshoot scale 1.15
+     62%    settle to 1.0
+     100%   hold, then parent fades */
+.seal-stamp-drop {
+  animation: seal-drop 2200ms cubic-bezier(0.18, 0.9, 0.32, 1.02) forwards;
+  filter: drop-shadow(0 20px 30px rgba(201, 49, 42, 0.35));
+}
+@keyframes seal-drop {
+  0% {
+    transform: translateY(-420px) rotate(-9deg) scale(0.55);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.85;
+  }
+  50% {
+    transform: translateY(0) rotate(0deg) scale(1.15);
+    opacity: 1;
+  }
+  62% {
+    transform: translateY(0) rotate(0deg) scale(0.98);
+  }
+  72% {
+    transform: translateY(0) rotate(0deg) scale(1.02);
+  }
+  82%, 100% {
+    transform: translateY(0) rotate(0deg) scale(1.0);
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Concentric shock-wave ring, expands from seal edge at impact */
+.seal-stamp-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  border: 2px solid rgba(201, 49, 42, 0.55);
+  opacity: 0;
+  animation: seal-ring 2200ms ease-out forwards;
+}
+@keyframes seal-ring {
+  0%, 48% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  52% {
+    transform: scale(1.0);
+    opacity: 0.9;
+  }
+  80% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.55);
+    opacity: 0;
+  }
+}
+
+/* Respect users who prefer reduced motion: show the seal statically
+   without the falling sequence. Accessibility essential. */
+@media (prefers-reduced-motion: reduce) {
+  .seal-stamp-overlay,
+  .seal-stamp-flash,
+  .seal-stamp-drop,
+  .seal-stamp-ring {
+    animation-duration: 600ms;
+    animation-timing-function: ease-out;
+  }
+  .seal-stamp-drop {
+    animation-name: seal-drop-reduced;
+  }
+  @keyframes seal-drop-reduced {
+    0%   { opacity: 0; transform: scale(0.95); }
+    60%  { opacity: 1; transform: scale(1.0);  }
+    100% { opacity: 0; transform: scale(1.0);  }
+  }
+}
+
+
 @keyframes shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }

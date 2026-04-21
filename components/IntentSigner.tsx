@@ -9,7 +9,8 @@
  * was rewritten.
  */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import SealStampOverlay from "@/components/SealStampOverlay";
 import {
   Connection,
   PublicKey,
@@ -148,6 +149,19 @@ export default function IntentSigner() {
     new Set([ActionType.Lend, ActionType.Repay])
   );
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+
+  // Seal-stamp overlay: plays the finality moment when an intent signs.
+  // Disable via `?noStamp=true` query param for screen recording / demos.
+  const [sealShowing, setSealShowing] = useState(false);
+  const [sealDisabled, setSealDisabled] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("noStamp") === "true") setSealDisabled(true);
+  }, []);
+  useEffect(() => {
+    if (status.kind === "success") setSealShowing(true);
+  }, [status.kind]);
 
   const toggleProtocol = (id: ProtocolId) =>
     setSelectedProtocols((prev) => {
@@ -317,6 +331,12 @@ export default function IntentSigner() {
     status.kind === "confirming";
 
   return (
+    <>
+    <SealStampOverlay
+      show={sealShowing}
+      disabled={sealDisabled}
+      onDone={() => setSealShowing(false)}
+    />
     <Card className="relative overflow-hidden border-[var(--border)] bg-[var(--bg-card)]">
       <Seigaiha className="absolute inset-0 pointer-events-none" opacity={0.04} />
 
@@ -489,6 +509,7 @@ export default function IntentSigner() {
         </span>
       </CardFooter>
     </Card>
+    </>
   );
 }
 
