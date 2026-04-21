@@ -1,93 +1,113 @@
 /**
- * lib/adapters/jupiter-lend.ts — Jupiter Lend (Earn + Borrow) adapter
+ * lib/adapters/jupiter-lend.ts — Jupiter Lend adapter (REAL CPI for Earn)
  *
- * STATUS (2026-04-22): Same shape as lib/adapters/kamino.ts — currently
- * produces Memo-based audit-trail ixs; full CPI integration ships in a
- * follow-up commit using @jup-ag/lend SDK.
+ * Status matrix (2026-04-22):
+ *   Lend     ✅ real CPI via @jup-ag/lend/earn:getDepositIxs
+ *   Withdraw ✅ real CPI via @jup-ag/lend/earn:getWithdrawIxs
+ *   Borrow   🟡 Memo audit stub — needs vaultId + positionId (see below)
+ *   Repay    🟡 Memo audit stub — same
  *
- * Jupiter Lend launched Aug 2025 and reached $1.65B TVL by Oct 2025,
- * making it the #1 Solana lending product by Grid gridRank (88) — ahead
- * of Kamino (32). Both protocols ship side-by-side.
+ * Earn (Lend/Withdraw) only needs `asset + amount`, so it maps cleanly
+ * onto our (mint, amountMicro) action shape. Borrow/Repay on Jupiter
+ * Lend requires `vaultId + positionId` to identify which collateralised
+ * borrow position to operate on; these are not available in our
+ * generic BuildActionParams shape. When the intent-executor skill
+ * produces an intent that borrows, it should additionally emit the
+ * chosen vaultId + positionId (or create a new position via
+ * getInitPositionIx) — plumbing tracked in a follow-up commit.
  *
- * SDK integration path (for follow-up commit):
- *   ```bash
- *   pnpm add @jup-ag/lend
- *   ```
- *   ```ts
- *   import { getDepositIxs, getWithdrawIxs } from "@jup-ag/lend/earn";
- *   import { getOperateIx } from "@jup-ag/lend/borrow";
- *
- *   // Earn (Lend/Withdraw on supply side):
- *   const ixs = await getDepositIxs({
- *     connection, owner, vaultMint: mint, amount
- *   });
- *
- *   // Borrow (collateralised Borrow / Repay):
- *   const ixs = await getOperateIx({
- *     connection, owner, marketMint, amount,
- *     operation: "borrow" | "repay" | "deposit-collateral" | "withdraw-collateral"
- *   });
- *   ```
- *
- * API endpoints (unsigned-tx preview): https://dev.jup.ag/docs/lend
+ * Mainnet TVL (as of 2026-04-22): ~$1.65B — #1 Solana lending by Grid
+ * gridRank (88). Launched Aug 2025.
  *
  * References:
- *   - Docs:   https://dev.jup.ag/docs/lend
- *   - SDK:    https://www.npmjs.com/package/@jup-ag/lend
- *   - GitHub: https://github.com/jup-ag/jupiter-lend
+ *   - SDK npm: https://www.npmjs.com/package/@jup-ag/lend (v0.1.9+)
+ *   - Docs:    https://dev.jup.ag/docs/lend
+ *   - GitHub:  https://github.com/jup-ag/jupiter-lend
  */
 
 import {
+  Connection,
   PublicKey,
   TransactionInstruction,
 } from "@solana/web3.js";
+import BN from "bn.js";
+import { getDepositIxs, getWithdrawIxs } from "@jup-ag/lend/earn";
 
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
 );
 
-function buildJupiterLendActionMemo(
-  user: PublicKey,
-  action: "lend" | "borrow" | "repay" | "withdraw",
-  mint: PublicKey,
-  amountMicro: bigint
-): TransactionInstruction {
-  const payload =
-    `sakura:v1:JupiterLend:${action}:` +
-    `user=${user.toBase58()}:mint=${mint.toBase58()}:amount=${amountMicro}`;
-  return new TransactionInstruction({
-    programId: MEMO_PROGRAM_ID,
-    keys: [{ pubkey: user, isSigner: true, isWritable: false }],
-    data: Buffer.from(payload, "utf8"),
-  });
-}
-
 export interface JupiterLendActionParams {
+  connection: Connection;
   user: PublicKey;
   mint: PublicKey;
   amountMicro: bigint;
 }
 
+/** Lend: deposit assets into Jupiter Lend Earn vault to earn yield. REAL CPI. */
 export async function buildJupiterLendLend(
   p: JupiterLendActionParams
 ): Promise<TransactionInstruction[]> {
-  return [buildJupiterLendActionMemo(p.user, "lend", p.mint, p.amountMicro)];
+  const { ixs } = await getDepositIxs({
+    connection: p.connection,
+    signer: p.user,
+    asset: p.mint,
+    amount: new BN(p.amountMicro.toString()),
+  });
+  return ixs;
 }
 
-export async function buildJupiterLendBorrow(
-  p: JupiterLendActionParams
-): Promise<TransactionInstruction[]> {
-  return [buildJupiterLendActionMemo(p.user, "borrow", p.mint, p.amountMicro)];
-}
-
-export async function buildJupiterLendRepay(
-  p: JupiterLendActionParams
-): Promise<TransactionInstruction[]> {
-  return [buildJupiterLendActionMemo(p.user, "repay", p.mint, p.amountMicro)];
-}
-
+/** Withdraw: redeem fTokens → underlying asset from Earn vault. REAL CPI. */
 export async function buildJupiterLendWithdraw(
   p: JupiterLendActionParams
 ): Promise<TransactionInstruction[]> {
-  return [buildJupiterLendActionMemo(p.user, "withdraw", p.mint, p.amountMicro)];
+  const { ixs } = await getWithdrawIxs({
+    connection: p.connection,
+    signer: p.user,
+    asset: p.mint,
+    amount: new BN(p.amountMicro.toString()),
+  });
+  return ixs;
+}
+
+/**
+ * Borrow: open or modify a collateralised borrow position.
+ *
+ * 🚧 Pending integration with intent-executor plumbing:
+ *   - Requires `vaultId` (e.g., SOL-collateral/USDC-borrow market)
+ *   - Requires `positionId` (existing user position or new via getInitPositionIx)
+ *   - Delta form: `getOperateIx({ colAmount: 0, debtAmount: +amountMicro })`
+ *   See @jup-ag/lend/borrow:getOperateIx signature.
+ */
+export async function buildJupiterLendBorrow(
+  p: JupiterLendActionParams
+): Promise<TransactionInstruction[]> {
+  const payload =
+    `sakura:v1:JupiterLend:borrow:user=${p.user.toBase58()}:` +
+    `mint=${p.mint.toBase58()}:amount=${p.amountMicro}:` +
+    `note=vaultId+positionId-required-see-getOperateIx`;
+  return [
+    new TransactionInstruction({
+      programId: MEMO_PROGRAM_ID,
+      keys: [{ pubkey: p.user, isSigner: true, isWritable: false }],
+      data: Buffer.from(payload, "utf8"),
+    }),
+  ];
+}
+
+/** Repay: reduce debt on an existing borrow position. 🚧 same plumbing need as Borrow. */
+export async function buildJupiterLendRepay(
+  p: JupiterLendActionParams
+): Promise<TransactionInstruction[]> {
+  const payload =
+    `sakura:v1:JupiterLend:repay:user=${p.user.toBase58()}:` +
+    `mint=${p.mint.toBase58()}:amount=${p.amountMicro}:` +
+    `note=vaultId+positionId-required-see-getOperateIx`;
+  return [
+    new TransactionInstruction({
+      programId: MEMO_PROGRAM_ID,
+      keys: [{ pubkey: p.user, isSigner: true, isWritable: false }],
+      data: Buffer.from(payload, "utf8"),
+    }),
+  ];
 }

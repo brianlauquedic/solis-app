@@ -239,12 +239,17 @@ async function wrapKaminoAction(
   const inputMint = p.inputMint ?? new (await import("@solana/web3.js")).PublicKey(
     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
   );
-  const ixs = await mod[fn]({ user: p.user, mint: inputMint, amountMicro: p.actionAmountMicro });
+  const ixs = await mod[fn]({
+    connection: p.connection,
+    user: p.user,
+    mint: inputMint,
+    amountMicro: p.actionAmountMicro,
+  });
   return {
     instructions: ixs,
     addressLookupTables: [],
     description: `Kamino ${ActionType[action]} ${p.actionAmountMicro} ${inputMint.toBase58().slice(0, 6)}`,
-    estimatedComputeUnits: 180_000,
+    estimatedComputeUnits: 300_000,
   };
 }
 
@@ -270,7 +275,12 @@ async function wrapJupiterLendAction(
   const inputMint = p.inputMint ?? new (await import("@solana/web3.js")).PublicKey(
     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
   );
-  const ixs = await mod[fn]({ user: p.user, mint: inputMint, amountMicro: p.actionAmountMicro });
+  const ixs = await mod[fn]({
+    connection: p.connection,
+    user: p.user,
+    mint: inputMint,
+    amountMicro: p.actionAmountMicro,
+  });
   return {
     instructions: ixs,
     addressLookupTables: [],

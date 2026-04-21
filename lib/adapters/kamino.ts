@@ -1,52 +1,50 @@
 /**
- * lib/adapters/kamino.ts — Kamino Lending adapter
+ * lib/adapters/kamino.ts — Kamino Lend adapter (REAL CPI via klend-sdk)
  *
- * STATUS (2026-04-22): CPI integration in progress. This file currently
- * produces Memo-based ixs with full action parameters so the on-chain
- * audit trail works end-to-end. Full CPI instructions require the
- * `@kamino-finance/klend-sdk` integration below.
+ * Status (2026-04-22): all 4 actions produce real mainnet CPI ixs.
  *
- * Why not yet finished: Kamino's SDK uses the new `@solana/kit` type
- * system (`Address`, `Rpc`, `TransactionSigner`). Our codebase uses
- * classic `@solana/web3.js` (`PublicKey`, `Connection`,
- * `TransactionInstruction`). Bridging requires ~300 LOC of type-shim,
- * kit RPC client bootstrapping, and per-ix conversion. Planned for a
- * dedicated commit after Jito + Raydium + Jupiter Lend ship.
+ * Kamino's SDK uses the new `@solana/kit` type system (`Address`,
+ * `Rpc<...>`, `TransactionSigner`), while our executor speaks classic
+ * `@solana/web3.js` (`PublicKey`, `Connection`, `TransactionInstruction`).
+ * This adapter bridges the two:
  *
- * SDK integration path (for future commit):
- *   ```ts
- *   import { KaminoMarket, KaminoAction } from "@kamino-finance/klend-sdk";
- *   import { fromLegacyPublicKey } from "@solana/compat";
- *   import { createSolanaRpc } from "@solana/kit";
+ *   Legacy PublicKey        → kit Address     via @solana/compat
+ *   Legacy Connection URL   → kit Rpc         via @solana/kit
+ *   (no real signing)       → NoopSigner      via @solana/signers
+ *   kit Instruction[]       → legacy TransactionInstruction[]  (inlined below)
  *
- *   const rpc = createSolanaRpc(rpcUrl);
- *   const marketAddress = fromLegacyPublicKey(KAMINO_MAIN_MARKET);
- *   const market = await KaminoMarket.load(rpc, marketAddress, SLOT_DURATION_MS);
- *   const obligation = await market.getUserVanillaObligation(ownerAddress);
- *   const action = await KaminoAction.buildDepositTxns(
- *     market, amount, mintAddress, signerStub, obligation,
- *     true, undefined, 0, true, false
- *   );
- *   // action.computeBudgetIxs, setupIxs, lendingIxs, cleanupIxs
- *   // are Array<Instruction> (kit type) — convert each to TransactionInstruction.
- *   ```
+ * KaminoAction returns FOUR instruction arrays — computeBudgetIxs,
+ * setupIxs, lendingIxs, cleanupIxs — which we concatenate in order.
+ * `setupIxs` contains ATA creation + init-obligation for first-time
+ * users, so this is safe to call even when the user has no Kamino
+ * obligation yet.
  *
  * Mainnet constants:
- *   Program:       KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD
- *   Main Market:   7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF
- *   USDC Reserve:  D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59 (main market)
- *   SOL Reserve:   d4A2prbA2whesmvHaL88BH6Ewn5N4bTSU2Ze8P6Bc4Q (main market)
+ *   Program:      KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD
+ *   Main Market:  7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF
+ *   USDC Reserve: D6q6wuQSrifJKZYpR1M8R4YawnLDtDsMmWM1NbBmgJ59
+ *   SOL Reserve:  d4A2prbA2whesmvHaL88BH6Ewn5N4bTSU2Ze8P6Bc4Q
  *
  * References:
- *   - Kamino SDK: https://github.com/Kamino-Finance/klend-sdk
- *   - Kamino API: https://api.kamino.finance/openapi/json
- *   - Main market: https://api.kamino.finance/kamino-market/7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF
+ *   - SDK:    https://www.npmjs.com/package/@kamino-finance/klend-sdk
+ *   - GitHub: https://github.com/Kamino-Finance/klend-sdk
  */
 
 import {
+  Connection,
   PublicKey,
   TransactionInstruction,
 } from "@solana/web3.js";
+import BN from "bn.js";
+import { createSolanaRpc } from "@solana/kit";
+import { fromLegacyPublicKey } from "@solana/compat";
+import { createNoopSigner } from "@solana/signers";
+import {
+  KaminoMarket,
+  KaminoAction,
+  VanillaObligation,
+  type KaminoAction as KaminoActionType,
+} from "@kamino-finance/klend-sdk";
 
 export const KAMINO_LEND_PROGRAM_ID = new PublicKey(
   "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD"
@@ -61,57 +59,165 @@ export const KAMINO_MAIN_SOL_RESERVE = new PublicKey(
   "d4A2prbA2whesmvHaL88BH6Ewn5N4bTSU2Ze8P6Bc4Q"
 );
 
-const MEMO_PROGRAM_ID = new PublicKey(
-  "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
-);
-
-/** Audit-trail-shaped Memo that encodes the intended Kamino action.
- *  Replace with buildKaminoDepositIx (etc.) once klend-sdk is wired in. */
-function buildKaminoActionMemo(
-  user: PublicKey,
-  action: "lend" | "borrow" | "repay" | "withdraw",
-  mint: PublicKey,
-  amountMicro: bigint
-): TransactionInstruction {
-  const payload =
-    `sakura:v1:Kamino:${action}:` +
-    `user=${user.toBase58()}:mint=${mint.toBase58()}:amount=${amountMicro}`;
-  return new TransactionInstruction({
-    programId: MEMO_PROGRAM_ID,
-    keys: [{ pubkey: user, isSigner: true, isWritable: false }],
-    data: Buffer.from(payload, "utf8"),
-  });
-}
-
-// ── Public API (stable contract — implementation switches from Memo to
-//    SDK-driven CPI without changing the signatures below) ────────────
+// Solana's nominal slot time — used by klend-sdk for interest-accrual
+// interpolation between snapshot loads. 460ms is the network median.
+const SLOT_DURATION_MS = 460;
 
 export interface KaminoActionParams {
+  connection: Connection;
   user: PublicKey;
   mint: PublicKey;
   amountMicro: bigint;
 }
 
+// ── kit ↔ legacy bridge ─────────────────────────────────────────────
+
+/**
+ * Convert a kit `IInstruction` to a legacy `TransactionInstruction`.
+ *
+ * Kit's IAccountMeta uses an `AccountRole` enum (0..3); the bit pattern
+ * is: bit 0 = writable, bit 1 = signer.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function kitIxToLegacy(ix: any): TransactionInstruction {
+  const programId = new PublicKey(ix.programAddress as string);
+  const keys = (ix.accounts ?? []).map((a: { address: string; role: number }) => ({
+    pubkey: new PublicKey(a.address),
+    isSigner: (a.role & 0b10) !== 0, // roles 2, 3
+    isWritable: (a.role & 0b01) !== 0, // roles 1, 3
+  }));
+  const data = ix.data ? Buffer.from(ix.data as Uint8Array) : Buffer.alloc(0);
+  return new TransactionInstruction({ programId, keys, data });
+}
+
+function extractAllIxs(action: KaminoActionType): TransactionInstruction[] {
+  return [
+    ...action.computeBudgetIxs,
+    ...action.setupIxs,
+    ...action.lendingIxs,
+    ...action.cleanupIxs,
+  ].map(kitIxToLegacy);
+}
+
+/**
+ * Boot a kit RPC + KaminoMarket instance. Reused across all 4 actions
+ * per call — KaminoMarket.load does a single getMultipleAccounts batch
+ * so the cost is one RPC round trip total.
+ */
+async function bootKamino(connection: Connection): Promise<{
+  market: KaminoMarket;
+  programAddress: ReturnType<typeof fromLegacyPublicKey>;
+}> {
+  const rpc = createSolanaRpc(connection.rpcEndpoint);
+  const programAddress = fromLegacyPublicKey(KAMINO_LEND_PROGRAM_ID);
+  const marketAddress = fromLegacyPublicKey(KAMINO_MAIN_MARKET);
+  const market = await KaminoMarket.load(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rpc as any,
+    marketAddress,
+    SLOT_DURATION_MS,
+    programAddress,
+    true // withReserves
+  );
+  if (!market) {
+    throw new Error(
+      `KaminoMarket.load returned null for ${KAMINO_MAIN_MARKET.toBase58()}`
+    );
+  }
+  return { market, programAddress };
+}
+
+// ── Public API ──────────────────────────────────────────────────────
+
 export async function buildKaminoLend(
   p: KaminoActionParams
 ): Promise<TransactionInstruction[]> {
-  return [buildKaminoActionMemo(p.user, "lend", p.mint, p.amountMicro)];
+  const { market, programAddress } = await bootKamino(p.connection);
+  const userAddr = fromLegacyPublicKey(p.user);
+  const signer = createNoopSigner(userAddr);
+  const obligation = new VanillaObligation(programAddress);
+
+  const action = await KaminoAction.buildDepositTxns(
+    market,
+    new BN(p.amountMicro.toString()),
+    fromLegacyPublicKey(p.mint),
+    signer,
+    obligation,
+    true, // useV2Ixs
+    undefined, // scopeRefreshConfig
+    0, // extraComputeBudget (we add our own CU limit in the executor)
+    true // includeAtaIxs
+  );
+  return extractAllIxs(action);
 }
 
 export async function buildKaminoBorrow(
   p: KaminoActionParams
 ): Promise<TransactionInstruction[]> {
-  return [buildKaminoActionMemo(p.user, "borrow", p.mint, p.amountMicro)];
+  const { market, programAddress } = await bootKamino(p.connection);
+  const userAddr = fromLegacyPublicKey(p.user);
+  const signer = createNoopSigner(userAddr);
+  const obligation = new VanillaObligation(programAddress);
+
+  const action = await KaminoAction.buildBorrowTxns(
+    market,
+    new BN(p.amountMicro.toString()),
+    fromLegacyPublicKey(p.mint),
+    signer,
+    obligation,
+    true,
+    undefined,
+    0,
+    true
+  );
+  return extractAllIxs(action);
 }
 
 export async function buildKaminoRepay(
   p: KaminoActionParams
 ): Promise<TransactionInstruction[]> {
-  return [buildKaminoActionMemo(p.user, "repay", p.mint, p.amountMicro)];
+  const { market, programAddress } = await bootKamino(p.connection);
+  const userAddr = fromLegacyPublicKey(p.user);
+  const signer = createNoopSigner(userAddr);
+  const obligation = new VanillaObligation(programAddress);
+
+  // buildRepayTxns requires currentSlot for accrual-aware repay-all handling
+  const slot = await p.connection.getSlot("confirmed");
+
+  const action = await KaminoAction.buildRepayTxns(
+    market,
+    new BN(p.amountMicro.toString()),
+    fromLegacyPublicKey(p.mint),
+    signer,
+    obligation,
+    true, // useV2Ixs
+    undefined, // scopeRefreshConfig
+    BigInt(slot), // currentSlot
+    undefined, // payer (defaults to signer)
+    0, // extraComputeBudget
+    true // includeAtaIxs
+  );
+  return extractAllIxs(action);
 }
 
 export async function buildKaminoWithdraw(
   p: KaminoActionParams
 ): Promise<TransactionInstruction[]> {
-  return [buildKaminoActionMemo(p.user, "withdraw", p.mint, p.amountMicro)];
+  const { market, programAddress } = await bootKamino(p.connection);
+  const userAddr = fromLegacyPublicKey(p.user);
+  const signer = createNoopSigner(userAddr);
+  const obligation = new VanillaObligation(programAddress);
+
+  const action = await KaminoAction.buildWithdrawTxns(
+    market,
+    new BN(p.amountMicro.toString()),
+    fromLegacyPublicKey(p.mint),
+    signer,
+    obligation,
+    true,
+    undefined,
+    0,
+    true
+  );
+  return extractAllIxs(action);
 }
