@@ -60,6 +60,7 @@ import {
   deriveIntentPDA,
   deriveActionRecordPDA,
   fetchProtocol,
+  SWITCHBOARD_SOL_USD_DEVNET,
 } from "../lib/insurance-pool";
 import {
   computeIntentCommitment,
@@ -323,6 +324,10 @@ async function main() {
       const { proofA, proofB, proofC } = proofToOnchainBytes(proofBundle.proof);
 
       const actionNonce = BigInt(Date.now() + i);
+      // ⚠️ TODO: replace SWITCHBOARD_SOL_USD_DEVNET placeholder with the
+      // real devnet Switchboard SOL/USD pull-feed account before the
+      // bench reflects the full C-full CU cost (expected +15.5k over
+      // C-lite per docs/DUAL_ORACLE_SPEC.md).
       const executeIx = buildExecuteWithIntentProofIx({
         admin: admin.publicKey,
         user: user.publicKey,
@@ -330,6 +335,7 @@ async function main() {
         payerUsdcAta: userUsdcAta,
         feeVault: feeVaultPDA,
         pythPriceAccount: postedPyth,
+        switchboardPriceAccount: SWITCHBOARD_SOL_USD_DEVNET,
         actionNonce,
         actionType: ActionType.Lend,
         actionAmount,

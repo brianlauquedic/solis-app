@@ -55,6 +55,7 @@ import {
   fetchProtocol,
   deserializeActionRecord,
   EXECUTE_ACTION_FEE_MICRO,
+  SWITCHBOARD_SOL_USD_DEVNET,
 } from "../lib/insurance-pool";
 import {
   computeIntentCommitment,
@@ -398,6 +399,13 @@ async function main() {
   const actionNonce = BigInt(Date.now() + 1);
   const [actionRecordPDA] = deriveActionRecordPDA(intentPDA, actionNonce);
 
+  // ⚠️ TODO: replace with real devnet Switchboard SOL/USD pull-feed
+  // pubkey from https://ondemand.switchboard.xyz/solana/devnet. With
+  // the system-program placeholder below, execute_with_intent_proof
+  // will revert on the owner-check — expected until the feed is wired.
+  // See docs/DUAL_ORACLE_SPEC.md §"Dependencies before this can ship".
+  const switchboardPriceAccount = SWITCHBOARD_SOL_USD_DEVNET;
+
   const executeIx = buildExecuteWithIntentProofIx({
     admin: admin.publicKey,
     user: user.publicKey,
@@ -405,10 +413,15 @@ async function main() {
     payerUsdcAta: userUsdcAta,
     feeVault: feeVaultPDA,
     pythPriceAccount: postedPythAccount,
+    switchboardPriceAccount,
     actionNonce,
     actionType,
     actionAmount,
     actionTargetIndex,
+    // Post-C-full: oracle_price_usd_micro is the MEDIAN of Pyth and
+    // Switchboard. Until a real Switchboard feed is wired, we pass
+    // the Pyth-only value and the handler will revert on the
+    // Switchboard owner-check before this mismatch matters.
     oraclePriceUsdMicro: priceMicro,
     oracleSlot: pyth.slot,
     proofA,

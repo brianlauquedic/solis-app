@@ -103,6 +103,29 @@ export const PYTH_SOL_USD_DEVNET = new PublicKey(
   "7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE"
 );
 
+// ── C-full dual oracle (Pyth + Switchboard) ──
+
+/** Switchboard On-Demand program ID (mainnet + devnet — same ID). */
+export const SWITCHBOARD_PROGRAM_ID = new PublicKey(
+  "SBondMDrcV3K4kxZR1HNVT7osZxAHVHgYXL5Ze1oMUv"
+);
+
+/**
+ * Canonical Switchboard On-Demand SOL/USD pull-feed PDA.
+ *
+ * ⚠️ TODO BEFORE MAINNET DEPLOY:
+ * Replace with the actual pull-feed account pubkey for your chosen
+ * SOL/USD feed from https://ondemand.switchboard.xyz/solana/mainnet
+ * or /solana/devnet respectively. The address below is a PLACEHOLDER
+ * (the system program ID so caller errors are obvious at runtime).
+ */
+export const SWITCHBOARD_SOL_USD_DEVNET = new PublicKey(
+  "11111111111111111111111111111111"
+);
+export const SWITCHBOARD_SOL_USD_MAINNET = new PublicKey(
+  "11111111111111111111111111111111"
+);
+
 // ══════════════════════════════════════════════════════════════════════
 // Action-type + Protocol enums (must match circuit bitmap interpretation)
 // ══════════════════════════════════════════════════════════════════════
@@ -594,15 +617,22 @@ export function buildRevokeIntentIx(params: {
  */
 export function buildExecuteWithIntentProofIx(params: {
   admin: PublicKey;
-  user: PublicKey;          // intent owner
-  payer: PublicKey;         // pays ActionRecord rent + $0.01 fee
-  payerUsdcAta: PublicKey;  // source of $0.01 flat fee
-  feeVault: PublicKey;      // protocol fee vault
-  pythPriceAccount: PublicKey;
+  user: PublicKey;                    // intent owner
+  payer: PublicKey;                   // pays ActionRecord rent + $0.01 fee
+  payerUsdcAta: PublicKey;            // source of $0.01 flat fee
+  feeVault: PublicKey;                // protocol fee vault
+  pythPriceAccount: PublicKey;        // Pyth PriceUpdateV2 account
+  switchboardPriceAccount: PublicKey; // Switchboard On-Demand PullFeedAccountData
   actionNonce: bigint;
   actionType: number;       // u8
   actionAmount: bigint;     // u64
   actionTargetIndex: number;// u8
+  /**
+   * MUST be the MEDIAN of Pyth and Switchboard prices (arithmetic mean
+   * with exactly two oracles). Client computes this off-chain; the
+   * on-chain handler verifies equality within ±1 micro-USD after
+   * independently parsing both oracle accounts.
+   */
   oraclePriceUsdMicro: bigint;
   oracleSlot: bigint;
   proofA: Uint8Array;       // 64 bytes
@@ -648,6 +678,7 @@ export function buildExecuteWithIntentProofIx(params: {
       { pubkey: params.payerUsdcAta, isSigner: false, isWritable: true },
       { pubkey: params.feeVault, isSigner: false, isWritable: true },
       { pubkey: params.pythPriceAccount, isSigner: false, isWritable: false },
+      { pubkey: params.switchboardPriceAccount, isSigner: false, isWritable: false },
       { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
@@ -657,6 +688,9 @@ export function buildExecuteWithIntentProofIx(params: {
 
 /** Flat per-action fee hard-coded in the program (10_000 micro-USDC = $0.01). */
 export const EXECUTE_ACTION_FEE_MICRO = 10_000n;
+
+/** Maximum Pyth-vs-Switchboard cross-oracle deviation (bps). 100 = 1%. */
+export const MAX_CROSS_ORACLE_DEVIATION_BPS = 100n;
 
 // ══════════════════════════════════════════════════════════════════════
 // Back-compat instruction-builder aliases
