@@ -1,6 +1,117 @@
 # Sakura
 
-**The bounds layer every agentic wallet will build. Built once, for all of them.**
+**Cryptographic bounds on what an AI agent can do with your money.**
+
+A ZK circuit that verifies every agentic DeFi action against a
+user-signed intent — before the action is allowed to touch user
+funds. Solana's `alt_bn128` pairing syscall executes the verification
+in **126,221 compute units** (measured on devnet, 5/5 runs,
+2026-04-21; see
+[`docs/bench/2026-04-21-cu.json`](docs/bench/2026-04-21-cu.json)),
+roughly one hundredth of a cent per call. A failing proof reverts the
+surrounding transaction before the underlying DeFi instruction can
+execute.
+
+[![Program](https://img.shields.io/badge/devnet%20program-AnszeCRFs…YLp-brightgreen?logo=solana)](https://solscan.io/account/AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp?cluster=devnet)
+[![Verification](https://img.shields.io/badge/alt__bn128-126%2C221%20CU-blue)](./docs/bench/2026-04-21-cu.json)
+[![Tests](https://img.shields.io/badge/invariant%20tests-8%20passing-green)](./__tests__/)
+[![No Token](https://img.shields.io/badge/token-none-lightgrey)](./docs/VALUE_CAPTURE.md)
+
+[→ Live demo (no wallet needed)](https://sakura.app/?demo=true) ·
+[→ Full E2E on devnet in 30s](./scripts/e2e-intent-execute.ts) ·
+[→ Submission · Colosseum Frontier 2026](https://frontier.colosseum.org/)
+
+---
+
+## What happens when an agent tries to act
+
+A user signs once, in natural language:
+
+> *"The agent may lend up to \$1,000 into Kamino or MarginFi for one week."*
+
+The instruction is compressed, via a two-layer Poseidon hash, into a
+thirty-two-byte commitment stored in a Program Derived Address on
+Solana. The user's private policy — per-action cap, allowed-protocol
+set, expiry — remains in the user's browser. Only the 32-byte hash
+reaches the chain.
+
+Every subsequent agent action flows through the same four-check gate:
+
+```
+  agent proposes action
+         │
+         ▼
+  ┌─────────────────────────────────────────────────┐
+  │  1.  Groth16 proof of intent bounds             │   alt_bn128 pairing, 126,221 CU
+  │  2.  Pyth PriceUpdateV2 feed-id + slot re-parse │   oracle not spoofable
+  │  3.  150-slot price-freshness window            │   stale price → revert
+  │  4.  ActionRecord PDA replay guard              │   seeded by (intent, nonce)
+  └─────────────────────────────────────────────────┘
+         │                          │
+     any check fails            all four pass
+         ▼                          ▼
+   TRANSACTION REVERTS       DeFi instruction executes atomically
+   funds never moved         fee vault collects 0.1% + $0.01 flat
+```
+
+The failing case is the important one. Nothing downstream of the gate
+executes until all four checks land. Every action on a Sakura-gated
+wallet is either mathematically in-bounds or it did not happen.
+
+---
+
+## We revert. Others record.
+
+The Solana ecosystem has produced several responses to the agentic-DeFi
+containment problem. Sakura is the only one that acts *before* a bad
+action lands.
+
+| Approach | Mechanism | What happens to an out-of-bounds action |
+|---|---|---|
+| Session-key rotation *(default wallet answer)* | Operator narrows the next key after the fact | Lands, then the next key is narrower |
+| [Signed AI](https://arena.colosseum.org/projects/explore/signed-ai) *(Breakout 2025)* | Each decision signed → compressed-NFT log | Lands, then a receipt is minted |
+| [AgentRunner](https://arena.colosseum.org/projects/explore/agentrunner) *(Cypherpunk 2025)* | Daily Merkle root anchored on-chain | Lands, then rolled into the day's root |
+| [AgentCred](https://arena.colosseum.org/projects/explore/agent-cred) *(Cypherpunk 2025)* | Hot-key / cold-key split + balance monitor | Lands up to the hot-key balance |
+| **Sakura** | **Groth16 proof-of-intent on every action** | **Reverts before the DeFi instruction executes** |
+
+Receipts, audits, and alerts are downstream consolations for a
+decision that already landed. Sakura gates first.
+
+---
+
+## Trust model, precisely stated
+
+Sakura has an admin role. Its scope is bounded by the program, not
+by a promise.
+
+**The admin CAN:**
+
+- Pause new intent signing and action execution (`set_paused`, instant, recoverable)
+- Rotate the admin key (`rotate_admin`, instant)
+- Propose fee-parameter changes within hard-coded ceilings — 2%
+  `execution_fee_bps`, 100% `platform_fee_bps` — through the
+  time-locked governance path
+  (`propose_admin_action` → timelock → `execute_admin_action`)
+
+**The admin CANNOT, even with a fully compromised key:**
+
+- Withdraw from `fee_vault` outside the hard-coded split
+  (the vault is PDA-owned; no admin-withdrawal instruction exists)
+- Alter the Groth16 verifying key (baked into
+  [`zk_verifying_key.rs`](programs/sakura-insurance/src/zk_verifying_key.rs)
+  at deploy time; any change requires redeployment under a new
+  program address)
+- Override a user-signed intent
+- Mutate a user's `ActionRecord` PDA
+- Cause funds to move in violation of an active intent
+
+Pausing the gate is not the same as bypassing it. The eight security
+invariants the program enforces (I1–I8, pairing, commitment binding,
+amount-type-target circuit constraints, USD-value oracle binding,
+Pyth authenticity, replay guard, activity flag, admin-scope) are
+enumerated in the module docstring at
+[`programs/sakura-insurance/src/lib.rs`](programs/sakura-insurance/src/lib.rs).
+Nothing the admin does can remove them.
 
 ---
 
@@ -10,8 +121,6 @@
 > action against a signed, on-chain bounds commitment, before the
 > action is allowed to touch user funds. This repository is that
 > layer.**
-
----
 
 In the first half of 2026, four consumer wallets — Phantom, Backpack,
 Abstract, and Infinex — each release an AI-agent mode. The
@@ -32,33 +141,13 @@ re-settled it, at significant user cost, in **2014 (Mt.Gox), 2019
 to learn the same law: any rule an operator can override will be
 overridden.
 
-Sakura replaces the policy with a circuit. A user signs, once, a
-natural-language instruction — for instance, *"the agent may lend up
-to \$1,000 into Kamino or MarginFi for one week."* The instruction is
-compressed, via a two-layer Poseidon hash, into a thirty-two-byte
-commitment stored in a Program Derived Address on the Solana chain.
-Every subsequent action the agent attempts must produce a Groth16
-zero-knowledge proof establishing that the action falls inside the
-commitment. Solana's `alt_bn128` pairing syscall, merged in protocol
-version 1.17, verifies the proof in 126,221 compute units (measured
-on devnet, 5 of 5 runs, 2026-04-21; see
-[`docs/bench/2026-04-21-cu.json`](docs/bench/2026-04-21-cu.json)) —
-roughly one hundredth of a cent per call. A failing proof reverts the
-surrounding transaction before the underlying DeFi instruction is
-allowed to touch user funds.
-
-The property the circuit encodes is structural. The agent's operator
-cannot widen the rule. The protocol's maintainers cannot widen the
-rule. Neither can an intermediary, a relayer, an indexer, or a
-future governance body. The guarantee is mathematical, not
-procedural.
+Sakura replaces the policy with a circuit. The property the circuit
+encodes is structural. The agent's operator cannot widen the rule.
+The protocol's maintainers cannot widen the rule. Neither can an
+intermediary, a relayer, an indexer, or a future governance body.
+The guarantee is mathematical, not procedural.
 
 Built for [Colosseum Frontier 2026](https://frontier.colosseum.org/).
-Devnet-verified at program
-`AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp`. A full end-to-end
-test — intent signing, proof generation, on-chain pairing
-verification — runs in under thirty seconds from a developer
-terminal: `npx tsx scripts/e2e-intent-execute.ts`.
 
 ---
 
@@ -83,9 +172,7 @@ Sakura's consumer value is a single cryptographic property: an agent
 granted execution authority under a Sakura-gated wallet cannot act
 outside the bounds the user signed. The property is enforced by the
 chain's native pairing verifier on every transaction, not by an
-off-chain monitor. The user's policy — per-action cap, allowed
-protocol set, expiry — remains in the user's browser; only its hash
-reaches the chain.
+off-chain monitor.
 
 The framing matters. Sakura is not a protection layer wrapped around
 a fundamentally operator-trusting architecture. It is an
@@ -139,7 +226,7 @@ structure is **no token**.
 | Visa Interchange | One card authorization | \$30 billion annually |
 | HTTPS certificate authorities | One encrypted handshake | Cents per issuance × 30 years |
 | Gold custody (LBMA class) | One ounce custodianship | 0.3% on \$12 trillion base |
-| **Sakura** | **One agentic action verification** | **See below** |
+| **Sakura** | **One agentic action verification** | **See [`docs/VALUE_CAPTURE.md`](docs/VALUE_CAPTURE.md)** |
 
 Each is fiat-priced, independently operated, and bound by a mechanism
 operators cannot override. Each sustained through multiple generations
@@ -154,56 +241,6 @@ connection in the world, has sustained independent, token-free
 primitives for over three decades, on a fee model measured in cents
 per issuance. The primitive wins by being cheaper and more
 integrated than any rebuild attempt; the economics follow.
-
----
-
-## The ceiling — *what the math says*
-
-```
-  $4B        Solana DeFi TVL reachable via agents
-×   4        major wallet agent modes shipping in 2026
-×   0.1%     routing fee, after first-$10M integrator rebate
-─────
-  ~$4–12M    year-1 routing-fee ARR ceiling
-             (low end: 10% of TVL routes through agent rebalancing;
-              high end: 30%, per Stripe MPP Q3 2025 forecast)
-
-  + x402 per-API-call settlement at $1 USDC via /api/mcp
-  + insurance-pool float on rebate reserves
-  + future MEV-bundle routing via a dedicated Jito relay
-  − (explicitly out of year-1 scope: L2 expansion, enterprise SLA tier)
-```
-
-The calculation does not depend on picking which of the 200 agent
-apps survives. The calculation holds as long as the verifier layer
-is called — independent of caller. That is the structural property
-inherited from the primitives above: HTTPS does not know which
-websites use it, SWIFT does not know whose bank originated the wire,
-and Sakura does not know which agent triggered the gate.
-
-Three additional revenue paths are architecturally in place and
-shipped today:
-
-| Path | Mechanism | Target customer |
-|---|---|---|
-| Enterprise SLA | Off-protocol sale of GPU-backed prover infrastructure, sub-2s latency, 99.9% uptime | Wallets routing > 10,000 actions/hour |
-| MCP server tolls | `$1 USDC per call via HTTP 402` on `/api/mcp` | Tooling vendors, backtest frameworks, AI-agent platforms |
-| MEV bundle routing | Priority-fee rebate via dedicated Jito relay (architecturally in place; not shipped) | Sophisticated agentic wallets seeking atomic-bundle guarantees |
-
-The first mirrors Stripe's early enterprise pricing: the primitive is
-free; the operational guarantees are not. The second monetizes the
-developer surface the protocol exposes to third parties via the
-[x402 Machine Payments Protocol](https://www.x402.org/) — Stripe's
-2025 re-proposal of HTTP 402, now production-deployed on Solana.
-The third is not yet shipped but is not precluded by the
-architecture.
-
-The token-free structure is deliberate. The certificate-authority
-market, the global payments-interchange market, and the internet's
-own name-service market each demonstrate, over decades, that fiat
-fees on integration-depth primitives out-accrue token-gated
-alternatives when the primitive is load-bearing for the ecosystem
-above it. Sakura is designed to fit that category.
 
 ---
 
@@ -254,16 +291,17 @@ and the five constraint families the circuit enforces are:
 The Anchor program
 (`programs/sakura-insurance/src/lib.rs`) exposes three user-facing
 instructions — `sign_intent`, `revoke_intent`, and
-`execute_with_intent_proof` — and three administrative instructions
-— `initialize_protocol`, `rotate_admin`, and `set_paused`. The
-verifying key is baked into
-`programs/sakura-insurance/src/zk_verifying_key.rs` at deploy time
-and cannot be altered without redeployment. `execute_with_intent_proof`
-performs four distinct safety checks in sequence: Groth16 pairing
-verification via the `alt_bn128` syscall, Pyth `PriceUpdateV2` account
-re-parsing, slot-freshness enforcement at 150 slots, and
-`ActionRecord` PDA creation seeded by the `(intent, action_nonce)`
-pair.
+`execute_with_intent_proof` — and six administrative /
+time-locked-governance instructions — `initialize_protocol`,
+`rotate_admin`, `set_paused`, `initialize_guardian`,
+`propose_admin_action`, `execute_admin_action`. The verifying key is
+baked into `programs/sakura-insurance/src/zk_verifying_key.rs` at
+deploy time and cannot be altered without redeployment.
+`execute_with_intent_proof` performs four distinct safety checks in
+sequence: Groth16 pairing verification via the `alt_bn128` syscall,
+Pyth `PriceUpdateV2` account re-parsing, slot-freshness enforcement
+at 150 slots, and `ActionRecord` PDA creation seeded by the
+`(intent, action_nonce)` pair.
 
 The TypeScript client (`lib/insurance-pool.ts`, `lib/zk-proof.ts`,
 `lib/sak-executor.ts`) provides instruction builders, PDA derivers,
@@ -325,12 +363,69 @@ npm run dev
 
 ---
 
+## Objections, answered inline
+
+**Q: ZK on Solana has been done — Blackpool, Encifher, Hush, zkyc. What is novel here?**
+
+The Groth16 + `alt_bn128` stack is not novel. It is Light Protocol's
+open-source crate, operating on a Solana syscall that has been
+production for two years. Our contribution is the **schema**: the
+five-constraint-family compilation from a natural-language intent
+into a 1,909-constraint BN254 circuit, with seven private witnesses
+and a 32-byte intent commitment stored as a PDA, such that every
+agent call must produce a fresh proof against it. The circuit type
+is commodity. The shape of what we prove is not.
+
+**Q: You say "no operator," but `set_paused` is instant admin power.**
+
+See *Trust model, precisely stated* above. Pausing the gate is
+architecturally different from bypassing it. Even a fully compromised
+admin key cannot move user funds in violation of an active intent,
+cannot alter the verifying key, and cannot withdraw from the fee
+vault outside the hard-coded split. Every non-emergency admin action
+routes through a time-locked governance path.
+
+**Q: Why would Phantom integrate Sakura instead of building this themselves?**
+
+The HTTPS-CA analogue is exact. Amazon and Google both operate their
+own TLS endpoints, but neither built its own certificate authority —
+the verifier layer is a single-implementation primitive, and the
+integration math is cheaper than the rebuild math. A four-way
+duplicate investment by Phantom, Backpack, Abstract, and Infinex in
+independent ZK-proof-of-bounds implementations would cost each of
+them measured in engineer-quarters per Solana protocol upgrade.
+
+**Q: Is a \$4–12M year-1 revenue ceiling venture-scale?**
+
+It is a year-1 floor, not a ceiling. The relevant comp is the HTTPS
+certificate-authority market, which took 30 years to reach
+\$500M+/year on a fee model measured in cents per issuance. Visa
+Interchange clears \$30B/year on a similar primitive structure.
+Primitive TAM is defined by the ecosystem the primitive sits under,
+not by the primitive's current revenue. See
+[`docs/VALUE_CAPTURE.md`](docs/VALUE_CAPTURE.md) for unit economics.
+
+**Q: Why no token?**
+
+Three reasons, in priority order. First, the primitives we model —
+HTTPS CAs, SWIFT, Visa Interchange — each demonstrate, over decades,
+that fiat fees on integration-depth primitives out-accrue
+token-gated alternatives when the primitive is load-bearing for the
+ecosystem above it. Second, a token creates a governance surface
+that is, in expectation, a vulnerability; our thesis is that the
+math should decide, not the token-holders. Third, regulatory
+clarity on fee-taking protocols is meaningfully higher than on
+fee-taking token protocols as of 2026.
+
+---
+
 ## Further reading
 
+- [`docs/VALUE_CAPTURE.md`](./docs/VALUE_CAPTURE.md) — revenue model, unit economics, and the no-token decision
 - [`docs/FOR_BUILDERS.md`](./docs/FOR_BUILDERS.md) — integration guide for wallet engineering teams
-- [`docs/VALUE_CAPTURE.md`](./docs/VALUE_CAPTURE.md) — no-token economic model and treasury governance
 - [`docs/PITCH.md`](./docs/PITCH.md) — pitch scripts (60s / 3min / 8min)
 - [`docs/SUBMISSION_CHECKLIST.md`](./docs/SUBMISSION_CHECKLIST.md) — hackathon submission prerequisites
+- [`COMPETITIVE_ANALYSIS_2026.md`](./COMPETITIVE_ANALYSIS_2026.md) — concise competitor matrix (signed-ai, agentrunner, agent-cred, urani, solprism)
 
 ---
 
