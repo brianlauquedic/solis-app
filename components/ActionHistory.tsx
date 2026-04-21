@@ -16,7 +16,14 @@ import {
   CircleSlash,
   Wallet,
   Clock,
+  ExternalLink,
 } from "lucide-react";
+import {
+  getDemoActions,
+  DEMO_ACTION_EVENT,
+  DEMO_ACTIONS_KEY,
+  solscanTxUrl,
+} from "@/lib/demo-store";
 import { useWallet } from "@/contexts/WalletContext";
 import {
   ActionType,
@@ -55,6 +62,10 @@ async function getActionRecordDiscriminator(): Promise<Buffer> {
 interface ActionRow {
   pda: string;
   state: ActionRecordState;
+  /** Optional external audit link. Real on-chain rows derive this from
+   *  `pda` → Solscan account URL; demo rows link to one of the 5 bench
+   *  signatures from docs/bench/2026-04-21-cu.json. */
+  permalink?: string;
 }
 
 // Base58 encoder for the memcmp filter (avoids pulling bs58).
@@ -83,74 +94,53 @@ function bs58Encode(bytes: Buffer): string {
 // Demo-mode: same placeholder user Pubkey as IntentSigner uses.
 const DEMO_USER_PUBKEY = "11111111111111111111111111111111";
 
-// Seed a believable trio of agent-executed actions so the audit trail
-// isn't empty when a user enters ?demo=true. Timestamps are anchored
-// to Date.now() so they feel fresh on every load.
-function buildDemoHistory(): { intent: IntentState; rows: ActionRow[] } {
+/**
+ * Transform the localStorage-backed demo action array into the
+ * ActionRow + IntentState shapes the render path already knows.
+ * Returns intent=null when no demo signs yet, so IntentSummary
+ * shows its "簽署一份以授予代理受約束的執行權限" empty state.
+ */
+function readDemoHistory(): { intent: IntentState | null; rows: ActionRow[] } {
+  const entries = getDemoActions();
+  if (entries.length === 0) return { intent: null, rows: [] };
+
   const userPk = new PublicKey(DEMO_USER_PUBKEY);
+  const newestFirst = [...entries].sort(
+    (a, b) => Number(BigInt(b.ts) - BigInt(a.ts))
+  );
+  const latest = newestFirst[0]!;
   const now = BigInt(Math.floor(Date.now() / 1000));
   const intent: IntentState = {
     user: userPk,
-    intentCommitment: Buffer.alloc(32, 0x73), // "s" repeated — visible demo marker
-    signedAt: now - 3_600n,
-    expiresAt: now + 23n * 3_600n,
-    actionsExecuted: 3n,
+    intentCommitment: Buffer.from(latest.commitmentHex, "hex"),
+    signedAt: BigInt(latest.ts),
+    // Demo intents have a fixed 24h horizon from the most recent sign.
+    expiresAt: BigInt(latest.ts) + 24n * 3_600n > now
+      ? BigInt(latest.ts) + 24n * 3_600n
+      : now + 3_600n,
+    actionsExecuted: BigInt(entries.length),
     isActive: true,
     bump: 255,
   };
-  const zeroPda = userPk;
-  const mkProofFp = (seed: number): Buffer => {
-    const b = Buffer.alloc(32);
-    for (let i = 0; i < 32; i++) b[i] = (seed * 31 + i * 7) & 0xff;
-    return b;
-  };
-  const rows: ActionRow[] = [
-    {
-      pda: "DemoAct1111111111111111111111111111111111111",
-      state: {
-        intent: zeroPda,
-        actionNonce: 3n,
-        actionType: ActionType.Lend,
-        actionAmount: 320_000_000n, // 320 USDC
-        actionTargetIndex: ProtocolId.Kamino,
-        oraclePriceUsdMicro: 180_500_000n,
-        oracleSlot: 333_333_003n,
-        ts: now - 180n,
-        proofFingerprint: mkProofFp(3),
-        bump: 255,
-      },
+
+  const rows: ActionRow[] = newestFirst.map((e, idx) => ({
+    // Deterministic PDA-ish identifier (not a real Pubkey — purely
+    // a React key). Use the demo signature to guarantee uniqueness.
+    pda: `demo:${e.demoSignature.slice(0, 16)}:${idx}`,
+    permalink: solscanTxUrl(e.benchRefSignature),
+    state: {
+      intent: userPk,
+      actionNonce: BigInt(e.nonce),
+      actionType: e.actionType,
+      actionAmount: BigInt(e.actionAmount),
+      actionTargetIndex: e.actionTargetIndex,
+      oraclePriceUsdMicro: BigInt(e.oraclePriceUsdMicro),
+      oracleSlot: BigInt(e.oracleSlot),
+      ts: BigInt(e.ts),
+      proofFingerprint: Buffer.from(e.proofFingerprintHex, "hex"),
+      bump: 255,
     },
-    {
-      pda: "DemoAct2222222222222222222222222222222222222",
-      state: {
-        intent: zeroPda,
-        actionNonce: 2n,
-        actionType: ActionType.Swap,
-        actionAmount: 150_000_000n, // 150 USDC
-        actionTargetIndex: ProtocolId.Jupiter,
-        oraclePriceUsdMicro: 181_200_000n,
-        oracleSlot: 333_332_900n,
-        ts: now - 1_800n,
-        proofFingerprint: mkProofFp(7),
-        bump: 255,
-      },
-    },
-    {
-      pda: "DemoAct3333333333333333333333333333333333333",
-      state: {
-        intent: zeroPda,
-        actionNonce: 1n,
-        actionType: ActionType.Lend,
-        actionAmount: 500_000_000n, // 500 USDC
-        actionTargetIndex: ProtocolId.MarginFi,
-        oraclePriceUsdMicro: 179_900_000n,
-        oracleSlot: 333_332_600n,
-        ts: now - 3_600n,
-        proofFingerprint: mkProofFp(11),
-        bump: 255,
-      },
-    },
-  ];
+  }));
   return { intent, rows };
 }
 
@@ -162,10 +152,10 @@ export default function ActionHistory() {
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    // Demo mode: skip RPC and load a static 3-action sample so the
-    // audit panel shows realistic on-chain rows without a real wallet.
+    // Demo mode: don't RPC — read localStorage. Each sign in IntentSigner
+    // appends an entry; we render them as on-chain audit rows.
     if (isDemo && !walletAddress) {
-      const { intent: demoIntent, rows: demoRows } = buildDemoHistory();
+      const { intent: demoIntent, rows: demoRows } = readDemoHistory();
       setIntent(demoIntent);
       setRows(demoRows);
       setLoading(false);
@@ -202,7 +192,13 @@ export default function ActionHistory() {
       const parsed: ActionRow[] = [];
       for (const { pubkey, account } of accounts) {
         const state = deserializeActionRecord(Buffer.from(account.data));
-        if (state) parsed.push({ pda: pubkey.toBase58(), state });
+        if (state) {
+          parsed.push({
+            pda: pubkey.toBase58(),
+            state,
+            permalink: `https://solscan.io/account/${pubkey.toBase58()}?cluster=devnet`,
+          });
+        }
       }
       parsed.sort((a, b) => Number(b.state.ts - a.state.ts));
       setRows(parsed);
@@ -218,6 +214,22 @@ export default function ActionHistory() {
     const id = setInterval(refresh, 15_000);
     return () => clearInterval(id);
   }, [refresh]);
+
+  // Demo-mode live reactivity: re-render the moment a demo sign
+  // appends a new entry to the localStorage store.
+  useEffect(() => {
+    if (!isDemo) return;
+    const onSameTab = () => refresh();
+    const onCrossTab = (e: StorageEvent) => {
+      if (e.key === DEMO_ACTIONS_KEY) refresh();
+    };
+    window.addEventListener(DEMO_ACTION_EVENT, onSameTab);
+    window.addEventListener("storage", onCrossTab);
+    return () => {
+      window.removeEventListener(DEMO_ACTION_EVENT, onSameTab);
+      window.removeEventListener("storage", onCrossTab);
+    };
+  }, [isDemo, refresh]);
 
   if (!walletAddress && !isDemo) {
     return (
@@ -392,8 +404,11 @@ function ActionRowView({ row }: { row: ActionRow }) {
   const s = row.state;
   const tsMs = Number(s.ts) * 1000;
   const priceUsd = Number(s.oraclePriceUsdMicro) / 1e6;
-  return (
-    <div className="rounded-md border border-[var(--border)] bg-[var(--bg-base)]/70 px-3 py-2.5 transition-colors hover:border-[var(--border-light)] hover:bg-[var(--bg-card-2)]/60">
+  const rowClass =
+    "block rounded-md border border-[var(--border)] bg-[var(--bg-base)]/70 px-3 py-2.5 transition-colors hover:border-[var(--accent-mid)] hover:bg-[var(--bg-card-2)]/60";
+
+  const inner = (
+    <>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <CircleCheck className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "var(--green)" }} />
@@ -404,6 +419,9 @@ function ActionRowView({ row }: { row: ActionRow }) {
           <span className="font-mono text-[12px] text-[var(--text-primary)]">
             {ProtocolId[s.actionTargetIndex] ?? `protocol#${s.actionTargetIndex}`}
           </span>
+          {row.permalink && (
+            <ExternalLink className="ml-1 h-3 w-3 text-[var(--text-muted)]" />
+          )}
         </div>
         <span className="font-mono text-[10px] text-[var(--text-muted)]">
           {new Date(tsMs).toLocaleString(undefined, {
@@ -443,6 +461,21 @@ function ActionRowView({ row }: { row: ActionRow }) {
           </span>
         </span>
       </div>
-    </div>
+    </>
   );
+
+  if (row.permalink) {
+    return (
+      <a
+        href={row.permalink}
+        target="_blank"
+        rel="noreferrer"
+        title="View on Solscan (devnet)"
+        className={rowClass}
+      >
+        {inner}
+      </a>
+    );
+  }
+  return <div className={rowClass}>{inner}</div>;
 }

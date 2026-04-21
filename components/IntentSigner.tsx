@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import SealStampOverlay from "@/components/SealStampOverlay";
+import { appendDemoAction } from "@/lib/demo-store";
 import {
   Connection,
   PublicKey,
@@ -278,6 +279,43 @@ export default function IntentSigner() {
           signature: demoSig,
         };
         localStorage.setItem("sakura:intent:demo", JSON.stringify(secrets));
+
+        // Append a synthetic ActionRecord row so the 鏈上審計 panel
+        // reflects THIS particular sign. We pick the first selected
+        // protocol + first selected action from the form, and a
+        // plausible amount (maxAmount * 0.4, a "realistic" agent action
+        // well inside the signed cap).
+        const firstProtocol =
+          Array.from(selectedProtocols)[0] ?? 0; // ProtocolId.Kamino fallback
+        const firstAction =
+          Array.from(selectedActions)[0] ?? 1;   // ActionType.Lend fallback
+        const actionAmountMicro =
+          (maxAmountMicro * 2n) / 5n; // 40% of cap
+        // Strip any "0x" prefix from hex before storing — ActionHistory
+        // reconstructs Buffers via Buffer.from(hex, "hex") which would
+        // otherwise parse "0x..." as invalid hex and produce an empty buf.
+        const hexClean = hex.replace(/^0x/i, "");
+        const proofFpHex = hexClean.slice(0, 64).padEnd(64, "0");
+        // Oracle price: jitter ±$3 around ~$180 so consecutive demo
+        // signs don't all show the same price.
+        const priceJitter = BigInt(
+          Math.floor((Number(nonce) % 600) - 300) * 1_000
+        );
+        const oraclePriceMicro = 180_000_000n + priceJitter;
+        const oracleSlot = 333_333_000n + (nonce % 1000n);
+        appendDemoAction({
+          nonce: nonce.toString(),
+          actionType: firstAction,
+          actionAmount: actionAmountMicro.toString(),
+          actionTargetIndex: firstProtocol,
+          oraclePriceUsdMicro: oraclePriceMicro.toString(),
+          oracleSlot: oracleSlot.toString(),
+          ts: Math.floor(Date.now() / 1000).toString(),
+          proofFingerprintHex: proofFpHex,
+          demoSignature: demoSig,
+          commitmentHex: hexClean,
+        });
+
         setStatus({ kind: "success", signature: demoSig });
         return;
       }
