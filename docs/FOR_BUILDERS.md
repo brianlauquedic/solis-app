@@ -76,6 +76,10 @@ import {
   pubkeyToFieldBytes,
   type IntentWitness,
 } from "./sakura/lib/zk-proof";
+// Note: @solana/spl-token is not listed directly in Sakura's own
+// `package.json`; it is pulled in transitively via Solana tooling
+// Sakura itself uses. If your project does not already depend on it,
+// install it explicitly: `npm install @solana/spl-token`
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import {
   Connection,
@@ -165,7 +169,12 @@ const signTx = new VersionedTransaction(
         feeVault: feeVaultPDA,
         intentCommitment: Buffer.from(commitmentBytes),
         expiresAt,             // bigint, unix seconds
-        feeMicro: feeFromMaxUsdValue(maxUsdValue),  // 0.1% of max_usd_value, capped at 1e9 ($1000)
+        // Fee is 0.1% of max_usd_value, capped at the program's
+        // MAX_DECLARED_FEE_MICRO = 1_000_000_000 (i.e. $1,000):
+        feeMicro:
+          maxUsdValue / 1000n > 1_000_000_000n
+            ? 1_000_000_000n
+            : maxUsdValue / 1000n,
       }),
     ],
   }).compileToV0Message()

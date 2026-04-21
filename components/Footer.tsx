@@ -11,10 +11,11 @@ export default function Footer() {
   const { t, lang } = useLang();
   const { setShowLanding } = useWallet();
 
-  const resources = [
-    { label: t("footerDocs"),     href: "/docs"      },
-    { label: t("footerUseCases"), href: "/use-cases" },
-    { label: "MCP API",           href: "/mcp"       },
+  const resources: Array<{ label: string; href: string; external?: boolean }> = [
+    { label: t("footerUserGuide"), href: "https://github.com/brianlauquedic/sakura-app/blob/main/docs/FOR_USERS.md", external: true },
+    { label: t("footerDocs"),      href: "/docs"      },
+    { label: t("footerUseCases"),  href: "/use-cases" },
+    { label: "MCP API",            href: "/mcp"       },
   ];
 
   const social = [
@@ -68,7 +69,15 @@ export default function Footer() {
             {t("footerResourcesSection")}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {resources.map(item => (
+            {resources.map(item => item.external ? (
+              <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer"
+                style={linkStyle}
+                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = "1"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = "0.65"; }}
+              >
+                {item.label} ↗
+              </a>
+            ) : (
               <Link key={item.href} href={item.href}
                 style={linkStyle}
                 onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = "1"; }}
