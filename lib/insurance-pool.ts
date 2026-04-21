@@ -34,6 +34,46 @@ import {
 import crypto from "crypto";
 
 // ══════════════════════════════════════════════════════════════════════
+// Big-int LE helpers — browser-polyfill-safe
+//
+// Some Next.js bundles ship a Buffer polyfill (`buffer@6` / feross) whose
+// `writeBigUInt64LE` / `readBigUInt64LE` / `readBigInt64LE` methods end up
+// as `undefined` after minification, producing runtime errors like
+// "i.writeBigUInt64LE is not a function". We avoid the polyfill's bigint
+// surface entirely by reading/writing 8 little-endian bytes via plain
+// indexed access, which works on any `Uint8Array` (all Buffer instances
+// are Uint8Arrays).
+// ══════════════════════════════════════════════════════════════════════
+
+function writeU64LE(buf: Uint8Array, value: bigint, offset: number): void {
+  if (value < 0n) {
+    throw new Error(`writeU64LE: value must be >= 0; got ${value}`);
+  }
+  if (value >= 1n << 64n) {
+    throw new Error(`writeU64LE: value overflows u64: ${value}`);
+  }
+  let v = value;
+  for (let i = 0; i < 8; i++) {
+    buf[offset + i] = Number(v & 0xffn);
+    v >>= 8n;
+  }
+}
+
+function readU64LE(buf: Uint8Array, offset: number): bigint {
+  let v = 0n;
+  for (let i = 7; i >= 0; i--) {
+    v = (v << 8n) | BigInt(buf[offset + i]);
+  }
+  return v;
+}
+
+function readI64LE(buf: Uint8Array, offset: number): bigint {
+  const u = readU64LE(buf, offset);
+  // Two's-complement sign-extend: if the high bit is set, value is negative.
+  return u >= 1n << 63n ? u - (1n << 64n) : u;
+}
+
+// ══════════════════════════════════════════════════════════════════════
 // Constants — Program ID, token mints
 // ══════════════════════════════════════════════════════════════════════
 
@@ -143,7 +183,7 @@ export function deriveActionRecordPDA(
   programId: PublicKey = SAKURA_INSURANCE_PROGRAM_ID
 ): [PublicKey, number] {
   const nonceBuf = Buffer.alloc(8);
-  nonceBuf.writeBigUInt64LE(actionNonce, 0);
+  writeU64LE(nonceBuf, actionNonce, 0);
   return PublicKey.findProgramAddressSync(
     [Buffer.from("sakura_action"), intent.toBuffer(), nonceBuf],
     programId
@@ -167,7 +207,7 @@ export function derivePendingAdminActionPDA(
   programId: PublicKey = SAKURA_INSURANCE_PROGRAM_ID
 ): [PublicKey, number] {
   const idBuf = Buffer.alloc(8);
-  idBuf.writeBigUInt64LE(actionId, 0);
+  writeU64LE(idBuf, actionId, 0);
   return PublicKey.findProgramAddressSync(
     [Buffer.from("sakura_pending"), protocol.toBuffer(), idBuf],
     programId
@@ -276,8 +316,8 @@ export function deserializeProtocol(data: Buffer): IntentProtocolState | null {
   const usdcMint = new PublicKey(data.subarray(o, o + 32)); o += 32;
   const feeVault = new PublicKey(data.subarray(o, o + 32)); o += 32;
   const platformTreasury = new PublicKey(data.subarray(o, o + 32)); o += 32;
-  const totalIntentsSigned = data.readBigUInt64LE(o); o += 8;
-  const totalActionsExecuted = data.readBigUInt64LE(o); o += 8;
+  const totalIntentsSigned = readU64LE(data, o); o += 8;
+  const totalActionsExecuted = readU64LE(data, o); o += 8;
   const executionFeeBps = data.readUInt16LE(o); o += 2;
   const platformFeeBps = data.readUInt16LE(o); o += 2;
   const paused = data.readUInt8(o) === 1; o += 1;
@@ -305,9 +345,9 @@ export function deserializeIntent(data: Buffer): IntentState | null {
   let o = 8;
   const user = new PublicKey(data.subarray(o, o + 32)); o += 32;
   const intentCommitment = Buffer.from(data.subarray(o, o + 32)); o += 32;
-  const signedAt = data.readBigInt64LE(o); o += 8;
-  const expiresAt = data.readBigInt64LE(o); o += 8;
-  const actionsExecuted = data.readBigUInt64LE(o); o += 8;
+  const signedAt = readI64LE(data, o); o += 8;
+  const expiresAt = readI64LE(data, o); o += 8;
+  const actionsExecuted = readU64LE(data, o); o += 8;
   const isActive = data.readUInt8(o) === 1; o += 1;
   const bump = data.readUInt8(o);
 
@@ -331,13 +371,13 @@ export function deserializeActionRecord(
 
   let o = 8;
   const intent = new PublicKey(data.subarray(o, o + 32)); o += 32;
-  const actionNonce = data.readBigUInt64LE(o); o += 8;
+  const actionNonce = readU64LE(data, o); o += 8;
   const actionType = data.readUInt8(o); o += 1;
-  const actionAmount = data.readBigUInt64LE(o); o += 8;
+  const actionAmount = readU64LE(data, o); o += 8;
   const actionTargetIndex = data.readUInt8(o); o += 1;
-  const oraclePriceUsdMicro = data.readBigUInt64LE(o); o += 8;
-  const oracleSlot = data.readBigUInt64LE(o); o += 8;
-  const ts = data.readBigInt64LE(o); o += 8;
+  const oraclePriceUsdMicro = readU64LE(data, o); o += 8;
+  const oracleSlot = readU64LE(data, o); o += 8;
+  const ts = readI64LE(data, o); o += 8;
   const proofFingerprint = Buffer.from(data.subarray(o, o + 32)); o += 32;
   const bump = data.readUInt8(o);
 
@@ -467,15 +507,14 @@ export function buildSignIntentIx(params: {
   IX_SIGN_INTENT.copy(data, o); o += 8;
   params.intentCommitment.copy(data, o); o += 32;
   // expiresAt is declared i64 on-chain but is always a positive Unix
-  // timestamp in practice. Some browser Buffer polyfills omit
-  // `writeBigInt64LE` while keeping `writeBigUInt64LE`; writing a
-  // non-negative bigint as unsigned is bit-identical to signed and
-  // avoids the "writeBigInt64LE is not a function" runtime error.
+  // timestamp in practice. Writing a non-negative bigint as unsigned is
+  // bit-identical to signed (two's-complement) and our `writeU64LE`
+  // helper sidesteps Buffer-polyfill bigint-method gaps entirely.
   if (params.expiresAt < 0n) {
     throw new Error(`expiresAt must be >= 0; got ${params.expiresAt}`);
   }
-  data.writeBigUInt64LE(params.expiresAt, o); o += 8;
-  data.writeBigUInt64LE(params.feeMicro, o);
+  writeU64LE(data, params.expiresAt, o); o += 8;
+  writeU64LE(data, params.feeMicro, o);
 
   return new TransactionInstruction({
     programId: SAKURA_INSURANCE_PROGRAM_ID,
@@ -515,7 +554,7 @@ export function buildRevokeIntentIx(params: {
   const data = Buffer.alloc(8 + 8);
   let o = 0;
   IX_REVOKE_INTENT.copy(data, o); o += 8;
-  data.writeBigUInt64LE(params.feeMicro, o);
+  writeU64LE(data, params.feeMicro, o);
 
   return new TransactionInstruction({
     programId: SAKURA_INSURANCE_PROGRAM_ID,
@@ -584,12 +623,12 @@ export function buildExecuteWithIntentProofIx(params: {
   const data = Buffer.alloc(8 + 8 + 1 + 8 + 1 + 8 + 8 + 64 + 128 + 64);
   let o = 0;
   IX_EXECUTE_WITH_INTENT_PROOF.copy(data, o); o += 8;
-  data.writeBigUInt64LE(params.actionNonce, o); o += 8;
+  writeU64LE(data, params.actionNonce, o); o += 8;
   data.writeUInt8(params.actionType, o); o += 1;
-  data.writeBigUInt64LE(params.actionAmount, o); o += 8;
+  writeU64LE(data, params.actionAmount, o); o += 8;
   data.writeUInt8(params.actionTargetIndex, o); o += 1;
-  data.writeBigUInt64LE(params.oraclePriceUsdMicro, o); o += 8;
-  data.writeBigUInt64LE(params.oracleSlot, o); o += 8;
+  writeU64LE(data, params.oraclePriceUsdMicro, o); o += 8;
+  writeU64LE(data, params.oracleSlot, o); o += 8;
   Buffer.from(params.proofA).copy(data, o); o += 64;
   Buffer.from(params.proofB).copy(data, o); o += 128;
   Buffer.from(params.proofC).copy(data, o); o += 64;
@@ -704,7 +743,7 @@ export function buildProposeAdminActionIx(params: {
   const data = Buffer.alloc(8 + 8 + 1 + 32);
   let o = 0;
   IX_PROPOSE_ADMIN_ACTION.copy(data, o); o += 8;
-  data.writeBigUInt64LE(params.actionId, o); o += 8;
+  writeU64LE(data, params.actionId, o); o += 8;
   data.writeUInt8(params.actionType, o); o += 1;
   params.payload.copy(data, o);
 
@@ -729,7 +768,7 @@ export function buildExecuteAdminActionIx(params: {
 
   const data = Buffer.alloc(8 + 8);
   IX_EXECUTE_ADMIN_ACTION.copy(data, 0);
-  data.writeBigUInt64LE(params.actionId, 8);
+  writeU64LE(data, params.actionId, 8);
 
   return new TransactionInstruction({
     programId: SAKURA_INSURANCE_PROGRAM_ID,
@@ -753,7 +792,7 @@ export function buildCancelAdminActionIx(params: {
 
   const data = Buffer.alloc(8 + 8);
   IX_CANCEL_ADMIN_ACTION.copy(data, 0);
-  data.writeBigUInt64LE(params.actionId, 8);
+  writeU64LE(data, params.actionId, 8);
 
   return new TransactionInstruction({
     programId: SAKURA_INSURANCE_PROGRAM_ID,
