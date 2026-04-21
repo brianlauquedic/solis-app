@@ -421,8 +421,9 @@ fee-taking token protocols as of 2026.
 
 ## Further reading
 
-- [`docs/VALUE_CAPTURE.md`](./docs/VALUE_CAPTURE.md) — revenue model, unit economics, and the no-token decision
+- [`docs/FOR_USERS.md`](./docs/FOR_USERS.md) — **retail user guide · 繁體中文** · how to sign a good intent without regretting it (the one thing a retail user actually does)
 - [`docs/FOR_BUILDERS.md`](./docs/FOR_BUILDERS.md) — integration guide for wallet engineering teams
+- [`docs/VALUE_CAPTURE.md`](./docs/VALUE_CAPTURE.md) — revenue model, unit economics, and the no-token decision
 - [`docs/PITCH.md`](./docs/PITCH.md) — pitch scripts (60s / 3min / 8min)
 - [`docs/SUBMISSION_CHECKLIST.md`](./docs/SUBMISSION_CHECKLIST.md) — hackathon submission prerequisites
 - [`COMPETITIVE_ANALYSIS_2026.md`](./COMPETITIVE_ANALYSIS_2026.md) — concise competitor matrix (signed-ai, agentrunner, agent-cred, urani, solprism)
