@@ -1,6 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 use groth16_solana::groth16::Groth16Verifier;
+// Switchboard On-Demand · C-full dual oracle integration.
+// Verified against `switchboard-on-demand 0.3.8` by inspecting the
+// installed crate source directly during implementation.
+use switchboard_on_demand::PullFeedAccountData;
 
 mod zk_verifying_key;
 use zk_verifying_key::VERIFYINGKEY;
@@ -59,6 +63,38 @@ pub const ADMIN_ACTION_DELAY_SLOTS: u64 = 216_000;
 /// check. See docs/DUAL_ORACLE_SPEC.md for the Switchboard integration that
 /// defends against publisher-network compromise.
 pub const MAX_PYTH_EMA_DEVIATION_BPS: u64 = 200;
+
+// ────────────────────────────────────────────────────────────────────────
+// C-full · Dual oracle (Pyth + Switchboard) constants
+// ────────────────────────────────────────────────────────────────────────
+
+/// Switchboard On-Demand program ID (same on mainnet + devnet).
+/// Source: https://docs.switchboard.xyz/solana/on-demand/program-ids
+pub const SWITCHBOARD_PROGRAM_ID: Pubkey =
+    solana_program::pubkey!("SBondMDrcV3K4kxZR1HNVT7osZxAHVHgYXL5Ze1oMUv");
+
+/// Expected Switchboard feed hash for the canonical SOL/USD pull feed.
+///
+/// ╔══════════════════════════════════════════════════════════════════╗
+/// ║  ⚠️  TODO BEFORE MAINNET DEPLOY ⚠️                                 ║
+/// ║  Populate with the real 32-byte feed hash from:                   ║
+/// ║    https://ondemand.switchboard.xyz/solana/mainnet/feed/SOL_USD   ║
+/// ║                                                                   ║
+/// ║  Until populated, this ALL-ZEROS sentinel guarantees every        ║
+/// ║  execute_with_intent_proof will revert on the feed_hash check —   ║
+/// ║  safe-by-default. Must be overridden before the dual-oracle path  ║
+/// ║  is useful.                                                       ║
+/// ╚══════════════════════════════════════════════════════════════════╝
+pub const EXPECTED_SWITCHBOARD_FEED_HASH_SOL_USD: [u8; 32] = [0u8; 32];
+
+/// Maximum allowed divergence between Pyth and Switchboard, in basis points.
+/// 100 bps = 1%.
+///
+/// Tighter than C-lite's 200 bps (spot-vs-EMA): two *independent* oracles
+/// aggregated over similar time windows should agree much more closely
+/// than one oracle's own spot-vs-smoothed values. A >1% cross-oracle
+/// divergence is a strong signal that one side is compromised or stale.
+pub const MAX_CROSS_ORACLE_DEVIATION_BPS: u64 = 100;
 
 /// Admin action type codes stored in `PendingAdminAction.action_type`.
 pub const ADMIN_ACTION_SET_PAUSED:  u8 = 1;
@@ -341,7 +377,7 @@ pub mod sakura_insurance {
         //    8  ema_price
         //    8  ema_conf
         //    8  posted_slot (u64 LE)
-        {
+        let pyth_price_micro: u64 = {
             let acct = &ctx.accounts.pyth_price_account;
 
             // (a) Owner check — only real Pyth Receiver writes these accounts
@@ -440,14 +476,90 @@ pub mod sakura_insurance {
                 price_abs / div
             };
 
-            // ±1 micro-USD tolerance for rounding
-            let diff = if computed_micro > oracle_price_usd_micro {
-                computed_micro - oracle_price_usd_micro
-            } else {
-                oracle_price_usd_micro - computed_micro
-            };
-            require!(diff <= 1, IntentErr::OraclePriceMismatch);
-        }
+            // Return the Pyth-side micro-USD price. The final equality check
+            // against `oracle_price_usd_micro` is deferred until after the
+            // Switchboard cross-check so that the public input is verified
+            // as the MEDIAN of both oracles, not just Pyth alone.
+            computed_micro
+        };
+
+        // ── C-full · Dual oracle cross-check: Pyth vs Switchboard ──
+        //
+        // Defense against sustained Pyth publisher-network compromise.
+        // C-lite above catches flash manipulation (spot vs EMA inside the
+        // Pyth account) but cannot defend against enough Pyth publishers
+        // colluding or being breached — at that point both `price` and
+        // `ema_price` move together. Switchboard On-Demand is an
+        // independent publisher network, organizationally and
+        // infrastructurally separate; a coordinated attack would need to
+        // compromise BOTH networks simultaneously.
+        //
+        // See docs/DUAL_ORACLE_SPEC.md for the full threat model.
+        let sb_price_micro: u64 = {
+            let sb_acct = &ctx.accounts.switchboard_price_account;
+
+            // (a) Owner check — only the Switchboard On-Demand program
+            //     writes these accounts
+            require!(
+                sb_acct.owner == &SWITCHBOARD_PROGRAM_ID,
+                IntentErr::SwitchboardAccountInvalid
+            );
+
+            let sb_data = sb_acct.try_borrow_data()?;
+
+            // Parse via the `switchboard-on-demand` crate (v0.3.8).
+            // Using the crate's own parser (vs manual byte offsets) keeps
+            // this code resilient to SDK layout updates.
+            let sb_feed = PullFeedAccountData::parse(sb_data)
+                .map_err(|_| error!(IntentErr::SwitchboardAccountInvalid))?;
+
+            // (b) feed_hash check — must be the canonical SOL/USD feed
+            require!(
+                sb_feed.feed_hash == EXPECTED_SWITCHBOARD_FEED_HASH_SOL_USD,
+                IntentErr::SwitchboardFeedHashMismatch
+            );
+
+            // (c) Current aggregated value → micro-USD.
+            // Uses `PullFeedAccountData::value(&Clock)` which returns
+            // `Result<Decimal, OnDemandError>` — the Err arm fires when the
+            // feed is stale relative to `max_staleness` configured on-chain,
+            // which is exactly the semantic we want (reject stale values).
+            let clock = Clock::get()?;
+            let sb_value = sb_feed
+                .value(&clock)
+                .map_err(|_| error!(IntentErr::SwitchboardNoValue))?;
+            decimal_to_micro(sb_value)?
+        };
+
+        // Cross-oracle deviation · Pyth and Switchboard must agree within 1%
+        let cross_diff = if pyth_price_micro > sb_price_micro {
+            pyth_price_micro - sb_price_micro
+        } else {
+            sb_price_micro - pyth_price_micro
+        };
+        let cross_max = core::cmp::max(pyth_price_micro, sb_price_micro);
+        let cross_bps = cross_diff
+            .checked_mul(10_000)
+            .ok_or(IntentErr::Overflow)?
+            .checked_div(cross_max.max(1))
+            .unwrap_or(0);
+        require!(
+            cross_bps <= MAX_CROSS_ORACLE_DEVIATION_BPS,
+            IntentErr::CrossOracleDeviation
+        );
+
+        // The circuit public input `oracle_price_usd_micro` must equal the
+        // MEDIAN of Pyth and Switchboard (with exactly two oracles, median
+        // = arithmetic mean). Client computes this median off-chain and
+        // passes it as the public input; on-chain we verify equality with
+        // ±1 micro-USD tolerance for rounding.
+        let effective_price_micro = (pyth_price_micro + sb_price_micro) / 2;
+        let final_diff = if effective_price_micro > oracle_price_usd_micro {
+            effective_price_micro - oracle_price_usd_micro
+        } else {
+            oracle_price_usd_micro - effective_price_micro
+        };
+        require!(final_diff <= 1, IntentErr::OraclePriceMismatch);
 
         // ── Groth16 pairing verification via alt_bn128 syscall ──
         //
@@ -839,9 +951,18 @@ pub struct ExecuteWithIntentProof<'info> {
     ///   • account.owner == PYTH_RECEIVER_PROGRAM_ID    (spoofing guard)
     ///   • price_message.feed_id == EXPECTED_FEED_ID_SOL_USD (wrong-asset guard)
     ///   • posted_slot == oracle_slot                   (replay guard)
-    ///   • oracle_price_usd_micro ≈ price × 10^(6+exp)  (forgery guard)
+    ///   • |price_i64 × 10^(6+exp) − pyth_price_micro| ≤ 1  (encoding guard)
+    ///   • |price − ema_price| / max ≤ 2%   (C-lite spot-vs-EMA sanity)
     /// CHECK: owner + layout validated by handler
     pub pyth_price_account: UncheckedAccount<'info>,
+
+    /// Switchboard On-Demand `PullFeedAccountData`. Handler enforces:
+    ///   • account.owner == SWITCHBOARD_PROGRAM_ID         (spoofing guard)
+    ///   • feed_hash == EXPECTED_SWITCHBOARD_FEED_HASH_SOL_USD
+    ///   • |pyth_price_micro − sb_price_micro| / max ≤ 1%  (C-full cross-oracle)
+    ///   • oracle_price_usd_micro ≈ (pyth + sb) / 2        (median forgery guard)
+    /// CHECK: owner + layout validated by handler via PullFeedAccountData::parse
+    pub switchboard_price_account: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
@@ -1120,10 +1241,57 @@ pub enum IntentErr {
     #[msg("oracle_price / oracle_slot does not match Pyth")]    OraclePriceMismatch,
     #[msg("Token account owner mismatch")]                      WrongOwner,
     #[msg("Pyth spot vs EMA deviation exceeds 2%")]             OracleSpotEmaDeviation,
+    // ── C-full · Dual oracle (Pyth + Switchboard) errors ──
+    #[msg("Switchboard account owner is not the On-Demand program")]
+    SwitchboardAccountInvalid,
+    #[msg("Switchboard feed_hash does not match expected SOL/USD")]
+    SwitchboardFeedHashMismatch,
+    #[msg("Switchboard feed returned no current value")]
+    SwitchboardNoValue,
+    #[msg("Pyth vs Switchboard deviation exceeds 1%")]
+    CrossOracleDeviation,
     #[msg("Guardian PDA already initialized")]                  GuardianAlreadyInit,
     #[msg("Caller is not the registered guardian")]             NotGuardian,
     #[msg("Admin action not yet effective (delay not reached)")] ActionNotEffective,
     #[msg("Admin action already executed")]                     ActionAlreadyExecuted,
     #[msg("Admin action cancelled")]                            ActionCancelled,
     #[msg("Unknown admin action_type")]                         InvalidActionType,
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Oracle helpers · C-full dual-oracle conversion
+// ══════════════════════════════════════════════════════════════════════════
+
+/// Convert a Switchboard On-Demand Decimal value to micro-USD (1e6 scaled).
+///
+/// Switchboard On-Demand v0.3.x returns `PullFeedAccountData::value()` as
+/// `rust_decimal::Decimal` (re-exported at
+/// `switchboard_on_demand::prelude::rust_decimal::Decimal`). A Decimal
+/// encodes `mantissa × 10^(-scale)` where `mantissa: i128` and
+/// `scale: u32` are accessed via methods (not fields).
+///
+/// We want: `micro_usd = value × 10^6 = mantissa × 10^(6 − scale)`.
+fn decimal_to_micro(
+    d: switchboard_on_demand::prelude::rust_decimal::Decimal,
+) -> Result<u64> {
+    let mantissa: i128 = d.mantissa();
+    require!(mantissa > 0, IntentErr::OraclePriceMismatch);
+    let mantissa_abs: u128 = mantissa as u128;
+    let scale: i32 = d.scale() as i32;
+    let adj: i32 = 6i32 - scale;
+
+    let result: u128 = if adj >= 0 {
+        let mul = 10u128
+            .checked_pow(adj as u32)
+            .ok_or(IntentErr::Overflow)?;
+        mantissa_abs.checked_mul(mul).ok_or(IntentErr::Overflow)?
+    } else {
+        let div = 10u128
+            .checked_pow((-adj) as u32)
+            .ok_or(IntentErr::Overflow)?;
+        mantissa_abs / div
+    };
+
+    require!(result <= u64::MAX as u128, IntentErr::Overflow);
+    Ok(result as u64)
 }

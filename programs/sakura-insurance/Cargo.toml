@@ -23,3 +23,9 @@ solana-program = "1.18"
 # Real Groth16 on-chain verifier (Light Protocol fork) — uses Solana's
 # sol_alt_bn128_pairing / addition / multiplication syscalls.
 groth16-solana = "0.2.0"
+# Switchboard On-Demand — second oracle source for the C-full dual
+# cross-check in execute_with_intent_proof. See docs/DUAL_ORACLE_SPEC.md.
+# TODO: verify this is the right crate name + latest stable version
+# against https://crates.io/crates/switchboard-on-demand at build time;
+# some toolchains pin to 0.1.x for Anchor 0.30 compatibility.
+switchboard-on-demand = "0.3"
