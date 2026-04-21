@@ -941,7 +941,7 @@ export const translations = {
   },
   footerProductSection:   { zh: "產品功能", en: "Product", ja: "プロダクト" },
   footerResourcesSection: { zh: "資源", en: "Resources", ja: "リソース" },
-  footerUserGuide:        { zh: "使用手冊 · 散戶版", en: "User Guide (retail)", ja: "使用手冊 · 個人投資家向け" },
+  footerUserGuide:        { zh: "使用手冊", en: "User Guide", ja: "使用手冊" },
   footerCommunitySection: { zh: "社交媒體", en: "Social Media", ja: "ソーシャルメディア" },
   footerPolicySection:    { zh: "政策", en: "Policy", ja: "ポリシー" },
   footerPortfolioCheck:   { zh: "持倉體檢", en: "Portfolio Health Check", ja: "ポートフォリオ健全チェック" },

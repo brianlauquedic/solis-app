@@ -12,7 +12,7 @@ export default function Footer() {
   const { setShowLanding } = useWallet();
 
   const resources: Array<{ label: string; href: string; external?: boolean }> = [
-    { label: t("footerUserGuide"), href: "https://github.com/brianlauquedic/sakura-app/blob/main/docs/FOR_USERS.md", external: true },
+    { label: t("footerUserGuide"), href: "/guide"     },
     { label: t("footerDocs"),      href: "/docs"      },
     { label: t("footerUseCases"),  href: "/use-cases" },
     { label: "MCP API",            href: "/mcp"       },
