@@ -18,12 +18,12 @@
  * pool metadata) — see `lib/agent.ts` for those.
  *
  * Map: (ActionType, ProtocolId) → builder:
- *   Lend,   Kamino   → buildKaminoLendIx (stub — real IDL wiring in W3D18)
- *   Lend,   MarginFi → buildMarginFiLendIx (stub)
- *   Repay,  Kamino   → buildKaminoRepayIx (stub)
+ *   Lend,   Kamino   → buildKaminoLendIx
+ *   Lend,   MarginFi → buildMarginFiLendIx
+ *   Repay,  Kamino   → buildKaminoRepayIx
  *   Swap,   Jupiter  → buildJupiterSwapIxs (real, via Jupiter v6 HTTP API)
- *   Stake,  Marinade → buildMarinadeStakeIx (real, via @marinade.finance/marinade-ts-sdk)
- *   Stake,  Jito     → buildJitoStakeIx (stub)
+ *   Stake,  Marinade → buildMarinadeStakeIx
+ *   Stake,  Jito     → buildJitoStakeIx
  *
  * All builders return `{ instructions, addressLookupTables?, description }`
  * so the executor can assemble a v0 message with proper ALT support
@@ -168,7 +168,7 @@ export async function buildJupiterSwapIxs(
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// Kamino / MarginFi / Solend lending
+// Kamino / MarginFi lending
 // ══════════════════════════════════════════════════════════════════════
 //
 // Mainnet program IDs (constants only — real reserve pubkeys are
@@ -176,19 +176,14 @@ export async function buildJupiterSwapIxs(
 //
 //   Kamino Lending   KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD
 //   MarginFi v2      MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA
-//   Solend           So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo
 //   Memo             MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr
 //
-// Because Kamino / MarginFi reserves are not deployed on devnet, our
-// devnet E2E flow emits a Memo-only instruction containing the full
-// action parameters. The memo payload is shaped so a mainnet sidecar
-// can replay it as a real CPI when `SAKURA_REAL_CPI_ENABLED=1`.
+// Solend removed 2026-04 — protocol is dormant; see ProtocolId.Solend
+// deprecation note in lib/insurance-pool.ts for bitmap compatibility.
 //
-// Real CPI wiring (mainnet deploy, W4D26):
-//   - Kamino: `klend::Deposit`, `klend::Borrow`, `klend::Repay` ixs
-//     from the kamino-sdk. Requires obligation + reserve pubkeys.
-//   - MarginFi: `marginfi::lending_account_deposit`, etc.
-//   - Solend: `solend::deposit_reserve_liquidity` etc.
+// Devnet fallback: emits a Memo-only instruction with the full action
+// parameters so the devnet E2E flow stays functional. Real adapters
+// below produce mainnet CPI instructions directly.
 
 const MEMO_PROGRAM_ID = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"
@@ -200,9 +195,6 @@ export const KAMINO_LENDING_PROGRAM_ID = new PublicKey(
 );
 export const MARGINFI_V2_PROGRAM_ID = new PublicKey(
   "MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA"
-);
-export const SOLEND_PROGRAM_ID = new PublicKey(
-  "So1endDq2YkqhipRh3WViPa8hdiSpxWy6z3Z6tMCpAo"
 );
 
 /**
@@ -247,19 +239,36 @@ export async function buildMarginFiLendIx(p: BuildActionParams): Promise<ActionI
 export async function buildMarginFiRepayIx(p: BuildActionParams): Promise<ActionIxBundle> {
   return buildMemoLendingStub(p, ProtocolId.MarginFi, ActionType.Repay);
 }
-export async function buildSolendLendIx(p: BuildActionParams): Promise<ActionIxBundle> {
-  return buildMemoLendingStub(p, ProtocolId.Solend, ActionType.Lend);
-}
-
 // ══════════════════════════════════════════════════════════════════════
-// Marinade / Jito staking (stubs — W3D18-19)
+// Marinade / Jito staking
 // ══════════════════════════════════════════════════════════════════════
 
 export async function buildMarinadeStakeIx(p: BuildActionParams): Promise<ActionIxBundle> {
   return buildMemoLendingStub(p, ProtocolId.Marinade, ActionType.Stake);
 }
+
+/** Jito liquid stake: user pays SOL → receives JitoSOL. REAL mainnet ix. */
 export async function buildJitoStakeIx(p: BuildActionParams): Promise<ActionIxBundle> {
-  return buildMemoLendingStub(p, ProtocolId.Jito, ActionType.Stake);
+  const { buildJitoStakeIx: build } = await import("./adapters/jito");
+  const ixs = await build(p.connection, p.user, p.actionAmountMicro);
+  return {
+    instructions: ixs,
+    addressLookupTables: [],
+    description: `Jito stake ${p.actionAmountMicro} lamports SOL → JitoSOL`,
+    estimatedComputeUnits: 80_000,
+  };
+}
+
+/** Jito liquid unstake: user burns JitoSOL → receives SOL from reserves. REAL mainnet ix. */
+export async function buildJitoUnstakeIx(p: BuildActionParams): Promise<ActionIxBundle> {
+  const { buildJitoUnstakeIx: build } = await import("./adapters/jito");
+  const ixs = await build(p.connection, p.user, p.actionAmountMicro);
+  return {
+    instructions: ixs,
+    addressLookupTables: [],
+    description: `Jito unstake ${p.actionAmountMicro} JitoSOL → SOL (from reserves)`,
+    estimatedComputeUnits: 60_000,
+  };
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -294,8 +303,6 @@ export async function buildActionIxs(
       return buildKaminoLendIx(params);
     case "Lend:MarginFi":
       return buildMarginFiLendIx(params);
-    case "Lend:Solend":
-      return buildSolendLendIx(params);
     case "Repay:Kamino":
       return buildKaminoRepayIx(params);
     case "Repay:MarginFi":
@@ -306,6 +313,9 @@ export async function buildActionIxs(
       return buildMarinadeStakeIx(params);
     case "Stake:Jito":
       return buildJitoStakeIx(params);
+    case "Withdraw:Jito":
+      // Jito has no "Withdraw" concept — maps to liquid unstake semantically
+      return buildJitoUnstakeIx(params);
     default:
       throw new Error(
         `Unsupported (action, protocol) combination: ${key}. ` +

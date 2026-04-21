@@ -2,7 +2,7 @@
  * Safety Pulse API
  * GET /api/safety-pulse
  *
- * Aggregates real-time health factor distribution across Kamino/MarginFi/Solend.
+ * Aggregates real-time health factor distribution across Kamino/MarginFi.
  * Cached in Redis for 3 minutes. Falls back to last cached value or demo data.
  *
  * Each user monitoring their position contributes to a collective safety
@@ -190,45 +190,8 @@ async function fetchMarginFiPulse(): Promise<ProtocolPulse> {
   };
 }
 
-// Solend stats
-async function fetchSolendPulse(): Promise<ProtocolPulse> {
-  try {
-    const res = await fetch(
-      "https://api.solend.fi/v1/markets/configs?scope=all&deployment=production",
-      { signal: AbortSignal.timeout(5000) }
-    ).catch(() => null);
-
-    if (res?.ok) {
-      const data = await res.json() as Array<{ stats?: { totalSupplyAPR?: number } }>;
-      const marketCount = Array.isArray(data) ? data.length : 0;
-      const monitored = marketCount * 120; // rough estimate
-      const below1_2 = Math.round(monitored * 0.045);
-      const below1_05 = Math.round(monitored * 0.009);
-      const atRiskPct = monitored > 0 ? (below1_2 / monitored) * 100 : 0;
-      return {
-        protocol: "Solend",
-        monitored,
-        avgHealthFactor: 1.65,
-        below1_2,
-        below1_05,
-        atRiskPct: +atRiskPct.toFixed(1),
-        tvlEstimateUsd: 600_000_000,
-        riskLevel: assessRiskLevel(atRiskPct),
-      };
-    }
-  } catch { /* fall through */ }
-
-  return {
-    protocol: "Solend",
-    monitored: 563,
-    avgHealthFactor: 1.65,
-    below1_2: 22,
-    below1_05: 4,
-    atRiskPct: 3.9,
-    tvlEstimateUsd: 600_000_000,
-    riskLevel: "medium",
-  };
-}
+// Solend removed 2026-04 — protocol is dormant; see ProtocolId.Solend
+// deprecation note in lib/insurance-pool.ts.
 
 export async function GET() {
   const redis = getRedisClient();
@@ -246,13 +209,12 @@ export async function GET() {
   }
 
   // Fetch live data from all protocols in parallel
-  const [kamino, marginfi, solend] = await Promise.all([
+  const [kamino, marginfi] = await Promise.all([
     fetchKaminoPulse(),
     fetchMarginFiPulse(),
-    fetchSolendPulse(),
   ]);
 
-  const protocols = [kamino, marginfi, solend];
+  const protocols = [kamino, marginfi];
   const totalMonitored = protocols.reduce((s, p) => s + p.monitored, 0);
   const totalAtRisk = protocols.reduce((s, p) => s + p.below1_2, 0);
 

@@ -120,7 +120,7 @@ export default function ArchitectureDiagram() {
           "SAK v2 DefiPlugin: routes + APY",
           "lib/sak-executor.ts → unsigned ix",
           "Jupiter V6 (real)",
-          "Kamino / MarginFi / Solend CPI",
+          "Kamino / MarginFi CPI",
           "Marinade / Jito LST",
         ]}
       />

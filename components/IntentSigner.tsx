@@ -100,7 +100,6 @@ interface IntentSecrets {
 const PROTOCOL_LABELS = [
   { id: ProtocolId.Kamino, label: "Kamino" },
   { id: ProtocolId.MarginFi, label: "MarginFi" },
-  { id: ProtocolId.Solend, label: "Solend" },
   { id: ProtocolId.Jupiter, label: "Jupiter" },
   { id: ProtocolId.Marinade, label: "Marinade" },
   { id: ProtocolId.Jito, label: "Jito" },

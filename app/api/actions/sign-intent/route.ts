@@ -255,7 +255,7 @@ function bigintParam(q: URLSearchParams, key: string, fallback: bigint): bigint 
 
 function buildDescription(p: IntentParams): string {
   const protos = bitmapDescribe(p.allowedProtocols, [
-    "Kamino", "MarginFi", "Solend", "Jupiter",
+    "Kamino", "MarginFi", "(deprecated)", "Jupiter",
     "Marinade", "Jito", "Drift", "Zeta",
   ]);
   const actions = bitmapDescribe(p.allowedActionTypes, [

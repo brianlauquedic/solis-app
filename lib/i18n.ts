@@ -1050,7 +1050,7 @@ export const translations = {
   shieldHashChainVerify: { zh: "驗證", en: "Verify", ja: "検証" },
   // ── Safety Pulse Panel ───────────────────────────────────────────
   pulseTitle:         { zh: "Solana DeFi 安全脈衝", en: "Solana DeFi Safety Pulse", ja: "Solana DeFi セーフティパルス" },
-  pulseScanning:      { zh: "掃描 Kamino · MarginFi · Solend 中…", en: "Scanning Kamino · MarginFi · Solend...", ja: "Kamino · MarginFi · Solend をスキャン中…" },
+  pulseScanning:      { zh: "掃描 Kamino · MarginFi 中…", en: "Scanning Kamino · MarginFi...", ja: "Kamino · MarginFi をスキャン中…" },
   pulsePositions:     { zh: "個倉位", en: "positions", ja: "ポジション" },
   pulseAtRisk:        { zh: "高風險", en: "at-risk", ja: "リスク" },
   pulseCritical:      { zh: "極危", en: "critical", ja: "極危険" },

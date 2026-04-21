@@ -124,6 +124,9 @@ export enum ActionType {
 export enum ProtocolId {
   Kamino = 0,
   MarginFi = 1,
+  /** @deprecated Solend support removed 2026-04 — protocol is dormant; value
+   * reserved in the bitmap for on-chain backwards compatibility. Do not
+   * expose in UI or adapter dispatcher. */
   Solend = 2,
   Jupiter = 3,
   Marinade = 4,
