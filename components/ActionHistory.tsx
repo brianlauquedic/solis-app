@@ -80,14 +80,98 @@ function bs58Encode(bytes: Buffer): string {
 // Main component
 // ═══════════════════════════════════════════════════════════════════
 
+// Demo-mode: same placeholder user Pubkey as IntentSigner uses.
+const DEMO_USER_PUBKEY = "11111111111111111111111111111111";
+
+// Seed a believable trio of agent-executed actions so the audit trail
+// isn't empty when a user enters ?demo=true. Timestamps are anchored
+// to Date.now() so they feel fresh on every load.
+function buildDemoHistory(): { intent: IntentState; rows: ActionRow[] } {
+  const userPk = new PublicKey(DEMO_USER_PUBKEY);
+  const now = BigInt(Math.floor(Date.now() / 1000));
+  const intent: IntentState = {
+    user: userPk,
+    intentCommitment: Buffer.alloc(32, 0x73), // "s" repeated — visible demo marker
+    signedAt: now - 3_600n,
+    expiresAt: now + 23n * 3_600n,
+    actionsExecuted: 3n,
+    isActive: true,
+    bump: 255,
+  };
+  const zeroPda = userPk;
+  const mkProofFp = (seed: number): Buffer => {
+    const b = Buffer.alloc(32);
+    for (let i = 0; i < 32; i++) b[i] = (seed * 31 + i * 7) & 0xff;
+    return b;
+  };
+  const rows: ActionRow[] = [
+    {
+      pda: "DemoAct1111111111111111111111111111111111111",
+      state: {
+        intent: zeroPda,
+        actionNonce: 3n,
+        actionType: ActionType.Lend,
+        actionAmount: 320_000_000n, // 320 USDC
+        actionTargetIndex: ProtocolId.Kamino,
+        oraclePriceUsdMicro: 180_500_000n,
+        oracleSlot: 333_333_003n,
+        ts: now - 180n,
+        proofFingerprint: mkProofFp(3),
+        bump: 255,
+      },
+    },
+    {
+      pda: "DemoAct2222222222222222222222222222222222222",
+      state: {
+        intent: zeroPda,
+        actionNonce: 2n,
+        actionType: ActionType.Swap,
+        actionAmount: 150_000_000n, // 150 USDC
+        actionTargetIndex: ProtocolId.Jupiter,
+        oraclePriceUsdMicro: 181_200_000n,
+        oracleSlot: 333_332_900n,
+        ts: now - 1_800n,
+        proofFingerprint: mkProofFp(7),
+        bump: 255,
+      },
+    },
+    {
+      pda: "DemoAct3333333333333333333333333333333333333",
+      state: {
+        intent: zeroPda,
+        actionNonce: 1n,
+        actionType: ActionType.Lend,
+        actionAmount: 500_000_000n, // 500 USDC
+        actionTargetIndex: ProtocolId.MarginFi,
+        oraclePriceUsdMicro: 179_900_000n,
+        oracleSlot: 333_332_600n,
+        ts: now - 3_600n,
+        proofFingerprint: mkProofFp(11),
+        bump: 255,
+      },
+    },
+  ];
+  return { intent, rows };
+}
+
 export default function ActionHistory() {
-  const { walletAddress } = useWallet();
+  const { walletAddress, isDemo } = useWallet();
   const [intent, setIntent] = useState<IntentState | null>(null);
   const [rows, setRows] = useState<ActionRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    // Demo mode: skip RPC and load a static 3-action sample so the
+    // audit panel shows realistic on-chain rows without a real wallet.
+    if (isDemo && !walletAddress) {
+      const { intent: demoIntent, rows: demoRows } = buildDemoHistory();
+      setIntent(demoIntent);
+      setRows(demoRows);
+      setLoading(false);
+      setError(null);
+      return;
+    }
     if (!walletAddress) return;
     setLoading(true);
     setError(null);
@@ -127,7 +211,7 @@ export default function ActionHistory() {
     } finally {
       setLoading(false);
     }
-  }, [walletAddress]);
+  }, [walletAddress, isDemo]);
 
   useEffect(() => {
     refresh();
@@ -135,7 +219,7 @@ export default function ActionHistory() {
     return () => clearInterval(id);
   }, [refresh]);
 
-  if (!walletAddress) {
+  if (!walletAddress && !isDemo) {
     return (
       <Card className="relative overflow-hidden border-[var(--border)] bg-[var(--bg-card)]">
         <CardHeader>
