@@ -39,7 +39,7 @@ describe("Wallet Address Validation", () => {
 // ── Token Allowlist ─────────────────────────────────────────────────
 
 describe("Token Allowlist Enforcement", () => {
-  // Mirrors the TOKEN_MINTS from lib/ghost-run.ts
+  // Token allowlist from the Jupiter integration surface.
   const TOKEN_MINTS: Record<string, string> = {
     SOL: "So11111111111111111111111111111111111111112",
     USDC: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",

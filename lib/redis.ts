@@ -185,60 +185,8 @@ export async function checkAndMarkUsed(
   return true;
 }
 
-// ── Usage tracking ────────────────────────────────────────────────────────────
-
-export type Feature = "nonce" | "ghost" | "shield";
-
-// In-memory fallback sets (per-instance, used when Redis not configured)
-const _memUsage: Record<Feature, Set<string>> = {
-  nonce:  new Set(),
-  ghost:  new Set(),
-  shield: new Set(),
-};
-
-/**
- * Record a wallet address as having used a feature.
- * Redis: SADD into a persistent Set (survives restarts, shared across instances).
- * Fallback: in-memory Set (per-instance, dev mode).
- * Fire-and-forget — never throws, never blocks the response.
- */
-export async function trackUsage(feature: Feature, wallet: string): Promise<void> {
-  const redis = getRedisClient();
-  try {
-    if (redis) {
-      await Promise.all([
-        redis.sadd(`sakura:users:${feature}`, wallet),
-        redis.sadd("sakura:users:total", wallet),
-      ]);
-    } else {
-      _memUsage[feature].add(wallet);
-    }
-  } catch { /* never block the main request */ }
-}
-
-/**
- * Return unique user counts per feature + total.
- * Used by /api/stats public endpoint.
- */
-export async function getUsageStats(): Promise<{
-  nonce: number; ghost: number; shield: number; total: number;
-}> {
-  const redis = getRedisClient();
-  if (redis) {
-    try {
-      const [nonce, ghost, shield, total] = await Promise.all([
-        redis.scard("sakura:users:nonce"),
-        redis.scard("sakura:users:ghost"),
-        redis.scard("sakura:users:shield"),
-        redis.scard("sakura:users:total"),
-      ]);
-      return { nonce, ghost, shield, total };
-    } catch { /* fall through to memory */ }
-  }
-  return {
-    nonce:  _memUsage.nonce.size,
-    ghost:  _memUsage.ghost.size,
-    shield: _memUsage.shield.size,
-    total:  new Set([..._memUsage.nonce, ..._memUsage.ghost, ..._memUsage.shield]).size,
-  };
-}
+// Usage tracking (Feature/trackUsage/getUsageStats) removed in L2 cleanup —
+// those were v0.1 per-feature counters for nonce/ghost/shield, deleted along
+// with the corresponding routes. v0.3 usage metrics, if/when needed, will be
+// derived from on-chain IntentProtocol state (total_intents_signed,
+// total_actions_executed) rather than Redis.
