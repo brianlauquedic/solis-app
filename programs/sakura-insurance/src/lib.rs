@@ -83,22 +83,23 @@ pub const SWITCHBOARD_PROGRAM_ID: Pubkey =
 
 /// Expected Switchboard feed hash for the canonical SOL/USD pull feed.
 ///
-/// Read directly from the on-chain `PullFeedAccountData` at devnet feed
-/// pubkey `GgGVgSLWAyL9Xf4fGaAQQCkmWetBjX7PCNz8kTK97DKB` on 2026-04-22
-/// via getAccountInfo → bytes[8..40]:
-///   b756d471b1686eda5df3ecb501957bf940ef54bb274ea9e7a517c368ddf3a4cb
+/// Read from the on-chain `PullFeedAccountData` at devnet feed pubkey
+/// `GgGVgSLWAyL9Xf4fGaAQQCkmWetBjX7PCNz8kTK97DKB` via getAccountInfo on
+/// 2026-04-22. The `feed_hash` field is at byte offset 2120 of the
+/// account data (not 8 — the account starts with 32 × 64-byte
+/// `OracleSubmission` entries + a 32-byte authority + a 32-byte queue
+/// BEFORE feed_hash):
+///   762ca1132d9071c754becd314da6bd4e91ac1ed681a136d7a0c06afa5ab86127
 ///
 /// NOTE: the feed_hash is derived from the feed's OracleJob config and
 /// is stable across updates as long as the job spec doesn't change.
-/// If Switchboard republishes the canonical SOL/USD feed under a new
-/// job spec, this constant must be re-derived from the new feed PDA.
-/// Mainnet migration must also re-read the hash from the mainnet
-/// canonical SOL/USD feed (which will likely differ).
+/// Mainnet migration must re-read this constant from the mainnet SOL/USD
+/// feed (which will likely differ).
 pub const EXPECTED_SWITCHBOARD_FEED_HASH_SOL_USD: [u8; 32] = [
-    0xb7, 0x56, 0xd4, 0x71, 0xb1, 0x68, 0x6e, 0xda,
-    0x5d, 0xf3, 0xec, 0xb5, 0x01, 0x95, 0x7b, 0xf9,
-    0x40, 0xef, 0x54, 0xbb, 0x27, 0x4e, 0xa9, 0xe7,
-    0xa5, 0x17, 0xc3, 0x68, 0xdd, 0xf3, 0xa4, 0xcb,
+    0x76, 0x2c, 0xa1, 0x13, 0x2d, 0x90, 0x71, 0xc7,
+    0x54, 0xbe, 0xcd, 0x31, 0x4d, 0xa6, 0xbd, 0x4e,
+    0x91, 0xac, 0x1e, 0xd6, 0x81, 0xa1, 0x36, 0xd7,
+    0xa0, 0xc0, 0x6a, 0xfa, 0x5a, 0xb8, 0x61, 0x27,
 ];
 
 /// Maximum allowed divergence between Pyth and Switchboard, in basis points.

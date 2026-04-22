@@ -354,13 +354,48 @@ async function main() {
     `  witness: lend ${Number(actionAmount) / 1e6} USDC → Kamino (lhs=${lhs} ≤ rhs=${rhs} ✓)`
   );
 
-  console.log("\n[5/6] Generating Groth16 proof…");
+  // ── C-full · Fetch Switchboard BEFORE proof gen, so proof encodes
+  //    the Pyth∩SB median (which is what the on-chain handler checks).
+  console.log("\n[4.5/6] Fetching Switchboard SOL/USD update (C-full dual oracle)…");
+  const switchboardPriceAccount = SWITCHBOARD_SOL_USD_DEVNET;
+  const sbFetch = await buildSwitchboardUpdateIxs({
+    feedPubkey: switchboardPriceAccount,
+    payer: user.publicKey,
+  });
+  const priceMicroSb = sbFetch.priceMicro;
+  const sbUpdateIxs = sbFetch.updateIxs;
+  const crossBps = crossOracleDeviationBps(priceMicro, priceMicroSb);
+  console.log(
+    `  ✓ Pyth  ${priceMicro} micro-USD · SB ${priceMicroSb} micro-USD · divergence ${crossBps} bps`
+  );
+  if (crossBps > 100n) {
+    console.log(
+      `  ⚠ cross-oracle divergence > 1% (100 bps) — on-chain will revert; abort`
+    );
+    process.exit(3);
+  }
+  const priceMicroMedian = crossOracleMedian(priceMicro, priceMicroSb);
+  console.log(`  → median ${priceMicroMedian} micro-USD (fed into proof)`);
+
+  // Re-check C5 with the MEDIAN price (tighter/looser than Pyth-only
+  // depending on direction of disagreement).
+  {
+    const lhsMedian = actionAmount * priceMicroMedian;
+    if (lhsMedian > rhs) {
+      throw new Error(
+        `C5 violated with median: lhs=${lhsMedian} > rhs=${rhs} ` +
+        `(Pyth-only passed but median tripped the cap)`
+      );
+    }
+  }
+
+  console.log("\n[5/6] Generating Groth16 proof (public input = median)…");
   const proofBundle = await generateIntentProof({
     intentCommitment: BigInt(commitmentDecimal),
     actionType,
     actionAmount,
     actionTargetIndex,
-    oraclePriceUsdMicro: priceMicro,
+    oraclePriceUsdMicro: priceMicroMedian,
     oracleSlot: pyth.slot,
     maxAmount,
     maxUsdValue,
@@ -404,29 +439,6 @@ async function main() {
   const actionNonce = BigInt(Date.now() + 1);
   const [actionRecordPDA] = deriveActionRecordPDA(intentPDA, actionNonce);
 
-  // ── C-full · Fetch fresh Switchboard SOL/USD + compute Pyth∩SB median ──
-  console.log("\n[5.5/6] Fetching Switchboard SOL/USD update (C-full dual oracle)…");
-  const switchboardPriceAccount = SWITCHBOARD_SOL_USD_DEVNET;
-  const {
-    updateIxs: sbUpdateIxs,
-    lookupTables: sbLuts,
-    priceMicro: priceMicroSb,
-  } = await buildSwitchboardUpdateIxs({
-    feedPubkey: switchboardPriceAccount,
-    payer: user.publicKey,
-  });
-  const crossBps = crossOracleDeviationBps(priceMicro, priceMicroSb);
-  console.log(
-    `  ✓ Pyth  ${priceMicro} micro-USD · SB ${priceMicroSb} micro-USD · divergence ${crossBps} bps`
-  );
-  if (crossBps > 100n) {
-    console.log(
-      `  ⚠ cross-oracle divergence > 1% (100 bps) — on-chain will revert; abort`
-    );
-    process.exit(3);
-  }
-  const priceMicroMedian = crossOracleMedian(priceMicro, priceMicroSb);
-
   const executeIx = buildExecuteWithIntentProofIx({
     admin: admin.publicKey,
     user: user.publicKey,
@@ -440,8 +452,7 @@ async function main() {
     actionAmount,
     actionTargetIndex,
     // Post-C-full: public input is the (Pyth, Switchboard) MEDIAN.
-    // On-chain handler independently parses both and verifies equality
-    // within ±1 micro-USD after recomputing the median.
+    // Matches the value we fed into the proof at [4.5/6].
     oraclePriceUsdMicro: priceMicroMedian,
     oracleSlot: pyth.slot,
     proofA,

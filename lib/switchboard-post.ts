@@ -46,20 +46,70 @@
  * `buildSwitchboardUpdateIxs` on the client side.
  */
 
-import type {
-  PublicKey,
-  TransactionInstruction,
-  AddressLookupTableAccount,
+import {
+  Connection,
+  Keypair,
+  type PublicKey,
+  type TransactionInstruction,
+  type AddressLookupTableAccount,
 } from "@solana/web3.js";
-import { PullFeed, AnchorUtils } from "@switchboard-xyz/on-demand";
+import {
+  PullFeed,
+  isMainnetConnection,
+  ON_DEMAND_DEVNET_PID,
+  ON_DEMAND_MAINNET_PID,
+} from "@switchboard-xyz/on-demand";
+// Resolve anchor-30 from @switchboard-xyz/on-demand's transitive deps.
+// Don't use AnchorUtils.loadProgramFromEnv: as of switchboard-on-demand
+// 1.2.42, that helper calls `isMainnetConnection` WITHOUT awaiting the
+// returned Promise, so `isMainnet` is always truthy and the mainnet PID
+// is always selected — a bug that manifests on devnet as
+// `AccountOwnedByWrongProgram (3007)`.
+//
+// We construct the Program ourselves with the correctly-awaited cluster
+// check.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const anchor = require("@coral-xyz/anchor-30");
 
-// Memoize the on-demand Program — loading it is non-trivial (RPC call
-// to fetch IDL). Since the program ID is stable per cluster, one load
-// per process is enough.
+// Memoize the on-demand Program — loading it (fetch IDL) is a round-trip.
 let _onDemandProgramPromise: Promise<unknown> | null = null;
 async function getOnDemandProgram(): Promise<unknown> {
   if (_onDemandProgramPromise == null) {
-    _onDemandProgramPromise = AnchorUtils.loadProgramFromEnv();
+    _onDemandProgramPromise = (async () => {
+      const rpcUrl = process.env.ANCHOR_PROVIDER_URL;
+      if (!rpcUrl) {
+        throw new Error(
+          "ANCHOR_PROVIDER_URL env var required for Switchboard update. " +
+          "Set it to a Solana RPC endpoint (e.g. https://api.devnet.solana.com)."
+        );
+      }
+      const connection = new Connection(rpcUrl, "confirmed");
+      // Dummy signer — fetchUpdateIx doesn't sign anything, it just
+      // builds an ix the caller signs in the parent tx.
+      const dummy = Keypair.generate();
+      const wallet = {
+        publicKey: dummy.publicKey,
+        signTransaction: async (tx: unknown) => tx,
+        signAllTransactions: async (txs: unknown[]) => txs,
+        payer: dummy,
+      };
+      const provider = new anchor.AnchorProvider(connection, wallet as never, {
+        commitment: "confirmed",
+      });
+
+      // Correctly await the cluster check (patching around the SDK bug).
+      const isMainnet = await isMainnetConnection(connection);
+      const pid = isMainnet ? ON_DEMAND_MAINNET_PID : ON_DEMAND_DEVNET_PID;
+
+      const idl = await anchor.Program.fetchIdl(pid, provider);
+      if (!idl) {
+        throw new Error(
+          `Failed to fetch on-demand IDL at ${pid.toBase58()}. ` +
+          `Cluster may not have the program deployed.`
+        );
+      }
+      return new anchor.Program(idl, provider);
+    })();
   }
   return _onDemandProgramPromise;
 }
