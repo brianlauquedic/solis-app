@@ -69,8 +69,10 @@ async function fetchJsonResilient<T>(url: string, timeoutMs = 6000): Promise<T> 
 //
 // Endpoint: /kamino-market/{market}/reserves/metrics
 // Shape: array of { reserve, liquidityTokenMint, supplyApy, borrowApy, ... }
-// supplyApy/borrowApy values are decimal strings ALREADY in percent
-// (e.g. "8.4012" = 8.40% APY).
+// supplyApy/borrowApy values are DECIMAL strings (e.g. "0.0554" = 5.54%);
+// multiply by 100 to render as a percentage. Verified 2026-04-22 against
+// the USDC reserve in the main market (95% utilisation → 5.5% supply,
+// 7.2% borrow — sane lending-curve math).
 interface KaminoReserveMetric {
   liquidityTokenMint?: string;
   liquidityToken?: string;
@@ -86,8 +88,8 @@ async function fetchKaminoUsdc(): Promise<{ lendApy: number; borrowApy: number }
     const usdc = metrics.find((r) => r.liquidityTokenMint === USDC_MINT);
     if (!usdc) return null;
     return {
-      lendApy: +Number(usdc.supplyApy ?? 0).toFixed(2),
-      borrowApy: +Number(usdc.borrowApy ?? 0).toFixed(2),
+      lendApy: +(Number(usdc.supplyApy ?? 0) * 100).toFixed(2),
+      borrowApy: +(Number(usdc.borrowApy ?? 0) * 100).toFixed(2),
     };
   } catch {
     return null;
