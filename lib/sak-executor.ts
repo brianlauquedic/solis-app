@@ -64,6 +64,16 @@ export interface BuildActionParams {
   outputMint?: PublicKey;
   /** Max slippage in bps for swap-like actions. Default 50 (0.5%). */
   slippageBps?: number;
+  /**
+   * Protocol-specific extra context. Currently:
+   *   jupiterLendVaultId    — Jupiter Lend Borrow market vault id
+   *   jupiterLendPositionId — Jupiter Lend position NFT id (REQUIRED
+   *                           for Borrow:Jupiter and Repay:Jupiter;
+   *                           caller must have minted via
+   *                           buildJupiterLendInitPosition first)
+   */
+  jupiterLendVaultId?: number;
+  jupiterLendPositionId?: number;
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -275,17 +285,27 @@ async function wrapJupiterLendAction(
   const inputMint = p.inputMint ?? new (await import("@solana/web3.js")).PublicKey(
     "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
   );
-  const ixs = await mod[fn]({
+  const result = await mod[fn]({
     connection: p.connection,
     user: p.user,
     mint: inputMint,
     amountMicro: p.actionAmountMicro,
+    vaultId: p.jupiterLendVaultId,
+    positionId: p.jupiterLendPositionId,
   });
+  // Description includes vault + position metadata when the adapter
+  // returns them (Borrow/Repay populate; Lend/Withdraw don't use them).
+  const tail =
+    result.vaultId !== undefined || result.nftId !== undefined
+      ? ` [vault=${result.vaultId ?? "?"} pos=${result.nftId ?? "?"}]`
+      : "";
   return {
-    instructions: ixs,
-    addressLookupTables: [],
-    description: `Jupiter Lend ${ActionType[action]} ${p.actionAmountMicro} ${inputMint.toBase58().slice(0, 6)}`,
-    estimatedComputeUnits: 150_000,
+    instructions: result.instructions,
+    addressLookupTables: result.addressLookupTables,
+    description:
+      `Jupiter Lend ${ActionType[action]} ${p.actionAmountMicro} ` +
+      `${inputMint.toBase58().slice(0, 6)}${tail}`,
+    estimatedComputeUnits: 250_000,
   };
 }
 
