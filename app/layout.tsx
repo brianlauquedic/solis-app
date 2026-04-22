@@ -9,6 +9,7 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 export const metadata: Metadata = {
   title: "Sakura · 数学で画定する、AI エージェントの実行境界",
   description: "AI エージェントの実行境界を、運営側の誓約ではなく、数学で画定する。ユーザーが一度意図に署名すれば、エージェントのあらゆる動作は、Solana のオンチェーン検証を通過してはじめて、チェーンに刻まれる。圏外は、運営側の信頼ではなく、可能性として成立しない。",
+  metadataBase: new URL("https://www.sakuraaai.com"),
   openGraph: {
     title: "Sakura · 数学で画定する、AI エージェントの実行境界",
     description: "AI エージェントの実行境界を、運営側の誓約ではなく、数学で画定する。ユーザーが一度意図に署名すれば、エージェントのあらゆる動作は、Solana のオンチェーン検証を通過してはじめて、チェーンに刻まれる。圏外は、運営側の信頼ではなく、可能性として成立しない。",
@@ -16,15 +17,25 @@ export const metadata: Metadata = {
     siteName: "Sakura",
     locale: "ja_JP",
     type: "website",
+    images: [
+      {
+        url: "/og-sakura.png",
+        width: 1200,
+        height: 630,
+        alt: "Sakura · 数学で画定する、AI エージェントの実行境界",
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Sakura · 数学で画定する、AI エージェントの実行境界",
     description: "AI エージェントの実行境界を、運営側の誓約ではなく、数学で画定する。ユーザーが一度意図に署名すれば、エージェントのあらゆる動作は、Solana のオンチェーン検証を通過してはじめて、チェーンに刻まれる。圏外は、運営側の信頼ではなく、可能性として成立しない。",
+    images: ["/og-sakura.png"],
   },
   icons: {
     icon: "/icon.png",
-    apple: "/icon.png",
+    apple: "/apple-icon.png",
   },
 };
 
