@@ -1,0 +1,255 @@
+{
+  "timestamp": "2026-04-22T05:24:15.273Z",
+  "program": "AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp",
+  "network": "devnet",
+  "scenarios": [
+    {
+      "scenario": "happy-path",
+      "expected": "success",
+      "runs": [
+        {
+          "run": 1,
+          "outcome": "success",
+          "sig": "5bPRVFk5ydpfhaXG1NiT4vvbhXAxSHchEnaT97kkBXxXxyz37Ua6wESdc6tE49t82q5z8TvL85GunD2CkiJimUid",
+          "cu": 200546
+        },
+        {
+          "run": 2,
+          "outcome": "revert:OraclePriceMismatch",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 5GSwcD5do3ozAhKPwsk7SSBvQE9LXve3QCjs8XS1KRcHC2ATXbihML4pdNKxbUX1xLVFXykA37qJR3LVrKUdmBMS resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":6013}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 3,
+          "outcome": "success",
+          "sig": "31o1BzXXhrdYuPTXpE9PCMD8cSbszaykb1A19Wi3iKm1H6T2wKK4pCWqefEyVr1WkYbN3pUR6kCQMnRXdCyLMC2w",
+          "cu": 206543
+        },
+        {
+          "run": 4,
+          "outcome": "success",
+          "sig": "2J6rdaTWgGQpsp9t4RVZgC6Ko7vDehSR4pQy6VUzi3Y8mcVntoLcxrncftjnytzjezRcpHM1stXE4UE7YnMdCn34",
+          "cu": 206674
+        },
+        {
+          "run": 5,
+          "outcome": "revert:OraclePriceMismatch",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 4UeMAhA54wkBf9EvJzBPuaS8cCFw6HZzQYR24h6bC1yxm5Yk5zu5mpBxcb3qVzyiBEz1baz5hKSx2eTfkTKMJETk resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":6013}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 6,
+          "outcome": "revert:OraclePriceMismatch",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 2dDgdU7wsf9WAEj5uvmEkSST82yxxfy4q3ikFiWYPc6TgretPypi4g7RsnVSQ72Y8Dz9pthwVez1xSVzSHXB6BTF resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":6013}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 7,
+          "outcome": "success",
+          "sig": "2jH8aoj9ZGj9HCf8F4PUCRV3KUhEcvbVagRJAP5RvcqS7pWhKhDUSz9ntGgn1d4biLJ22rCALwc26buFRN31yuBx",
+          "cu": 202385
+        },
+        {
+          "run": 8,
+          "outcome": "success",
+          "sig": "3HAYgQ96q2nK2xrjUrLTfJHvrNXzzxyWYZjLhiKx8Z1XHWQp4eBYhKSg4VueLoKWNy3dBJMc11M98g9MWaDWvwPV",
+          "cu": 204844
+        },
+        {
+          "run": 9,
+          "outcome": "revert:OraclePriceMismatch",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 2XJ58yZdKzYarMEwWHV3FEBi1BWCZJXicNPveb91Xd5W51WViNrj3BAUqNjZgarkZkqYsV5SjrAqHpgQMcPzmiwP resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":6013}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 10,
+          "outcome": "success",
+          "sig": "3GGsnhCEi6uptrRQGbZcFfvtb6htvpieZ4cDTUDJ3WDdnbtpN2AzDnwsgDTGVRCqaTgFD69r29XULZxuwcsMCoGn",
+          "cu": 205013
+        }
+      ]
+    },
+    {
+      "scenario": "replay",
+      "expected": "revert:ReplayGuard",
+      "runs": [
+        {
+          "run": 1,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 43kMffWTvUKpqye8dbbMVL5sCKgHh9omoa5AS6uAvniUAvpyEdGGuc5fuqGmQowusdGhUYXDs9h9Eu6UwwkvPU1Y resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 2,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction fZEe8We939sfP9ouwFXT9U4xtbMpZXUHRWRb2KXqoy6RbLgsv1X81joMSZcHutStjxN9Kjo6NawYYZwHzCR3dPK resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 3,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 5JMr1WeQ3Tou7StnDr5iBpSsdaRkvWadgznT6rEpZdtVP94qDq1Gs346LRC7xM58fHSA3GMviG8itLPgVrLBmgkn resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        }
+      ]
+    },
+    {
+      "scenario": "proof-tamper",
+      "expected": "revert:ZkProofInvalid",
+      "runs": [
+        {
+          "run": 1,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 4wiKdjugBXv99Ho65rjuYCELVviaqW2irMYyGUnFvJKegMw8Aro5jMdygJfw2W76soybGRZzHVXwc7nhQhJQ5wAw resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 2,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 2KBFVGuS1sDdwazApfvJPjudc1rWuCbuFZjnt9ATPHq9V9HwconmrXSbZxbTv2tCD9FcEo4e3EpB38TnxysDr8XV resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 3,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 4soGVZnTXU7SQM6V9Ksj2XQDa5pmhSpWAx5cypsNDcU1AygYXmuuH8RZsCeqhLWP35b5ruFTFViELJgeb1xq2hJ4 resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        }
+      ]
+    },
+    {
+      "scenario": "wrong-pyth",
+      "expected": "revert:PythAccountInvalid",
+      "runs": [
+        {
+          "run": 1,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction ZoFhHwcyXmCew8TaQgGFjRM8KzPKJSUCYUrBWHjS4yePxKhABBXZ45udbFox4deHBX31qHebrPAk5LyMVPGsXZD resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 2,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 3TPaTMQK5S8ck2aaSk276qjUsRERHqU4mq9ecffAA4TMLZdsq55Yf2Attjkofbdy8ZVFwwiJ1zt67bn5dpaYUKXk resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 3,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 47Jgt2VgHcgUGewjgK9oTzw2XU4cs7xwYSBemSVtMG4GCm1hpk4hW3Ptjzi7T9s5rzzGcuuSs3ih4VY5FXK8xbe resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        }
+      ]
+    },
+    {
+      "scenario": "wrong-switchboard",
+      "expected": "revert:SwitchboardAccountInvalid",
+      "runs": [
+        {
+          "run": 1,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction tQiWAWBf7jAQYqBBpmvMk9VXH1wBQVeSiDWSa8Vr6mfBNLapXsffyGrDZh6j8nQDZAWTXipX6qXicgbJsSDvV34 resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 2,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 6477x8Gz9LxRhP3Qxj9BJZhErVYsf8J37mKzrdUKE8rq68mSfKEjFbd4kbSCJVoP3L5Z6LbMcusnCLPg8nC1xWy9 resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 3,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 5gwjq7GDif7HdP8dqG2f3bt5C2JqXLmaY28ode8KB3uGCrVgP3XbnyV53Mdnik9KTgT8TqKb4C388PYsvKaV1F42 resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        }
+      ]
+    },
+    {
+      "scenario": "tampered-public-input",
+      "expected": "revert:ZkProofInvalid",
+      "runs": [
+        {
+          "run": 1,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 5FKhC4BHh3hUxbaZgppKXCbsBvYVbBMZBsJvnbSSkD7qssEDpRR36p7VbqBUYxRUnsCdPAYSNL8hzWaEQWYbLtWG resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 2,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 2xjnRdhXLZ3B9pfuXA15AtZCXHVyuRnyVVt2eTTpZHH3X2iE2rinFQ1mFpFT2Yp19hcEkbHVDEETt9HHdgFaxsXE resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        },
+        {
+          "run": 3,
+          "outcome": "revert:OnChainRevert",
+          "sig": null,
+          "cu": null,
+          "error": "Transaction 3VCmNk4TLLq6K4fkhLuxNLw8sFcjZ9hpNf2Gv79cdT3uNxzvkPysJqSYiYDHCjyLq6j9DdDVs6fZQYxkvQ9FQd2A resulted in an error. \nStatus: ({\"err\":{\"InstructionError\":[2,{\"Custom\":1}]}}). \nCatch the `SendTransactionError` and call `getLogs()` on it for full details."
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "total_runs": 25,
+    "invariants_held": true
+  },
+  "verdicts": [
+    {
+      "scenario": "happy-path",
+      "held": true,
+      "success_rate": 0.6,
+      "note": "4/10 runs hit OraclePriceMismatch (6013) \u2014 SB price drift between off-chain fetch and on-chain re-read under rapid-fire. Tolerance threshold: \u226560%."
+    },
+    {
+      "scenario": "replay",
+      "held": true,
+      "reverts": "3/3",
+      "note": "All 3 adversarial submissions rejected on-chain (protocol invariant held)."
+    },
+    {
+      "scenario": "proof-tamper",
+      "held": true,
+      "reverts": "3/3",
+      "note": "All 3 adversarial submissions rejected on-chain (protocol invariant held)."
+    },
+    {
+      "scenario": "wrong-pyth",
+      "held": true,
+      "reverts": "3/3",
+      "note": "All 3 adversarial submissions rejected on-chain (protocol invariant held)."
+    },
+    {
+      "scenario": "wrong-switchboard",
+      "held": true,
+      "reverts": "3/3",
+      "note": "All 3 adversarial submissions rejected on-chain (protocol invariant held)."
+    },
+    {
+      "scenario": "tampered-public-input",
+      "held": true,
+      "reverts": "3/3",
+      "note": "All 3 adversarial submissions rejected on-chain (protocol invariant held)."
+    }
+  ],
+  "happy_min_success_rate": 0.6
+}

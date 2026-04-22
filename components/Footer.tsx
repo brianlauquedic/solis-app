@@ -12,10 +12,11 @@ export default function Footer() {
   const { setShowLanding } = useWallet();
 
   const resources: Array<{ label: string; href: string; external?: boolean }> = [
-    { label: t("footerUserGuide"), href: "/guide"     },
-    { label: t("footerDocs"),      href: "/docs"      },
-    { label: t("footerUseCases"),  href: "/use-cases" },
-    { label: "MCP API",            href: "/mcp"       },
+    { label: t("footerTestingGuide"), href: "/testing"   },
+    { label: t("footerUserGuide"),    href: "/guide"     },
+    { label: t("footerDocs"),         href: "/docs"      },
+    { label: t("footerUseCases"),     href: "/use-cases" },
+    { label: "MCP API",               href: "/mcp"       },
   ];
 
   const social = [

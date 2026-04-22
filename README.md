@@ -16,6 +16,7 @@ DeFi instruction can execute.
 
 [![Program](https://img.shields.io/badge/devnet%20program-AnszeCRFs…YLp-brightgreen?logo=solana)](https://solscan.io/account/AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp?cluster=devnet)
 [![Verification](https://img.shields.io/badge/dual__oracle_gate-204%2C460_CU-blue)](./docs/bench/2026-04-22-cfull-cu.json)
+[![Invariants](https://img.shields.io/badge/adversarial_stress-15%2F15_reverted-success)](./docs/bench/2026-04-22-stress.json)
 [![Tests](https://img.shields.io/badge/invariant%20tests-8%20passing-green)](./__tests__/)
 [![No Token](https://img.shields.io/badge/token-none-lightgrey)](./docs/VALUE_CAPTURE.md)
 

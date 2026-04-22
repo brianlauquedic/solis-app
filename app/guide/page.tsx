@@ -308,9 +308,22 @@ export default function GuidePage() {
             <div style={{ fontSize: 13, fontWeight: 400, color: "var(--text-primary)", marginBottom: 8, fontFamily: "var(--font-heading)", letterSpacing: "0.04em" }}>
               {c.introHeadline}
             </div>
-            <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.9 }}>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.9, marginBottom: 10 }}>
               {c.introBody}
             </div>
+            <Link href="/testing" style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              fontSize: 11, color: "var(--accent)", textDecoration: "none",
+              padding: "5px 10px", border: "1px solid var(--accent-mid)",
+              borderRadius: 4, fontFamily: "var(--font-mono)",
+              letterSpacing: "0.04em",
+            }}>
+              {lang === "zh"
+                ? "→ 還沒裝 Phantom？先看 Devnet 測試教程"
+                : lang === "ja"
+                ? "→ Phantom 未導入？まず Devnet チュートリアルへ"
+                : "→ Haven't installed Phantom? Start with the Devnet Walkthrough"}
+            </Link>
           </div>
         </div>
 
