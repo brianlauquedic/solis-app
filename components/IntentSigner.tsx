@@ -499,9 +499,9 @@ export default function IntentSigner() {
     <Card className="relative overflow-hidden border-[var(--border)] bg-[var(--bg-card)]">
       <Seigaiha className="absolute inset-0 pointer-events-none" opacity={0.04} />
 
-      <CardHeader className="relative z-10 px-6 pb-5 pt-4 sm:px-10 sm:pt-6">
+      <CardHeader className="relative z-10 px-6 pb-5 pt-4 sm:px-14 sm:pt-6">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--bg-card-2)]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[var(--accent-soft)]">
             <PenLine className="h-5 w-5" style={{ color: "var(--accent)" }} />
           </div>
           <div>
@@ -517,7 +517,7 @@ export default function IntentSigner() {
 
       <Separator className="bg-[var(--border)]" />
 
-      <CardContent className="relative z-10 space-y-7 px-6 py-7 sm:px-10 sm:py-9">
+      <CardContent className="relative z-10 space-y-7 px-6 py-7 sm:px-14 sm:py-9">
         {/* Intent text */}
         <div className="space-y-2.5">
           <Label className="font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-muted)]">
@@ -680,7 +680,7 @@ export default function IntentSigner() {
         )}
       </CardContent>
 
-      <CardFooter className="relative z-10 justify-between border-t border-[var(--border)] bg-[var(--bg-card-2)]/40 px-6 py-4 sm:px-10">
+      <CardFooter className="relative z-10 justify-between border-t border-[var(--border)] bg-[var(--bg-card-2)]/40 px-6 py-4 sm:px-14">
         <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--text-muted)]">
           Program · {SAKURA_INSURANCE_PROGRAM_ID.toBase58().slice(0, 10)}…
         </span>
@@ -818,45 +818,45 @@ function ProtocolCard({
       disabled={disabled}
       aria-pressed={active}
       className={cn(
-        "group flex w-full flex-col items-stretch gap-2.5 rounded-xl border px-3.5 py-3.5 text-left transition-all",
-        "min-h-[126px] disabled:cursor-not-allowed disabled:opacity-50",
+        "group flex w-full flex-col items-center gap-2.5 rounded-xl border px-3.5 py-4 text-center transition-all",
+        "min-h-[140px] disabled:cursor-not-allowed disabled:opacity-50",
         active
           ? "border-[var(--accent)]/60 bg-[var(--accent-soft)] text-[var(--text-primary)] shadow-sm"
           : "border-[var(--border)] bg-transparent text-[var(--text-secondary)] hover:border-[var(--border-light)] hover:bg-[var(--bg-card-2)]/40 hover:text-[var(--text-primary)]"
       )}
     >
-      {/* Top row: seal + name + active sparkle (left-aligned) */}
-      <div className="flex items-center gap-2.5">
-        <span
-          className="inline-flex shrink-0 items-center justify-center"
-          style={{
-            transform: active ? "rotate(-4deg) scale(1.04)" : "rotate(-2deg)",
-            transition: "transform 220ms cubic-bezier(.2,.8,.2,1), filter 220ms ease",
-            filter: active
-              ? "drop-shadow(0 4px 10px rgba(201,49,42,0.32))"
-              : "drop-shadow(0 1px 4px rgba(201,49,42,0.18))",
-          }}
-          aria-hidden="true"
-        >
-          <LogoSeal logoSrc={meta.logoSrc} label={meta.label} size={40} />
-        </span>
-        <span className="flex min-w-0 items-center gap-1">
-          <span className="truncate font-mono text-[13px] font-semibold tracking-[0.03em] text-[var(--text-primary)]">
-            {meta.label}
-          </span>
-          {active && (
-            <Sparkles className="h-3 w-3 shrink-0 text-[var(--accent)]" aria-hidden="true" />
-          )}
-        </span>
-      </div>
+      {/* Seal — centered */}
+      <span
+        className="inline-flex items-center justify-center"
+        style={{
+          transform: active ? "rotate(-4deg) scale(1.04)" : "rotate(-2deg)",
+          transition: "transform 220ms cubic-bezier(.2,.8,.2,1), filter 220ms ease",
+          filter: active
+            ? "drop-shadow(0 4px 10px rgba(201,49,42,0.32))"
+            : "drop-shadow(0 1px 4px rgba(201,49,42,0.18))",
+        }}
+        aria-hidden="true"
+      >
+        <LogoSeal logoSrc={meta.logoSrc} label={meta.label} size={40} />
+      </span>
 
-      {/* Tagline — full-width, single line */}
-      <span className="truncate font-mono text-[10.5px] tracking-[0.02em] text-[var(--text-muted)]">
+      {/* Name + active sparkle — centered */}
+      <span className="flex items-center justify-center gap-1">
+        <span className="truncate font-mono text-[13px] font-semibold tracking-[0.03em] text-[var(--text-primary)]">
+          {meta.label}
+        </span>
+        {active && (
+          <Sparkles className="h-3 w-3 shrink-0 text-[var(--accent)]" aria-hidden="true" />
+        )}
+      </span>
+
+      {/* Tagline — centered, single line */}
+      <span className="w-full truncate font-mono text-[10.5px] tracking-[0.02em] text-[var(--text-muted)]">
         {meta.tagline}
       </span>
 
-      {/* Bottom: APR value + label (left-justified for visual weight) */}
-      <div className="mt-auto flex items-baseline gap-1.5">
+      {/* APR value + label — centered, bottom-pinned */}
+      <div className="mt-auto flex items-baseline justify-center gap-1.5">
         {loading ? (
           <span className="inline-block h-3 w-16 animate-pulse rounded bg-[var(--border)]/60" />
         ) : (
