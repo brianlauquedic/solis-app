@@ -188,8 +188,22 @@ function AppContent() {
               </div>
             </div>
 
-            {/* ── Agentic Consumer Protocol — Intent Execution ── */}
-            <div className={isDemo ? "demo-frame" : undefined} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* ── Agentic Consumer Protocol — Intent Execution ──
+                Inset the form area inside the 1080px page container so
+                the Card has a visible breathing buffer on both sides
+                (≈80px between page edge and Card border at desktop). */}
+            <div
+              className={isDemo ? "demo-frame" : undefined}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 20,
+                maxWidth: 920,
+                marginLeft: "auto",
+                marginRight: "auto",
+                width: "100%",
+              }}
+            >
               <ErrorBoundary fallbackLabel="Intent Signer">
                 <IntentSigner />
               </ErrorBoundary>

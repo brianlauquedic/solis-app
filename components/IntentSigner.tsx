@@ -499,7 +499,7 @@ export default function IntentSigner() {
     <Card className="relative overflow-hidden border-[var(--border)] bg-[var(--bg-card)]">
       <Seigaiha className="absolute inset-0 pointer-events-none" opacity={0.04} />
 
-      <CardHeader className="relative z-10 px-6 pb-5 pt-4 sm:px-16 sm:pt-6">
+      <CardHeader className="relative z-10 px-6 pb-5 pt-4 sm:px-10 sm:pt-6">
         <div className="flex items-center gap-3.5">
           <div className="flex h-11 w-11 items-center justify-center rounded-md border border-[var(--border)] bg-[var(--bg-card-2)]">
             <PenLine className="h-5 w-5" style={{ color: "var(--accent)" }} />
@@ -517,7 +517,7 @@ export default function IntentSigner() {
 
       <Separator className="bg-[var(--border)]" />
 
-      <CardContent className="relative z-10 space-y-7 px-6 py-7 sm:px-16 sm:py-9">
+      <CardContent className="relative z-10 space-y-7 px-6 py-7 sm:px-10 sm:py-9">
         {/* Intent text */}
         <div className="space-y-2.5">
           <Label className="font-mono text-[11px] uppercase tracking-[0.06em] text-[var(--text-muted)]">
@@ -680,7 +680,7 @@ export default function IntentSigner() {
         )}
       </CardContent>
 
-      <CardFooter className="relative z-10 justify-between border-t border-[var(--border)] bg-[var(--bg-card-2)]/40 px-6 py-4 sm:px-16">
+      <CardFooter className="relative z-10 justify-between border-t border-[var(--border)] bg-[var(--bg-card-2)]/40 px-6 py-4 sm:px-10">
         <span className="font-mono text-[10px] tracking-[0.06em] text-[var(--text-muted)]">
           Program · {SAKURA_INSURANCE_PROGRAM_ID.toBase58().slice(0, 10)}…
         </span>
