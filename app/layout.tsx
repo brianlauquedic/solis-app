@@ -7,11 +7,11 @@ import { cn } from "@/lib/utils";
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "Sakura — Solana の AI セキュリティレイヤー",
-  description: "見えない脆弱性を捕捉し、予測できない結果を事前に再現し、逃げ切れない清算を阻止する。",
+  title: "Sakura · 数学で画定する、AI エージェントの実行境界",
+  description: "AI エージェントの実行境界を、運営側の誓約ではなく、数学で画定する。ユーザーが一度意図に署名すれば、エージェントのあらゆる動作は、Solana のオンチェーン検証を通過してはじめて、チェーンに刻まれる。圏外は、運営側の信頼ではなく、可能性として成立しない。",
   openGraph: {
-    title: "Sakura — Solana の AI セキュリティレイヤー",
-    description: "見えない脆弱性を捕捉し、予測できない結果を事前に再現し、逃げ切れない清算を阻止する。",
+    title: "Sakura · 数学で画定する、AI エージェントの実行境界",
+    description: "AI エージェントの実行境界を、運営側の誓約ではなく、数学で画定する。ユーザーが一度意図に署名すれば、エージェントのあらゆる動作は、Solana のオンチェーン検証を通過してはじめて、チェーンに刻まれる。圏外は、運営側の信頼ではなく、可能性として成立しない。",
     url: "https://www.sakuraaai.com",
     siteName: "Sakura",
     locale: "ja_JP",
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sakura — Solana の AI セキュリティレイヤー",
-    description: "見えない脆弱性を捕捉し、予測できない結果を事前に再現し、逃げ切れない清算を阻止する。",
+    title: "Sakura · 数学で画定する、AI エージェントの実行境界",
+    description: "AI エージェントの実行境界を、運営側の誓約ではなく、数学で画定する。ユーザーが一度意図に署名すれば、エージェントのあらゆる動作は、Solana のオンチェーン検証を通過してはじめて、チェーンに刻まれる。圏外は、運営側の信頼ではなく、可能性として成立しない。",
   },
   icons: {
     icon: "/icon.png",
