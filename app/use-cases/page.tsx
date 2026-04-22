@@ -154,14 +154,14 @@ const USE_CASES: SectionEntry[] = [
           ja: "AI エージェント開発者",
         },
         context: {
-          zh: "開發者希望做一個 AI 代理，每日自動在 Kamino / MarginFi / Jupiter 之間為用戶再平衡 USDC 收益倉位。問題：用戶不會為了一個還不知道能賺多少的 AI 代理，把任意金額的簽名權限交出去。必須有一個結構性的上限——但 allowlist / session key 並不夠硬。",
-          en: "A developer wants to build an AI agent that daily rebalances the user's USDC yield positions across Kamino, MarginFi, and Jupiter. The problem: no user will sign over unbounded authority to an agent whose ROI is not yet proven. A structural ceiling is required — but allowlists and session keys are not hard enough.",
-          ja: "ある開発者は、Kamino / MarginFi / Jupiter の間で、ユーザーの USDC 利回りポジションを日次でリバランスする AI エージェントを構築したいと考えている。問題は、ROI がまだ実証されていないエージェントに、ユーザーが無制限の署名権を渡すことは決してない、ということである。構造的な上限が必要だが、許可リストやセッションキーでは硬さが足りない。",
+          zh: "開發者希望做一個 AI 代理，每日自動在 Kamino / Jupiter Lend / Jito 之間為用戶再平衡 USDC + SOL 收益倉位（Solana 借貸與 LST 的四大龍頭裡的三個）。問題：用戶不會為了一個還不知道能賺多少的 AI 代理，把任意金額的簽名權限交出去。必須有一個結構性的上限——但 allowlist / session key 並不夠硬。",
+          en: "A developer wants to build an AI agent that daily rebalances the user's USDC + SOL yield positions across Kamino, Jupiter Lend, and Jito (three of Solana's four 龙头 lending + LST protocols). The problem: no user will sign over unbounded authority to an agent whose ROI is not yet proven. A structural ceiling is required — but allowlists and session keys are not hard enough.",
+          ja: "ある開発者は、Kamino / Jupiter Lend / Jito の間で（Solana の貸付と LST の主要 4 プロトコルのうちの 3 つ）、ユーザーの USDC と SOL の利回りポジションを日次でリバランスする AI エージェントを構築したいと考えている。問題は、ROI がまだ実証されていないエージェントに、ユーザーが無制限の署名権を渡すことは決してない、ということである。構造的な上限が必要だが、許可リストやセッションキーでは硬さが足りない。",
         },
         outcome: {
-          zh: "以 Sakura SDK 整合：用戶簽一次意圖——「代理每次可移動最多 $500 USDC，僅限 Kamino / MarginFi / Jupiter，為期 30 天」。代理每次執行前，用 @solana/web3.js + SAK 組裝 DeFi 指令，透過 SDK 於瀏覽器本地 600ms 生成 Groth16 證明，打包至 v0 原子交易。鏈上驗證 116k CU。用戶的上限由數學而非軟體保證——結構上不可逾越。",
-          en: "Integrate via Sakura SDK: the user signs one intent — \"the agent may move up to $500 USDC per action, limited to Kamino / MarginFi / Jupiter, for thirty days.\" Before each execution, the agent assembles the DeFi instruction via @solana/web3.js + SAK, generates a Groth16 proof locally in the browser in ~600ms, and bundles it into a v0 atomic transaction. On-chain verification costs ~116k CU. The user's cap is guaranteed by math, not by software — structurally unexceedable.",
-          ja: "Sakura SDK を用いて統合する——ユーザーは、1 度の意図署名を行う。「エージェントは、Kamino / MarginFi / Jupiter に限り、1 回最大 $500 USDC、30 日間に限って動かしてよい」。エージェントは各実行前に、@solana/web3.js と SAK で DeFi 命令を組み立て、ブラウザ内で約 600ms の Groth16 証明を生成し、v0 アトミックトランザクションに束ねる。オンチェーン検証はおよそ 116k CU。ユーザーの上限は、ソフトウェアではなく、数学によって保証される——構造上、越えられない。",
+          zh: "以 Sakura SDK 整合：用戶簽一次意圖——「代理每次可移動最多 $500 USDC，僅限 Kamino / Jupiter / Raydium / Jito 這四大龍頭，為期 30 天」。代理每次執行前，用 lib/adapters 組裝對應協議的真 mainnet CPI 指令（13 個格子已驗證），透過 SDK 於瀏覽器本地 600ms 生成 Groth16 證明，打包至 v0 原子交易。鏈上驗證 126k CU（實測）。用戶的上限由數學而非軟體保證——結構上不可逾越。",
+          en: "Integrate via Sakura SDK: the user signs one intent — \"the agent may move up to $500 USDC per action, limited to the four 龙头 (Kamino / Jupiter / Raydium / Jito), for thirty days.\" Before each execution, the agent assembles the protocol-specific real mainnet CPI via lib/adapters (13 cells verified). The SDK generates a Groth16 proof locally in ~600ms and bundles it into a v0 atomic transaction. On-chain verification costs ~126k CU (measured). The user's cap is guaranteed by math, not by software — structurally unexceedable.",
+          ja: "Sakura SDK を用いて統合する——ユーザーは、1 度の意図署名を行う。「エージェントは、Kamino / Jupiter / Raydium / Jito の 4 つの龍頭に限り、1 回最大 $500 USDC、30 日間に限って動かしてよい」。エージェントは各実行前に、lib/adapters で各プロトコルの本物のメインネット CPI 命令を組み立てる（13 セル検証済み）。SDK はブラウザ内で約 600ms の Groth16 証明を生成し、v0 アトミックトランザクションに束ねる。オンチェーン検証はおよそ 126k CU（実測）。ユーザーの上限は、ソフトウェアではなく、数学によって保証される——構造上、越えられない。",
         },
         tag: {
           zh: "代理整合",

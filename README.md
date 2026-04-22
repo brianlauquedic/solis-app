@@ -29,7 +29,7 @@ DeFi instruction can execute.
 
 A user signs once, in natural language:
 
-> *"The agent may lend up to \$1,000 into Kamino or MarginFi for one week."*
+> *"The agent may lend up to \$1,000 into Kamino or Jupiter Lend for one week."*
 
 The instruction is compressed, via a two-layer Poseidon hash, into a
 thirty-two-byte commitment stored in a Program Derived Address on
@@ -137,9 +137,9 @@ In the first half of 2026, four consumer wallets — Phantom, Backpack,
 Abstract, and Infinex — each release an AI-agent mode. The
 engineering challenge those modes expose is not the agent's
 intelligence. It is the agent's containment. An AI system that can
-deposit a user's USDC into Kamino, borrow on MarginFi, or swap on
-Jupiter is, in a strict operational sense, a signing key the user
-does not control.
+deposit a user's USDC into Kamino, borrow on Jupiter Lend, or swap on
+Jupiter / Raydium is, in a strict operational sense, a signing key
+the user does not control.
 
 The industry's default answer to the containment problem is the same
 answer every software industry has given when faced with it: a
@@ -265,7 +265,7 @@ mid-2024 and early 2026:
 | Solana `alt_bn128` pairing syscall | Protocol 1.17, shipped Q3 2024 |
 | Light Protocol `groth16-solana` crate | Production release, Q1 2025 |
 | Pyth Pull Oracle `PriceUpdateV2` | Feed-id-scoped accounts, Q2 2025 |
-| Solana Agent Kit v2 | Plugin surface for Jupiter, Kamino, MarginFi, Marinade, Q4 2025 |
+| Solana Agent Kit v2 | Plugin surface used for token + price utilities; Sakura's adapter layer (`lib/adapters/`) integrates the four 龙头 directly — Jupiter (Swap + Lend × 4), Raydium, Kamino × 4, Jito × 2 = 13 mainnet CPI cells, all reproducible via `npx tsx scripts/verify-{jito,raydium,kamino,jupiter-lend}-adapter.ts` |
 | Claude Sonnet 4.6 Agent Skills | Composable skill pipelines with structured output, Q1 2026 |
 | Stripe x402 (HTTP 402 re-proposal) | Machine Payments Protocol, Q3 2025 |
 
