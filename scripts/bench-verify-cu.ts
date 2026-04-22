@@ -63,6 +63,10 @@ import {
   SWITCHBOARD_SOL_USD_DEVNET,
 } from "../lib/insurance-pool";
 import {
+  buildSwitchboardUpdateIxs,
+  crossOracleMedian,
+} from "../lib/switchboard-post";
+import {
   computeIntentCommitment,
   generateIntentProof,
   proofToOnchainBytes,
@@ -295,10 +299,20 @@ async function main() {
       if (!pythAcct) throw new Error("posted Pyth account fetch failed");
       const pyth = parsePythPriceUpdateV2(Buffer.from(pythAcct.data));
       const adj = 6 + pyth.exponent;
-      const priceMicro: bigint =
+      const priceMicroPyth: bigint =
         adj >= 0
           ? pyth.price * 10n ** BigInt(adj)
           : pyth.price / 10n ** BigInt(-adj);
+
+      // ── C-full · fetch fresh Switchboard + compute Pyth∩SB median ──
+      const {
+        updateIxs: sbUpdateIxs,
+        priceMicro: priceMicroSb,
+      } = await buildSwitchboardUpdateIxs({
+        feedPubkey: SWITCHBOARD_SOL_USD_DEVNET,
+        payer: user.publicKey,
+      });
+      const priceMicro = crossOracleMedian(priceMicroPyth, priceMicroSb);
 
       const actionAmount = 10n * 1_000_000n; // lend 10 USDC — trivial action, all constraints pass
       const proofBundle = await generateIntentProof({
@@ -306,6 +320,7 @@ async function main() {
         actionType: ActionType.Lend,
         actionAmount,
         actionTargetIndex: ProtocolId.Kamino,
+        // Proof public input is the MEDIAN — matches on-chain verification.
         oraclePriceUsdMicro: priceMicro,
         oracleSlot: pyth.slot,
         maxAmount,
@@ -324,10 +339,6 @@ async function main() {
       const { proofA, proofB, proofC } = proofToOnchainBytes(proofBundle.proof);
 
       const actionNonce = BigInt(Date.now() + i);
-      // ⚠️ TODO: replace SWITCHBOARD_SOL_USD_DEVNET placeholder with the
-      // real devnet Switchboard SOL/USD pull-feed account before the
-      // bench reflects the full C-full CU cost (expected +15.5k over
-      // C-lite per docs/DUAL_ORACLE_SPEC.md).
       const executeIx = buildExecuteWithIntentProofIx({
         admin: admin.publicKey,
         user: user.publicKey,
@@ -340,14 +351,18 @@ async function main() {
         actionType: ActionType.Lend,
         actionAmount,
         actionTargetIndex: ProtocolId.Kamino,
+        // Median of (Pyth, Switchboard) — on-chain recomputes and checks ±1.
         oraclePriceUsdMicro: priceMicro,
         oracleSlot: pyth.slot,
         proofA,
         proofB,
         proofC,
       });
+      // Include Switchboard update ix(s) BEFORE executeIx so the feed
+      // is fresh when the gate reads it. Both land atomically.
       const tx = new Transaction()
         .add(ComputeBudgetProgram.setComputeUnitLimit({ units: PER_TX_CU_CEILING }))
+        .add(...sbUpdateIxs)
         .add(executeIx);
       const sig = await sendAndConfirmTransaction(conn, tx, [user], {
         commitment: "confirmed",

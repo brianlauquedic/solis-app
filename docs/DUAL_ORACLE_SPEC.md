@@ -1,8 +1,17 @@
 # C · Dual Oracle Spec (Pyth + Switchboard)
 
-**Status:** design approved, implementation deferred
-**Scope:** next cycle after C-lite (Pyth EMA sanity) ships and proves stable
-**Estimate:** 2 engineering days + 1 day integration testing
+**Status:** **code shipped 2026-04-22** · `anchor deploy` + e2e verification pending
+**Shipped commits:** `1540dca` (Rust-side), `4bd3b54` (TS-side), `7cc4592` (real devnet constants)
+**Current state:**
+  · Rust `execute_with_intent_proof` enforces Pyth ∩ Switchboard ≤ 1% deviation, median-to-circuit (`cargo check` clean)
+  · TS client `buildExecuteWithIntentProofIx` extended with `switchboardPriceAccount`
+  · Helper `lib/switchboard-post.ts` (buildSwitchboardUpdateIxs + crossOracleMedian)
+  · Real devnet constants populated: `SWITCHBOARD_PROGRAM_ID = Aio4gaXj…ji2`, feed hash `b756d471…a4cb` (read from on-chain feed `GgGV…KB`)
+  · e2e + bench scripts integrated with median computation
+
+**Remaining:** `anchor build && anchor deploy --provider.cluster devnet`, one successful e2e run, then rerun `bench-verify-cu` to measure post-C-full CU (expected ~145–215k vs C-lite ~126k).
+
+**Mainnet migration:** requires `SWITCHBOARD_PROGRAM_ID` swap (devnet `Aio4gaXj…ji2` → mainnet `SBond…YLp`), populating `SWITCHBOARD_SOL_USD_MAINNET` pubkey + corresponding feed hash, then redeploy via Squads time-locked admin path per `docs/SQUADS_MIGRATION_RUNBOOK.md`.
 
 ---
 

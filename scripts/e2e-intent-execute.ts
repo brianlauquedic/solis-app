@@ -58,6 +58,11 @@ import {
   SWITCHBOARD_SOL_USD_DEVNET,
 } from "../lib/insurance-pool";
 import {
+  buildSwitchboardUpdateIxs,
+  crossOracleMedian,
+  crossOracleDeviationBps,
+} from "../lib/switchboard-post";
+import {
   computeIntentCommitment,
   generateIntentProof,
   proofToOnchainBytes,
@@ -399,12 +404,28 @@ async function main() {
   const actionNonce = BigInt(Date.now() + 1);
   const [actionRecordPDA] = deriveActionRecordPDA(intentPDA, actionNonce);
 
-  // ⚠️ TODO: replace with real devnet Switchboard SOL/USD pull-feed
-  // pubkey from https://ondemand.switchboard.xyz/solana/devnet. With
-  // the system-program placeholder below, execute_with_intent_proof
-  // will revert on the owner-check — expected until the feed is wired.
-  // See docs/DUAL_ORACLE_SPEC.md §"Dependencies before this can ship".
+  // ── C-full · Fetch fresh Switchboard SOL/USD + compute Pyth∩SB median ──
+  console.log("\n[5.5/6] Fetching Switchboard SOL/USD update (C-full dual oracle)…");
   const switchboardPriceAccount = SWITCHBOARD_SOL_USD_DEVNET;
+  const {
+    updateIxs: sbUpdateIxs,
+    lookupTables: sbLuts,
+    priceMicro: priceMicroSb,
+  } = await buildSwitchboardUpdateIxs({
+    feedPubkey: switchboardPriceAccount,
+    payer: user.publicKey,
+  });
+  const crossBps = crossOracleDeviationBps(priceMicro, priceMicroSb);
+  console.log(
+    `  ✓ Pyth  ${priceMicro} micro-USD · SB ${priceMicroSb} micro-USD · divergence ${crossBps} bps`
+  );
+  if (crossBps > 100n) {
+    console.log(
+      `  ⚠ cross-oracle divergence > 1% (100 bps) — on-chain will revert; abort`
+    );
+    process.exit(3);
+  }
+  const priceMicroMedian = crossOracleMedian(priceMicro, priceMicroSb);
 
   const executeIx = buildExecuteWithIntentProofIx({
     admin: admin.publicKey,
@@ -418,20 +439,30 @@ async function main() {
     actionType,
     actionAmount,
     actionTargetIndex,
-    // Post-C-full: oracle_price_usd_micro is the MEDIAN of Pyth and
-    // Switchboard. Until a real Switchboard feed is wired, we pass
-    // the Pyth-only value and the handler will revert on the
-    // Switchboard owner-check before this mismatch matters.
-    oraclePriceUsdMicro: priceMicro,
+    // Post-C-full: public input is the (Pyth, Switchboard) MEDIAN.
+    // On-chain handler independently parses both and verifies equality
+    // within ±1 micro-USD after recomputing the median.
+    oraclePriceUsdMicro: priceMicroMedian,
     oracleSlot: pyth.slot,
     proofA,
     proofB,
     proofC,
   });
 
+  // Bundle Switchboard update ixs BEFORE the Sakura gate; both land
+  // atomically (or the whole tx reverts). The Pyth post already
+  // happened as a separate tx earlier in the flow; SB lives in the
+  // same tx as the gate because its update needs to be on-chain at
+  // the moment the gate reads it.
   const tx = new Transaction()
     .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }))
+    .add(...sbUpdateIxs)
     .add(executeIx);
+  // Note: with LUTs (sbLuts) we'd switch to a VersionedTransaction;
+  // keeping legacy Transaction here because the LUT path requires
+  // blockhash + compileToV0Message and a larger refactor. If the
+  // Switchboard update ix exceeds the 64-account legacy limit, this
+  // send will fail and we'll know to migrate to v0.
 
   try {
     const sigExec = await sendAndConfirmTransaction(conn, tx, [user], {

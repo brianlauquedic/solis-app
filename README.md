@@ -35,24 +35,33 @@ Solana. The user's private policy — per-action cap, allowed-protocol
 set, expiry — remains in the user's browser. Only the 32-byte hash
 reaches the chain.
 
-Every subsequent agent action flows through the same four-check gate:
+Every subsequent agent action flows through the same six-check gate:
 
 ```
   agent proposes action
          │
          ▼
-  ┌─────────────────────────────────────────────────┐
-  │  1.  Groth16 proof of intent bounds             │   alt_bn128 pairing, 126,221 CU
-  │  2.  Pyth PriceUpdateV2 feed-id + slot re-parse │   oracle not spoofable
-  │  3.  150-slot price-freshness window            │   stale price → revert
-  │  4.  ActionRecord PDA replay guard              │   seeded by (intent, nonce)
-  └─────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────┐
+  │  1.  Groth16 proof of intent bounds                  │   alt_bn128 pairing
+  │  2.  Pyth PriceUpdateV2 feed-id + slot re-parse      │   oracle not spoofable
+  │  3.  150-slot price-freshness window                 │   stale price → revert
+  │  4.  Pyth spot-vs-EMA deviation ≤ 2%   (C-lite)      │   flash manip → revert
+  │  5.  Switchboard feed_hash + ≤ 1% vs Pyth (C-full)   │   sustained compromise → revert
+  │  6.  ActionRecord PDA replay guard                   │   seeded by (intent, nonce)
+  └──────────────────────────────────────────────────────┘
          │                          │
-     any check fails            all four pass
+     any check fails            all six pass
          ▼                          ▼
    TRANSACTION REVERTS       DeFi instruction executes atomically
    funds never moved         fee vault collects 0.1% + $0.01 flat
 ```
+
+The oracle public input to the Groth16 proof is not the raw Pyth
+price — it is the **median of Pyth and Switchboard** (arithmetic
+mean with two oracles). Defeating the gate would require
+simultaneously compromising Pyth's publisher network *and*
+Switchboard's, two organizationally and infrastructurally
+independent oracle systems.
 
 The failing case is the important one. Nothing downstream of the gate
 executes until all four checks land. Every action on a Sakura-gated

@@ -14,10 +14,15 @@ answer it from first principles.
   proof is verified on-chain by Solana's `alt_bn128` syscall
   (Protocol 1.17). If the proof fails, the entire transaction
   reverts — the DeFi instruction your wallet built never runs.
-- **Oracle binding built in.** Sakura cross-checks Pyth `PriceUpdateV2`
-  on-chain on every gate call: feed-id, posted slot, and a 150-slot
-  freshness window. An agent cannot construct a proof against a
-  stale or spoofed price. You do not rebuild this.
+- **Dual-oracle binding built in.** Sakura cross-checks Pyth
+  `PriceUpdateV2` AND Switchboard On-Demand `PullFeedAccountData`
+  on-chain on every gate call: feed-id, posted slot, 150-slot
+  freshness window, Pyth spot-vs-EMA deviation ≤ 2%, and Pyth-vs-
+  Switchboard deviation ≤ 1%. The circuit's `oracle_price_usd_micro`
+  public input is the median of the two oracles. An attacker would
+  need to simultaneously compromise both Pyth's and Switchboard's
+  publisher networks to forge a passing proof. You do not rebuild
+  any of this.
 - **An audit record your compliance team will ask for in 2026.** Every
   passing execution writes an `ActionRecord` PDA with a keccak
   fingerprint of the proof. The forensic trail exists whether your
