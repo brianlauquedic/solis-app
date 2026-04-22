@@ -32,7 +32,7 @@ function AppContent() {
       <div
         className="main-container"
         style={{
-          maxWidth: showApp ? 860 : 1280,
+          maxWidth: showApp ? 1080 : 1280,
           margin: "0 auto",
           padding: showApp ? "40px 24px" : "0",
         }}
