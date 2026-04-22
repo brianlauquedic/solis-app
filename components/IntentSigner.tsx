@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import SealStampOverlay from "@/components/SealStampOverlay";
+import NumeralSeal from "@/components/NumeralSeal";
 import {
   appendDemoAction,
   clearDemoIntentRevoked,
@@ -723,99 +724,32 @@ function NumField({
 }
 
 /**
- * 朱印 seal — vermillion stamp with a single kanji character. Hand-rotated
- * a touch for the inked-by-hand feel; classic double-frame inset.
- * Hoisted to module scope (zero render cost on re-renders).
+ * Wrap NumeralSeal (homepage 朱印 with 桜紋 gold pattern + 4-corner
+ * bead flourishes) in an active-state animation container. Hand-stamped
+ * tilt amplifies on selection.
  */
-function ShuinSeal({ kanji, active }: { kanji: string; active: boolean }) {
+function SealMark({
+  kanji,
+  active,
+  size,
+}: {
+  kanji: string;
+  active: boolean;
+  size: number;
+}) {
   return (
     <span
       aria-hidden="true"
-      className="relative inline-flex shrink-0 items-center justify-center"
+      className="inline-flex shrink-0 items-center justify-center"
       style={{
-        width: 56,
-        height: 56,
-        background: "var(--accent)",
-        borderRadius: 8,
-        transform: active ? "rotate(-3deg)" : "rotate(-2deg)",
-        transition: "transform 200ms ease, box-shadow 200ms ease",
-        boxShadow: active
-          ? "0 2px 0 rgba(0,0,0,0.10), 0 4px 14px rgba(201,49,42,0.35)"
-          : "0 1px 0 rgba(0,0,0,0.08), 0 2px 6px rgba(201,49,42,0.20)",
+        transform: active ? "rotate(-4deg) scale(1.04)" : "rotate(-2deg)",
+        transition: "transform 220ms cubic-bezier(.2,.8,.2,1), filter 220ms ease",
+        filter: active
+          ? "drop-shadow(0 4px 10px rgba(201,49,42,0.32))"
+          : "drop-shadow(0 1px 4px rgba(201,49,42,0.18))",
       }}
     >
-      {/* Inner ink-frame — the classic 朱印 double border */}
-      <span
-        className="absolute"
-        style={{
-          top: 4,
-          left: 4,
-          right: 4,
-          bottom: 4,
-          border: "1.5px solid rgba(255,255,255,0.55)",
-          borderRadius: 4,
-          pointerEvents: "none",
-        }}
-      />
-      <span
-        style={{
-          color: "#FFFFFF",
-          fontSize: 30,
-          fontWeight: 700,
-          fontFamily: '"Noto Serif JP", "Hiragino Mincho ProN", serif',
-          lineHeight: 1,
-          letterSpacing: 0,
-          textShadow: "0 0 1px rgba(255,255,255,0.25)",
-        }}
-      >
-        {kanji}
-      </span>
-    </span>
-  );
-}
-
-/** Smaller 朱印 seal used inside action tiles (40px instead of 56px). */
-function ShuinSealSmall({ kanji, active }: { kanji: string; active: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      className="relative inline-flex shrink-0 items-center justify-center"
-      style={{
-        width: 40,
-        height: 40,
-        background: "var(--accent)",
-        borderRadius: 6,
-        transform: active ? "rotate(-3deg)" : "rotate(-2deg)",
-        transition: "transform 200ms ease, box-shadow 200ms ease",
-        boxShadow: active
-          ? "0 1px 0 rgba(0,0,0,0.10), 0 3px 10px rgba(201,49,42,0.32)"
-          : "0 1px 0 rgba(0,0,0,0.06), 0 1px 4px rgba(201,49,42,0.18)",
-      }}
-    >
-      <span
-        className="absolute"
-        style={{
-          top: 3,
-          left: 3,
-          right: 3,
-          bottom: 3,
-          border: "1.25px solid rgba(255,255,255,0.55)",
-          borderRadius: 3,
-          pointerEvents: "none",
-        }}
-      />
-      <span
-        style={{
-          color: "#FFFFFF",
-          fontSize: 22,
-          fontWeight: 700,
-          fontFamily: '"Noto Serif JP", "Hiragino Mincho ProN", serif',
-          lineHeight: 1,
-          letterSpacing: 0,
-        }}
-      >
-        {kanji}
-      </span>
+      <NumeralSeal numeral={kanji} size={size} />
     </span>
   );
 }
@@ -841,13 +775,13 @@ function ActionTile({
       aria-pressed={active}
       className={cn(
         "flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition-all",
-        "min-h-[64px] disabled:cursor-not-allowed disabled:opacity-50",
+        "min-h-[72px] disabled:cursor-not-allowed disabled:opacity-50",
         active
           ? "border-[var(--accent)]/60 bg-[var(--accent-soft)] text-[var(--text-primary)] shadow-sm"
           : "border-[var(--border)] bg-transparent text-[var(--text-secondary)] hover:border-[var(--border-light)] hover:bg-[var(--bg-card-2)]/40 hover:text-[var(--text-primary)]"
       )}
     >
-      <ShuinSealSmall kanji={kanji} active={active} />
+      <SealMark kanji={kanji} active={active} size={44} />
       <span className="font-mono text-[13px] font-semibold tracking-[0.04em] text-[var(--text-primary)]">
         {label}
       </span>
@@ -884,7 +818,7 @@ function ProtocolCard({
           : "border-[var(--border)] bg-transparent text-[var(--text-secondary)] hover:border-[var(--border-light)] hover:bg-[var(--bg-card-2)]/40 hover:text-[var(--text-primary)]"
       )}
     >
-      <ShuinSeal kanji={meta.sealKanji} active={active} />
+      <SealMark kanji={meta.sealKanji} active={active} size={56} />
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex items-center gap-1.5">
