@@ -6,6 +6,8 @@ Cryptographic bounds on what an AI agent can do with your money — a Solana-nat
 
 **Day-1 SOM: $4.48B in Solana TVL addressable via 12 mainnet CPI cells** — Kamino lending $1.67B, Jupiter (Swap + Lend) $880M, Jito LST $920M, Raydium AMM $1.01B. Of which **$1.62B is outstanding borrow debt** — the surface most exposed to unbounded agent delegation today. Sourced from DefiLlama; reproducible by [`npx tsx scripts/som-analysis/day1-som.ts`](scripts/som-analysis/day1-som.ts). Not TAM. Not projection. The real number.
 
+**Flow, not just stock: 10.7% of Solana DeFi fees over the last 30 days flowed through these four protocols** ($18.4M of $171.7M). Reproducible by [`npx tsx scripts/som-analysis/activity-pattern.ts`](scripts/som-analysis/activity-pattern.ts); wallet-level pattern analysis via [`scripts/som-analysis/queries/*.sql`](scripts/som-analysis/queries/) for Dune's free-tier editor.
+
 A ZK circuit that verifies every agentic DeFi action against a
 user-signed intent — before the action is allowed to touch user
 funds. Solana's `alt_bn128` pairing syscall executes the gate in

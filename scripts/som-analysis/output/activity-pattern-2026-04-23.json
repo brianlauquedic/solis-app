@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-04-23T18:31:33.157Z",
+  "solanaTotalFees": {
+    "total24h": 5308698,
+    "total7d": 40964628,
+    "total30d": 171723016
+  },
+  "perProtocol": [
+    {
+      "label": "Kamino",
+      "kind": "Lending",
+      "total24h": 176689,
+      "total7d": 1278340,
+      "total30d": 4934853
+    },
+    {
+      "label": "Jupiter (Swap)",
+      "kind": "Aggregator",
+      "total24h": 57667,
+      "total7d": 497125,
+      "total30d": 1800163
+    },
+    {
+      "label": "Jupiter (Lend)",
+      "kind": "Lending",
+      "total24h": 65802,
+      "total7d": 460796,
+      "total30d": 1869474
+    },
+    {
+      "label": "Jito",
+      "kind": "LST",
+      "total24h": 0,
+      "total7d": 877408,
+      "total30d": 4520129
+    },
+    {
+      "label": "Raydium",
+      "kind": "AMM",
+      "total24h": 153163,
+      "total7d": 1332329,
+      "total30d": 5305122
+    }
+  ],
+  "our4TotalFees": {
+    "total24h": 453321,
+    "total7d": 4445998,
+    "total30d": 18429741
+  },
+  "share": {
+    "pct24h": 8.539212439660346,
+    "pct7d": 10.85326101337964,
+    "pct30d": 10.732248611333498
+  }
+}

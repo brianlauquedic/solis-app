@@ -35,24 +35,39 @@ verifier today."
 
 ## Running the analysis
 
+Two layers, different data sources, both reproducible.
+
+### Layer 1 · DefiLlama (no key — runs in this sandbox)
+
 ```bash
-# Day-1 SOM: TVL + borrowing + category (pulls DefiLlama public API)
+# Static stock: reachable TVL + borrow exposure per protocol
 npx tsx scripts/som-analysis/day1-som.ts
 
-# Output:
-#   scripts/som-analysis/output/day1-som-YYYY-MM-DD.json  (structured)
-#   scripts/som-analysis/output/day1-som-YYYY-MM-DD.md    (pitch-ready)
+# Flow: share of Solana DeFi fee activity captured by the 4 protocols
+npx tsx scripts/som-analysis/activity-pattern.ts
 ```
 
-No API keys required. DefiLlama is free and public.
+Outputs land in `output/{kind}-YYYY-MM-DD.{json,md}`. No API keys, no
+projections. Every number traces back to a DefiLlama endpoint cited in
+the JSON's `sources` field.
 
-## Roadmap (not yet implemented)
+Latest runs (2026-04-24):
 
-- `agentic-wallets.sql` — Dune query to find wallets active on ≥2 of the 4
-  protocols in the last 30 days (proxy for "agentic DeFi user").
-- `tx-pattern-freq.sql` — classify txs into rebalance / lend / stake / swap
-  and measure distribution.
-- `rebalance-horizon.sql` — measure time-between-action for multi-step flows
-  to test the "long-horizon rebalancing = highest pain" thesis.
+- `day1-som` — **$4.48B** addressable Solana TVL; **$1.62B** live borrow debt.
+- `activity-pattern` — **10.7%** of Solana DeFi 30-day fees flowed through
+  the 4 integrated protocols ($18.43M / $171.72M).
 
-Those need a Dune account. Gated until Step 2 decision.
+### Layer 2 · Dune SQL (wallet-level — evaluator-run)
+
+DefiLlama gives protocol-level aggregates; wallet-level patterns need
+decoded-tx data. The SQL in [`queries/`](queries/) is pre-written for
+Dune's free-tier web UI at https://dune.com/queries — paste into the
+editor, run against Solana, and get real numbers within seconds.
+
+| Query | Answers |
+|---|---|
+| [`agentic-wallet-candidates.sql`](queries/agentic-wallet-candidates.sql) | How many wallets touched ≥ 2 of our 4 integrated protocols in 30 days? The population for whom bounded-intent ZK is value-creating. |
+| [`borrow-long-horizon-share.sql`](queries/borrow-long-horizon-share.sql) | Of wallets that lend/borrow on Kamino or Jupiter Lend, what % also swap or stake? Stress-tests the "multi-delegation concentration" thesis — includes an honest pass/fail threshold. |
+
+The queries document both the intent and the fallback behaviour if
+Dune's Solana schema has drifted by the time an evaluator runs them.
