@@ -1,0 +1,135 @@
+{
+  "generatedAt": "2026-04-24T06:20:07.208Z",
+  "rpcUrl": "https://solana-rpc.publicnode.com",
+  "maxSigsPerFamily": 800,
+  "scans": [
+    {
+      "family": "Kamino",
+      "program": "KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD",
+      "kind": "Lending",
+      "signaturesScanned": 800,
+      "uniqueSigners": 65,
+      "earliestBlockTime": 1777008579,
+      "latestBlockTime": 1777011321,
+      "earliestBlockTimeIso": "2026-04-24 05:29:39Z",
+      "latestBlockTimeIso": "2026-04-24 06:15:21Z",
+      "windowSeconds": 2742
+    },
+    {
+      "family": "Jupiter",
+      "program": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+      "kind": "DEX aggregator",
+      "signaturesScanned": 800,
+      "uniqueSigners": 188,
+      "earliestBlockTime": 1777011374,
+      "latestBlockTime": 1777011392,
+      "earliestBlockTimeIso": "2026-04-24 06:16:14Z",
+      "latestBlockTimeIso": "2026-04-24 06:16:32Z",
+      "windowSeconds": 18
+    },
+    {
+      "family": "Jito",
+      "program": "SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy",
+      "kind": "SPL Stake Pool (JitoSOL)",
+      "signaturesScanned": 800,
+      "uniqueSigners": 229,
+      "earliestBlockTime": 1776992662,
+      "latestBlockTime": 1777011417,
+      "earliestBlockTimeIso": "2026-04-24 01:04:22Z",
+      "latestBlockTimeIso": "2026-04-24 06:16:57Z",
+      "windowSeconds": 18755
+    },
+    {
+      "family": "Raydium",
+      "program": "routeUGWgWzqBWFcrCfv8tritsqukccJPu3q5GPP3xS",
+      "kind": "AMM router",
+      "signaturesScanned": 800,
+      "uniqueSigners": 169,
+      "earliestBlockTime": 1777008881,
+      "latestBlockTime": 1777011515,
+      "earliestBlockTimeIso": "2026-04-24 05:34:41Z",
+      "latestBlockTimeIso": "2026-04-24 06:18:35Z",
+      "windowSeconds": 2634
+    }
+  ],
+  "overlap": {
+    "totalUniqueWallets": 648,
+    "distribution": [
+      {
+        "distinct_families": 2,
+        "wallet_count": 3
+      },
+      {
+        "distinct_families": 1,
+        "wallet_count": 645
+      }
+    ],
+    "pairs": [
+      {
+        "a": "Kamino",
+        "b": "Jupiter",
+        "intersection": 2
+      },
+      {
+        "a": "Kamino",
+        "b": "Jito",
+        "intersection": 0
+      },
+      {
+        "a": "Kamino",
+        "b": "Raydium",
+        "intersection": 0
+      },
+      {
+        "a": "Jupiter",
+        "b": "Jito",
+        "intersection": 1
+      },
+      {
+        "a": "Jupiter",
+        "b": "Raydium",
+        "intersection": 0
+      },
+      {
+        "a": "Jito",
+        "b": "Raydium",
+        "intersection": 0
+      }
+    ],
+    "triples": [
+      {
+        "families": [
+          "Kamino",
+          "Jupiter",
+          "Jito"
+        ],
+        "intersection": 0
+      },
+      {
+        "families": [
+          "Kamino",
+          "Jupiter",
+          "Raydium"
+        ],
+        "intersection": 0
+      },
+      {
+        "families": [
+          "Kamino",
+          "Jito",
+          "Raydium"
+        ],
+        "intersection": 0
+      },
+      {
+        "families": [
+          "Jupiter",
+          "Jito",
+          "Raydium"
+        ],
+        "intersection": 0
+      }
+    ],
+    "allFour": 0
+  }
+}

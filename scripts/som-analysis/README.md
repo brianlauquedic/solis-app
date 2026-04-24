@@ -111,21 +111,40 @@ Latest runs (2026-04-24):
 - `activity-pattern` — **10.7%** of Solana DeFi 30-day fees flowed through
   the 4 integrated protocols (\$18.43M / \$171.72M).
 
-### Layer 3 · Optional external APIs (only if evaluators want deeper data)
+### Layer 3 · Optional deeper wallet analysis
 
 **Wallet-level overlap**, which answers "what share of agentic wallets
-cross-delegate" at the wallet dimension, genuinely requires a
-tx-signature-level indexer. The options we documented, in descending
-self-containment:
+cross-delegate" at the wallet dimension, requires a tx-signature-level
+indexer. Two entrypoints, in descending self-containment:
 
 | Tool | Self-containment | File |
 |---|---|---|
-| Helius RPC (free, 50k credits/day) + our own indexing | Medium — Helius is hosted, but our indexer is self-written | [`agentic-wallets-helius.ts`](agentic-wallets-helius.ts) |
+| **publicnode RPC (zero-key)** + our own indexing | **High** — no API key, no signup | [`agentic-wallets-publicnode.ts`](agentic-wallets-publicnode.ts) |
+| Helius RPC (free, 50k credits/day) + our own indexing | Medium — Helius is hosted, our indexer is self-written | [`agentic-wallets-helius.ts`](agentic-wallets-helius.ts) |
 | Dune SQL saved queries | Low — relies on Dune's compute + schema | [`queries/agentic-wallet-candidates.sql`](queries/agentic-wallet-candidates.sql), [`queries/borrow-long-horizon-share.sql`](queries/borrow-long-horizon-share.sql) |
 
-Both are **optional** for closing the Dovey loop — Layers 0+1+2 already
-answer the three questions she explicitly asked. Layer 3 is for
-evaluators or investors who want to poke deeper with their own keys.
+```bash
+# Default zero-key path: no API key, no signup, runs anywhere.
+npx tsx scripts/som-analysis/agentic-wallets-publicnode.ts
+
+# Deeper scan (requires own paid RPC key)
+OVERLAP_RPC_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY \
+  MAX_SIGS_PER_FAMILY=20000 \
+  npx tsx scripts/som-analysis/agentic-wallets-publicnode.ts
+```
+
+**Honest reading of the zero-key variant**: at publicnode's ~800 sigs/
+family cap, Jupiter's sample window is measured in *seconds* of wall-
+clock time, so the measured multi-protocol intersection is dominated by
+non-overlapping time windows, not a population estimate. The script's
+value at the zero-key cap is **proof every family is reachable from any
+machine with no credentials**; the population-level "which txs most need
+boundary verification" answer stays on protocol mechanics (Layer 0) and
+borrow-exposed dollar count ($1.62B on Kamino + Jupiter Lend, Layer 2).
+
+All three entrypoints are **optional** for closing the Dovey loop —
+Layers 0+1+2 already answer her three questions. Layer 3 is for
+evaluators who want to poke the wallet dimension with their own keys.
 
 The Dune queries are all public-forked saved queries:
 
