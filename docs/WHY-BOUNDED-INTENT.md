@@ -123,7 +123,18 @@ no other primitive is structurally sufficient.
 
 ---
 
-## Empirical backing
+## Empirical backing — past harm proves the pattern
+
+Six documented Solana incidents in 2024–2025 — cumulatively **~$42M
+in user losses** — map directly onto the attack surface a
+bounded-intent primitive addresses. [`docs/INCIDENT-LIBRARY.md`](INCIDENT-LIBRARY.md)
+catalogs each with vector, loss, and an honest counter-factual: roughly
+**$33M of the $42M (~78%) was preventable by non-custodial architecture**
+(the pattern Sakura encodes), another ~$1.4M was bounded by the
+per-action cap pattern, and the remaining ~$8M was out of scope
+(platform-internal breaches that no delegation primitive addresses).
+
+Additional backing from:
 
 Logical reasoning above; real-world evidence in
 [`scripts/backtest-rescues.ts`](../scripts/backtest-rescues.ts), which
