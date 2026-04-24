@@ -108,6 +108,7 @@ export default function AppNav() {
           href="https://x.com/sakuraaijp"
           target="_blank"
           rel="noopener noreferrer"
+          aria-label="X (Twitter)"
           style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: 26, height: 26,
@@ -117,6 +118,24 @@ export default function AppNav() {
         >
           <svg width="12" height="12" viewBox="0 0 1200 1227" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.163 519.284ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.828Z" fill="var(--text-secondary)"/>
+          </svg>
+        </a>
+
+        {/* YouTube link */}
+        <a
+          href="https://www.youtube.com/@Sakuraaaijp"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="YouTube"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: 26, height: 26,
+            background: "var(--bg-card)", border: "1px solid var(--border)",
+            borderRadius: 5, textDecoration: "none", flexShrink: 0,
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" fill="var(--text-secondary)"/>
           </svg>
         </a>
       </div>

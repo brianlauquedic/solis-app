@@ -6,6 +6,7 @@ import { useLang } from "@/contexts/LanguageContext";
 import { useWallet } from "@/contexts/WalletContext";
 
 const X_URL = "https://x.com/sakuraaijp";
+const YOUTUBE_URL = "https://www.youtube.com/@Sakuraaaijp";
 
 export default function Footer() {
   const { t, lang } = useLang();
@@ -21,6 +22,7 @@ export default function Footer() {
 
   const social = [
     { label: "𝕏  @sakuraaijp", href: X_URL },
+    { label: "▶  YouTube · @Sakuraaaijp", href: YOUTUBE_URL },
   ];
 
   const policy = [
@@ -143,6 +145,11 @@ export default function Footer() {
             onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = "1"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = "0.5"; }}
           >𝕏 @sakuraaijp</a>
+          <a href={YOUTUBE_URL} target="_blank" rel="noopener noreferrer"
+            style={{ color: "var(--text-primary)", opacity: 0.5, textDecoration: "none", fontSize: 13 }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = "1"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.opacity = "0.5"; }}
+          >▶ @Sakuraaaijp</a>
         </div>
       </div>
     </footer>
