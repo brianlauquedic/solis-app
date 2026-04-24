@@ -41,7 +41,15 @@ describe("network-config", () => {
     expect(getNetwork()).toBe("devnet");
     const cfg = getNetworkConfig();
     expect(cfg.network).toBe("devnet");
-    expect(cfg.usdcMint).toBe("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+    // Verified 2026-04-24 via on-chain read of protocol PDA
+    // Ab3ZwupehsPz9fhPhmjwfzrn3XPypdrNj9wvwb6bt96M (owner:
+    // AnszeCRFs…YLp, seeds [b"sakura_intent_v3", admin=2iCWnS1J…wHNg]):
+    // its usdc_mint field (byte offset 40..72 of account data) is this
+    // Sakura-admin-controlled test mint, NOT Circle's canonical devnet
+    // USDC (4zMMC…DncDU). See lib/network-config.ts:30-36 for rationale.
+    // Web UI USDC_DEVNET must match this on-chain value or sign_intent
+    // fails with "account not found" on the user's USDC ATA.
+    expect(cfg.usdcMint).toBe("7rEhvYrGGT41FQrCt3zNx8Bko9TFVvytYWpP1mqhtLi3");
     expect(cfg.explorerSuffix).toBe("?cluster=devnet");
   });
 
