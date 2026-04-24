@@ -6,7 +6,11 @@ Cryptographic bounds on what an AI agent can do with your money — a Solana-nat
 
 **Day-1 SOM: $4.48B in Solana TVL addressable via 12 mainnet CPI cells** — Kamino lending $1.67B, Jupiter (Swap + Lend) $880M, Jito LST $920M, Raydium AMM $1.01B. Of which **$1.62B is outstanding borrow debt** — the surface most exposed to unbounded agent delegation today. Sourced from DefiLlama; reproducible by [`npx tsx scripts/som-analysis/day1-som.ts`](scripts/som-analysis/day1-som.ts). Not TAM. Not projection. The real number.
 
-**Flow, not just stock: 10.7% of Solana DeFi fees over the last 30 days flowed through these four protocols** ($18.4M of $171.7M). Reproducible by [`npx tsx scripts/som-analysis/activity-pattern.ts`](scripts/som-analysis/activity-pattern.ts); wallet-level pattern analysis via [`scripts/som-analysis/queries/*.sql`](scripts/som-analysis/queries/) for Dune's free-tier editor.
+**Flow, not just stock: 10.7% of Solana DeFi fees over the last 30 days flowed through these four protocols** ($18.4M of $171.7M). Reproducible by [`npx tsx scripts/som-analysis/activity-pattern.ts`](scripts/som-analysis/activity-pattern.ts).
+
+**Independently cross-checked against on-chain state** — [`tvl-cross-check.ts`](scripts/som-analysis/tvl-cross-check.ts) reads JitoSOL's SPL Stake Pool state directly via public Solana RPC (single `getAccountInfo` call, no aggregator), parses `total_lamports` from the 274-byte account layout, and compares against DefiLlama's reported Jito TVL. The two views agree within the SOL spot-price band at read time. DefiLlama is a convenience layer, not a black box.
+
+**Why this surface needs bounded-intent verification** — [`docs/WHY-BOUNDED-INTENT.md`](docs/WHY-BOUNDED-INTENT.md) argues from protocol mechanics alone (zero runtime dependency) for why borrow-holding, multi-protocol-delegating wallets are the transaction class where the loss upper bound escapes the action amount — and therefore where no classical primitive (spending cap, session-key expiry, allowlist, rate limit, audit log) is structurally sufficient.
 
 A ZK circuit that verifies every agentic DeFi action against a
 user-signed intent — before the action is allowed to touch user

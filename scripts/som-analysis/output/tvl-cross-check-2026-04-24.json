@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-04-24T02:06:58.256Z",
+  "onChain": {
+    "rpc": "https://solana-rpc.publicnode.com",
+    "account": "Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb",
+    "dataLen": 611,
+    "totalLamports": "10652076008705789",
+    "poolTokenSupply": "8353793043244450",
+    "solStaked": 10652076.008705787,
+    "jitoSolSupply": 8353793.04324445,
+    "exchangeRate": 1.2751184945047105
+  },
+  "defiLlama": {
+    "sourceUrl": "https://api.llama.fi/protocol/jito-liquid-staking",
+    "solanaTvlUsd": 918170686.12699,
+    "stakingTvlUsd": 0,
+    "usedTvlUsd": 918170686.12699
+  },
+  "derived": {
+    "impliedSolUsd": 86.19640766518962
+  }
+}

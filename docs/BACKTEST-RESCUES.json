@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-04-24T02:12:50.473Z",
+  "rpc": "https://solana-rpc.publicnode.com",
+  "windowDays": 30,
+  "signaturesScanned": 5000,
+  "liquidationTxsFound": 0,
+  "sample": [],
+  "totals": {
+    "totalUserLossUsd": 0,
+    "avgUserLossUsd": 0,
+    "medianUserLossUsd": 0,
+    "largestSingleLossUsd": 0
+  },
+  "rescuePolicy": [
+    {
+      "capUsd": 5000,
+      "preventableCount": 0,
+      "preventablePct": 0,
+      "totalSavedUsd": 0
+    },
+    {
+      "capUsd": 10000,
+      "preventableCount": 0,
+      "preventablePct": 0,
+      "totalSavedUsd": 0
+    },
+    {
+      "capUsd": 50000,
+      "preventableCount": 0,
+      "preventablePct": 0,
+      "totalSavedUsd": 0
+    }
+  ],
+  "caveats": [
+    "Historical Kamino obligation state is not retrievable from public RPC, so pre-liquidation health factor is not directly observed.",
+    "Collateral-seized USD value is approximated as debt_repaid × 1.05 (Kamino's typical 3-7% liquidation bonus).",
+    "Only USDC-denominated liquidations are scanned; cross-collateral liquidations without a USDC leg are skipped.",
+    "The 'preventable' classifier is a capacity test: if user had pre-authorized >= debt_repaid USDC in Sakura mandate, they could have been rescued. It does not model agent monitoring latency or network congestion."
+  ]
+}
