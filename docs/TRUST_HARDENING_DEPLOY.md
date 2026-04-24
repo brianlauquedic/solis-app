@@ -61,8 +61,12 @@ Execute `docs/SQUADS_MIGRATION_RUNBOOK.md` Steps 1–2 ONLY:
 **Verification:** `solana program show AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp -u devnet` reports
 `Upgrade Authority: <SQUADS_VAULT>`.
 
-**Skip `rotate_admin` from the runbook for now** — it requires a PDA-seed fix that isn't in this
-upgrade. IntentProtocol admin stays as your current EOA keypair until a separate migration.
+**Note on admin rotation:** `rotate_admin` has been **removed** from the program entirely
+because mutating `protocol.admin` orphans the Protocol PDA (seed depends on `admin.key()`).
+Admin is immutable after `initialize_protocol`; governance migration to a multisig = redeploy
+the program with the multisig as admin from day 1, then pause the old protocol PDA via
+`set_paused`. The `IntentProtocol` admin for the existing devnet deploy therefore stays as the
+current EOA keypair until the mainnet redeploy.
 
 ### Step 2 · Deploy the new program bytecode via Squads (~30 min)
 
@@ -178,9 +182,10 @@ That would defeat the entire point of this hardening.
    and state copy. Deferred to a dedicated upgrade.
 2. **Switchboard integration (C-full)** — spec in `docs/DUAL_ORACLE_SPEC.md`. 3-day effort.
    Prerequisites: this upgrade stable on devnet for ≥1 week first.
-3. **RotateAdmin via time-locked flow** — currently missing from `execute_admin_action` dispatch.
-   Added after PDA-seed fix (#1) lands. Until then, `rotate_admin` is still the only way to
-   change admin, and calling it will break the protocol as documented.
+3. **Admin rotation via time-locked flow** — deliberately NOT supported. `rotate_admin` was
+   removed from the program because the Protocol PDA seed is `[b"sakura_intent_v3", admin.key()]`;
+   mutating admin orphans the account. Governance migration = redeploy with multisig admin,
+   sunset old protocol via `set_paused`. See SQUADS_MIGRATION_RUNBOOK.md for the procedure.
 4. **Hardware wallet support for Squads signers** — recommended but not blocking. Ledger Solana
    app supports Squads v4 natively.
 

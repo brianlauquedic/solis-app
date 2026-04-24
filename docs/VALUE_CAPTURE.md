@@ -174,10 +174,14 @@ DeFi-operating veteran; both TBD). The multisig is authorized to:
 - Adjust `execution_fee_bps` within the 200 bps ceiling
 - Adjust `platform_fee_bps` within the 10,000 bps ceiling
 - Pause the protocol (`set_paused`) in emergencies
-- Rotate admin (`rotate_admin`) on signer key compromise
 
 The multisig is **not** authorized to:
 
+- **Rotate its own key** — admin is immutable after
+  `initialize_protocol` (PDA seed depends on `admin.key()`). If signer
+  keys are compromised, the path forward is redeploy with a fresh
+  multisig vault as admin + sunset the old protocol via `set_paused`.
+  See [`SQUADS_MIGRATION_RUNBOOK.md`](SQUADS_MIGRATION_RUNBOOK.md).
 - Alter the program's verifying key
 - Withdraw from the protocol fee vault outside the `platform_fee_bps`
   split

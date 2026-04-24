@@ -166,7 +166,6 @@ by a promise.
 **The admin CAN:**
 
 - Pause new intent signing and action execution (`set_paused`, instant, recoverable)
-- Rotate the admin key (`rotate_admin`, instant)
 - Propose fee-parameter changes within hard-coded ceilings — 2%
   `execution_fee_bps`, 100% `platform_fee_bps` — through the
   time-locked governance path
@@ -174,6 +173,12 @@ by a promise.
 
 **The admin CANNOT, even with a fully compromised key:**
 
+- **Rotate its own key** — admin is **immutable** after
+  `initialize_protocol`. The Protocol PDA is seeded by
+  `[b"sakura_intent_v3", admin.key()]`, so mutating the admin field
+  would orphan the account. Governance migration therefore requires
+  redeploying with a multisig as admin from day 1; see
+  [`docs/SQUADS_MIGRATION_RUNBOOK.md`](docs/SQUADS_MIGRATION_RUNBOOK.md).
 - Withdraw from `fee_vault` outside the hard-coded split
   (the vault is PDA-owned; no admin-withdrawal instruction exists)
 - Alter the Groth16 verifying key (baked into
@@ -374,10 +379,14 @@ and the five constraint families the circuit enforces are:
 The Anchor program
 (`programs/sakura-insurance/src/lib.rs`) exposes three user-facing
 instructions — `sign_intent`, `revoke_intent`, and
-`execute_with_intent_proof` — and six administrative /
+`execute_with_intent_proof` — and five administrative /
 time-locked-governance instructions — `initialize_protocol`,
-`rotate_admin`, `set_paused`, `initialize_guardian`,
-`propose_admin_action`, `execute_admin_action`. The verifying key is
+`set_paused`, `initialize_guardian`, `propose_admin_action`,
+`execute_admin_action`. Admin is immutable after
+`initialize_protocol` (rotation would orphan the Protocol PDA whose
+seed depends on `admin.key()`; governance migration therefore requires
+redeploy with a multisig as admin from day 1, per
+[`docs/SQUADS_MIGRATION_RUNBOOK.md`](docs/SQUADS_MIGRATION_RUNBOOK.md)). The verifying key is
 baked into `programs/sakura-insurance/src/zk_verifying_key.rs` at
 deploy time and cannot be altered without redeployment.
 `execute_with_intent_proof` performs six distinct safety checks in

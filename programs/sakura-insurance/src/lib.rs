@@ -139,11 +139,18 @@ pub const ADMIN_ACTION_UPDATE_FEES: u8 = 2;
 ///
 /// Instruction set:
 ///   initialize_protocol       — admin setup (once per deployment)
-///   rotate_admin              — admin key rotation
 ///   set_paused                — emergency stop
 ///   sign_intent               — user signs an intent, commits bounds
 ///   revoke_intent             — user revokes an active intent
 ///   execute_with_intent_proof — execute an action, ZK-gated on intent
+///
+/// NOTE on admin immutability: admin is set once in initialize_protocol
+/// and cannot be rotated. The Protocol PDA seed is
+/// `[b"sakura_intent_v3", admin.key().as_ref()]`, so mutating the admin
+/// field would orphan the PDA (next AdminOnly call would fail PDA
+/// derivation). This is intentional — governance migration = redeploy
+/// with a multisig as admin from day 1, then pause the old protocol.
+/// See docs/SQUADS_MIGRATION_RUNBOOK.md for the procedure.
 ///
 /// Security invariants:
 ///   I1  ZK pairing check passes via Solana alt_bn128 syscall
@@ -155,7 +162,8 @@ pub const ADMIN_ACTION_UPDATE_FEES: u8 = 2;
 ///   I5  Pyth account owner/feed_id/posted_slot verified on-chain
 ///   I6  ActionRecord PDA init prevents replay per (intent, action_nonce)
 ///   I7  Intent.is_active flag guards against using revoked intents
-///   I8  Only admin may pause / rotate / adjust fee params
+///   I8  Only admin may pause or adjust fee params (via timelock);
+///       admin is immutable after initialize_protocol.
 #[program]
 pub mod sakura_insurance {
     use super::*;
@@ -192,11 +200,12 @@ pub mod sakura_insurance {
         Ok(())
     }
 
-    pub fn rotate_admin(ctx: Context<AdminOnly>, new_admin: Pubkey) -> Result<()> {
-        ctx.accounts.protocol.admin = new_admin;
-        emit!(AdminRotated { new_admin });
-        Ok(())
-    }
+    // Note: `rotate_admin` was removed in response to a PDA-seed bug —
+    // the Protocol PDA is seeded by `[b"sakura_intent_v3", admin.key()]`,
+    // so mutating `protocol.admin` in place would orphan the account on
+    // the next AdminOnly call. Admin is now immutable by design;
+    // governance migration = redeploy with multisig as admin (see
+    // docs/SQUADS_MIGRATION_RUNBOOK.md).
 
     pub fn set_paused(ctx: Context<AdminOnly>, paused: bool) -> Result<()> {
         ctx.accounts.protocol.paused = paused;
@@ -1171,11 +1180,6 @@ pub struct ProtocolInitialized {
     pub admin: Pubkey,
     pub execution_fee_bps: u16,
     pub platform_fee_bps: u16,
-}
-
-#[event]
-pub struct AdminRotated {
-    pub new_admin: Pubkey,
 }
 
 #[event]

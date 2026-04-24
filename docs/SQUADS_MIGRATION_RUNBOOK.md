@@ -92,39 +92,50 @@ solana program show AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp -u devnet
 
 ---
 
-## Step 3 · Rotate IntentProtocol admin (~15 min)
+## Step 3 · Admin is immutable — migration requires redeploy (~30 min)
 
-The `IntentProtocol` PDA's `admin` field is currently the same EOA. We need to call `rotate_admin(new_admin: Pubkey = <SQUADS_VAULT>)`.
+**Read this carefully.** `rotate_admin` has been removed from the program
+as of commit `<tbd>` because the Protocol PDA seed depends on
+`admin.key()`:
 
-**Option A · Using the existing CLI keypair (while it still has admin)**
-
-```bash
-# Build a one-shot TS call
-cat > /tmp/rotate.ts <<'TS'
-import { Connection, Keypair, Transaction, PublicKey, sendAndConfirmTransaction } from "@solana/web3.js";
-import * as fs from "fs"; import * as os from "os"; import * as path from "path";
-import { buildRotateAdminIx } from "./lib/insurance-pool";
-
-const secret = new Uint8Array(JSON.parse(fs.readFileSync(path.join(os.homedir(), ".config/solana/id.json"), "utf8")));
-const admin = Keypair.fromSecretKey(secret);
-const newAdmin = new PublicKey(process.argv[2]);
-const conn = new Connection("https://api.devnet.solana.com", "confirmed");
-const ix = buildRotateAdminIx({ admin: admin.publicKey, newAdmin });
-const sig = await sendAndConfirmTransaction(conn, new Transaction().add(ix), [admin]);
-console.log("rotated →", newAdmin.toBase58(), "sig:", sig);
-TS
+```rust
+seeds = [b"sakura_intent_v3", admin.key().as_ref()]
 ```
 
-Then run:
-```bash
-npx tsx /tmp/rotate.ts <SQUADS_VAULT>
-```
+Mutating `protocol.admin` in place orphans the PDA (the next AdminOnly
+call can't derive the same account). So admin is **immutable** after
+`initialize_protocol`, by design.
 
-(Note: `buildRotateAdminIx` must be added to `lib/insurance-pool.ts` — it may not exist yet. Check before running.)
+**What this means for migration to Squads**:
 
-**Option B · Using Squads itself (safer, recommended)**
+The EOA-owned `IntentProtocol` PDA at
+`Ab3ZwupehsPz9fhPhmjwfzrn3XPypdrNj9wvwb6bt96M` (seeded by EOA admin
+`2iCWnS1J…wHNg`) cannot be handed over to a Squads vault in place. The
+migration path is:
 
-Via Squads web app: create a custom transaction proposal that calls `sakura-insurance::rotate_admin(new_admin)`. This proves the Squads vault-signing flow works end-to-end before you critically depend on it.
+1. **Redeploy** the `sakura-insurance` program with the Squads vault as
+   `<SQUADS_VAULT>` signer calling `initialize_protocol`. This creates a
+   fresh `IntentProtocol` PDA at a **different address** (seeded by the
+   vault's pubkey). This happens under a new program ID or via program
+   upgrade followed by state re-init.
+2. **Sunset** the old EOA-owned `IntentProtocol` PDA by calling
+   `set_paused(true)` with the current EOA admin. This prevents new
+   intents being signed against it while existing user intents continue
+   to function (users can still revoke; agents can still execute against
+   already-signed intents until expiry).
+3. **Publish the new PDA address** in `docs/TRUST_SURFACE.md` and update
+   `lib/insurance-pool.ts`'s `SAKURA_INSURANCE_PROGRAM_ID` constant + UI
+   frontend to point at the new protocol.
+
+**Why not just live with `rotate_admin` working?** Because it doesn't.
+The PDA seed is `admin.key()`, so even a working-in-isolation rotation
+makes the resulting account unfindable on the next call. The clean
+solution is the immutable-by-construction model above, matching the
+verifying-key immutability already in the contract.
+
+The trade-off: migration is heavier (deploy + re-init + UI update) but
+each invocation afterward is simpler (no time-locked rotation path to
+audit, no "which admin is canonical at slot N" race conditions).
 
 ---
 
@@ -140,7 +151,7 @@ Create `docs/TRUST_SURFACE.md` with the new governance architecture. Minimum con
 | Role | Who holds it | How it changes |
 |---|---|---|
 | `sakura-insurance` upgrade authority | Squads vault `<SQUADS_VAULT>` · 3-of-5 | Squads proposal |
-| `IntentProtocol.admin` | same Squads vault | Squads proposal → `rotate_admin` |
+| `IntentProtocol.admin` | same Squads vault (as of post-redeploy) | **Immutable** after `initialize_protocol`; migration = fresh deploy with Squads as admin, sunset old PDA via `set_paused` |
 
 ## 5 Signers
 1. `<pubkey 1>` — Brian Lau (founder, Pacific timezone)
@@ -188,27 +199,28 @@ After all steps, confirm:
 
 ---
 
-## ⚠️ Known issue: IntentProtocol PDA address changes when admin changes
+## Design resolution: admin is immutable
 
-The PDA seeds include `protocol.admin.as_ref()`. If admin changes from EOA to Squads vault, the PDA address changes. This means:
-- The OLD IntentProtocol PDA (`Ab3ZwupehsPz9fhPhmjwfzrn3XPypdrNj9wvwb6bt96M`) becomes orphaned
-- A NEW IntentProtocol PDA must be initialized at a different address with Squads as admin
-- Total state migration issue: all existing `Intent` PDAs reference the old protocol; they still work because Intent seeds don't depend on protocol's admin, but readers must know which Protocol PDA is "current"
+The Protocol PDA seed is `[b"sakura_intent_v3", admin.key().as_ref()]`.
+This means a mutable admin field creates a self-inconsistent PDA (its
+address depends on a field stored inside itself; mutating the field
+orphans the account).
 
-**Options to resolve:**
+Two resolutions were considered:
 
-**Resolution A (simplest):** Just call `rotate_admin` — the field updates but the PDA address stays the same (because Anchor derives the PDA at account resolution time using the CURRENT admin field, not a fixed seed). Wait, no — seeds are static at derivation time. The account's `admin` field changes but its PDA address is fixed.
+| Option | Outcome | Why rejected/accepted |
+|---|---|---|
+| Change PDA seed to fixed `[b"sakura_intent_v3"]` (singleton) | Would make rotation work in-place | Rejected: requires program redeploy AND breaks all existing Intent PDAs' implicit linkage to current protocol; larger surface, more migration risk |
+| **Remove `rotate_admin` entirely; admin is immutable by construction** | Governance migration = redeploy with Squads as admin | **Accepted.** Smaller code surface, matches verifying-key immutability pattern, no ambiguity about "which admin is canonical at slot N". Trade-off: migration is heavier once per lifecycle |
 
-Let me re-read: `seeds = [b"sakura_intent_v3", protocol.admin.as_ref()]` in `AdminOnly` means Anchor re-derives the PDA each call using the CURRENT admin value stored in the account it's reading. That's actually circular — Anchor can't find the account because the PDA depends on a field inside the account. In practice, this seed style means the account **must always resolve to the PDA that matches its current admin**. If you call `rotate_admin` and change admin, the account's PDA address no longer matches its seeds → subsequent calls fail.
+This runbook (Step 3 above) reflects the accepted resolution.
 
-**This is a design bug in the current program**, separate from the single-EOA issue. It means `rotate_admin` is actually broken — you can call it once, but the resulting account becomes orphaned because its PDA no longer self-consistently derives.
+**Recommended order for the current devnet → Squads migration:**
 
-See `docs/TRUST_HARDENING_DEPLOY.md` for the fix: remove admin from the PDA seed, migrate to a fixed seed `["sakura_intent_v3"]` (singleton protocol PDA).
-
-**Recommended order:**
-1. Complete Steps 1–2 first (transfer upgrade authority — no code change needed)
-2. Ship plan B (time-lock) as a program upgrade that also fixes the PDA seed design
-3. Then `rotate_admin` to Squads vault via the new time-locked flow
+1. Complete Steps 1–2 first (transfer upgrade authority — no code change needed).
+2. Publish the immutable-admin design in `docs/TRUST_SURFACE.md`.
+3. For mainnet launch: deploy under a fresh program ID with Squads as the `initialize_protocol` signer; sunset devnet separately via `set_paused(true)`.
+4. Update `lib/insurance-pool.ts`'s `SAKURA_INSURANCE_PROGRAM_ID` to the new mainnet program once live.
 
 ---
 

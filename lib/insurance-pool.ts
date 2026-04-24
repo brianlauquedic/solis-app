@@ -12,8 +12,8 @@
  *   Claim   → ActionRecord     (seeds: "sakura_action", intent, nonce)
  *
  * Instructions exposed:
- *   - initialize_protocol       (admin, once per deployment)
- *   - rotate_admin              (admin key rotation)
+ *   - initialize_protocol       (admin, once per deployment; admin is
+ *                                immutable thereafter — see lib.rs note)
  *   - set_paused                (emergency stop)
  *   - sign_intent               (user signs, creates Intent PDA)
  *   - revoke_intent             (user revokes)
@@ -305,7 +305,10 @@ function anchorAccountDiscriminator(name: string): Buffer {
 }
 
 const IX_INIT_PROTOCOL = anchorIxDiscriminator("initialize_protocol");
-const IX_ROTATE_ADMIN = anchorIxDiscriminator("rotate_admin");
+// `IX_ROTATE_ADMIN` removed — rotate_admin was removed from the program
+// because mutating protocol.admin orphans the PDA (seeded by admin.key).
+// Admin is now immutable after initialize_protocol; governance migration
+// = redeploy with multisig as admin. See docs/SQUADS_MIGRATION_RUNBOOK.md.
 const IX_SET_PAUSED = anchorIxDiscriminator("set_paused");
 const IX_SIGN_INTENT = anchorIxDiscriminator("sign_intent");
 const IX_REVOKE_INTENT = anchorIxDiscriminator("revoke_intent");
