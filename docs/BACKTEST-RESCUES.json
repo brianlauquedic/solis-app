@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-04-24T02:12:50.473Z",
+  "generatedAt": "2026-04-24T06:45:30.533Z",
   "rpc": "https://solana-rpc.publicnode.com",
   "windowDays": 30,
-  "signaturesScanned": 5000,
+  "signaturesScanned": 2000,
   "liquidationTxsFound": 0,
   "sample": [],
   "totals": {
