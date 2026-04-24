@@ -104,6 +104,34 @@ decision that already landed. Sakura gates first.
 
 ---
 
+## How Sakura captures value
+
+Sakura has no token and will not have one — by design. The primitive
+sustains on fee flow the way HTTPS certificate authorities have for
+thirty years. Five priced operations, three of them **live on devnet
+today** with verifiable transaction transcripts:
+
+| Operation | Who pays | Price | Status |
+|---|---|---|---|
+| `sign_intent` | End user | 0.1% of `max_usd_value`, capped at $1k | Live devnet |
+| `revoke_intent` | End user | 0.1% of `max_usd_value`, capped at $1k | Live devnet |
+| `execute_with_intent_proof` | Wallet integrator or user | $0.01 USDC flat per verified action | Live devnet |
+| `/api/mcp` tool call (x402) | AI agent / developer | $1.00 USDC per call | Live devnet |
+| Enterprise prover + SLA tier | Wallet/institutional integrator | $10k–$38k per month | Deferred — activated on integrator demand |
+
+Gross margin per consumer operation is ~99% (prover runs client-side;
+server pays only for verification-gate plumbing). At 10,000 MAUs with
+two policy signatures and ten agent actions per user per month,
+blended revenue is ~$90k/month. At 100k MAUs — less than 1% of
+Phantom's active base — it crosses $10M annualized on ~85% blended
+gross margin.
+
+Full breakdown — devnet-verified tx signatures, unit economics per
+operation, three MAU scenarios with the exact assumption list — lives
+in [`docs/VALUE_CAPTURE.md`](docs/VALUE_CAPTURE.md).
+
+---
+
 ## Integration coverage — proof of reachability
 
 Not "we could integrate with any Solana DeFi protocol." The four below,
