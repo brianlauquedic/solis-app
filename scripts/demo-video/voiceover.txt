@@ -1,23 +1,35 @@
-[INTRO · 0:00–0:08 · over Sakura landing hero]
+[HOOK · 0:00–0:10 · over $42M / $33M cards]
+
+Six Solana agent incidents. 2024 to 2025. Forty-two million dollars in user losses. Thirty-three million of that — structurally impossible in the Sakura model.
+
+[INTRO · 0:10–0:20 · over Sakura landing hero]
 
 Sakura is a Solana-native execution-bounds verifier for AI agents. Where every other approach lets the out-of-bounds action land, then records or limits — Sakura reverts before the DeFi instruction executes.
 
-[SHOT 1 · 0:08–0:35 · over IntentSigner UI]
+[SHOT-1 · 0:20–0:45 · over IntentSigner UI]
 
 A user signs one sentence in their wallet — for instance, "lend up to one thousand USDC into Kamino, ten thousand max per action, one week". Seven private values fold through a two-layer Poseidon hash into a thirty-two-byte commitment, anchored on Solana. The values stay in the browser. Only the hash reaches the chain.
 
-[SHOT 2 · 0:35–1:30 · over terminal e2e flow]
+[SHOT-1.5 · 0:45–1:15 · over revert terminal]
 
-Now the agent acts. The Sakura execute-with-intent-proof handler takes the user-signed commitment, a fresh Pyth price, a Switchboard cross-check, and a Groth16 proof generated in the browser. Six checks land atomically. The DeFi instruction either passes the gate with a valid proof — or the entire transaction reverts. Two hundred four thousand compute units, on-chain, via the alt-bn128 pairing syscall.
+Now imagine an agent goes off-script. It attempts five thousand dollars — five times the user-signed bound. The Groth16 circuit's bounds constraint cannot be satisfied. The proof is mathematically unconstructible. No transaction is sent. No funds move. Out-of-bounds is not blocked — it is unreachable.
 
-[SHOT 3 · 1:30–2:10 · over Solscan tx view]
+[SHOT-2 · 1:15–1:50 · over happy-path terminal]
 
-The proof and the DeFi action share a single atomic version-zero transaction. They both land, or they both revert — inseparably. Every action writes a permanent ActionRecord PDA. Lawyers, auditors, counterparties — anyone can reconstruct the execution from public chain data alone. No off-chain monitor in the loop.
+For the in-bounds case, six checks land atomically. The Sakura execute-with-intent-proof handler takes the user-signed commitment, a fresh Pyth price, a Switchboard cross-check, and a Groth16 proof. Two hundred four thousand compute units, on-chain, via the alt-bn128 pairing syscall.
 
-[SHOT 4 · 2:10–2:35 · over ActionHistory feed]
+[SHOT-3 · 1:50–2:15 · over Solana Explorer]
 
-Inside the app, the same execution renders as a human-readable line — action type, target protocol, amount, oracle price, slot, and keccak-256 fingerprint. The user sees what their agent did. Always.
+The proof and the DeFi action share a single atomic version-zero transaction. They both land, or they both revert — inseparably. Every action writes a permanent ActionRecord PDA. Anyone can reconstruct the execution from public chain data alone.
 
-[SHOT 5 · 2:35–3:00 · over closing card]
+[COMPARE · 2:15–2:30 · over comparison table]
 
-Six twenty-twenty-four to twenty-twenty-five Solana agent incidents. Forty-two million dollars in user losses. Thirty-three million of that — seventy-eight percent — structurally impossible in the Sakura model. Live on devnet today. Twelve CPI cells across Kamino, Jupiter, Jito, and Raydium. MIT-licensed, permissionless integration. Sakura — at sakuraaai.com.
+Session-key rotation. Signed receipts. Daily Merkle roots. Hot-cold balance splits. Every other approach lets the action land, then records or limits the consequence. Sakura is the only primitive that reverts before the DeFi instruction executes.
+
+[SHOT-4 · 2:30–2:45 · over ActionHistory]
+
+Inside the app, every execution renders as a human-readable line — action type, target protocol, amount, oracle price, slot, and keccak-256 fingerprint. The user sees what their agent did. Always.
+
+[SHOT-5 · 2:45–3:00 · over closing card]
+
+Live on devnet today. Twelve CPI cells across Kamino, Jupiter, Jito, and Raydium. MIT-licensed, permissionless integration. Sakura — at sakuraaai.com.

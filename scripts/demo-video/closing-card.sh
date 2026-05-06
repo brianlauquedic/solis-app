@@ -11,7 +11,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p dist
 
-DUR_SEC="${DUR_SEC:-29.23}"
+DUR_SEC="${DUR_SEC:-14.69}"
 WIDTH=1920
 HEIGHT=1080
 

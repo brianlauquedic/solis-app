@@ -20,22 +20,23 @@ RATE="${RATE:-+0%}"
 PAUSE_SEC="${PAUSE_SEC:-0.6}"
 EDGE_TTS="${HOME}/Library/Python/3.12/bin/edge-tts"
 
-declare -a SHOT_NAMES=(INTRO SHOT-1 SHOT-2 SHOT-3 SHOT-4 SHOT-5)
+declare -a SHOT_NAMES=(HOOK INTRO SHOT-1 SHOT-1.5 SHOT-2 SHOT-3 COMPARE SHOT-4 SHOT-5)
+NSHOTS=9
 
-# Split voiceover.txt by [...] markers into 6 numbered files.
-python3 - <<'PY'
+# Split voiceover.txt by [...] markers into 9 numbered files.
+python3 - <<PY
 import re, pathlib
 src = pathlib.Path("voiceover.txt").read_text()
 chunks = re.split(r"^\[[^\]]+\]\s*$", src, flags=re.MULTILINE)
 chunks = [c.strip() for c in chunks if c.strip()]
-assert len(chunks) == 6, f"expected 6 shots, got {len(chunks)}"
+assert len(chunks) == ${NSHOTS}, f"expected ${NSHOTS} shots, got {len(chunks)}"
 for i, c in enumerate(chunks):
     pathlib.Path(f"cache/shot-{i}.txt").write_text(c)
 print(f"split into {len(chunks)} shots")
 PY
 
 # Generate each shot's TTS audio.
-for i in 0 1 2 3 4 5; do
+for i in 0 1 2 3 4 5 6 7 8; do
   name="${SHOT_NAMES[$i]}"
   out="cache/shot-${i}.mp3"
   echo "[${name}] tts…"
@@ -51,11 +52,11 @@ ffmpeg -y -hide_banner -loglevel error \
   -f lavfi -i "anullsrc=channel_layout=mono:sample_rate=24000" \
   -t "$PAUSE_SEC" -c:a libmp3lame -b:a 128k cache/silence.mp3
 
-# Concat: shot-0 [pause] shot-1 [pause] ... shot-5
+# Concat: shot-0 [pause] shot-1 [pause] ... shot-8
 {
-  for i in 0 1 2 3 4 5; do
+  for i in 0 1 2 3 4 5 6 7 8; do
     echo "file 'shot-${i}.mp3'"
-    if [ "$i" -lt 5 ]; then
+    if [ "$i" -lt 8 ]; then
       echo "file 'silence.mp3'"
     fi
   done
@@ -78,14 +79,15 @@ def dur(p):
     return float(out.strip())
 
 pause = $PAUSE_SEC
+names = "HOOK INTRO SHOT-1 SHOT-1.5 SHOT-2 SHOT-3 COMPARE SHOT-4 SHOT-5".split()
 shots = []
 cursor = 0.0
-for i in range(6):
+for i in range(9):
     d = dur(f"cache/shot-{i}.mp3")
-    trailing = pause if i < 5 else 0.0
+    trailing = pause if i < 8 else 0.0
     shots.append({
         "index": i,
-        "name": "${SHOT_NAMES[0]} ${SHOT_NAMES[1]} ${SHOT_NAMES[2]} ${SHOT_NAMES[3]} ${SHOT_NAMES[4]} ${SHOT_NAMES[5]}".split()[i],
+        "name": names[i],
         "start_sec": round(cursor, 3),
         "audio_sec": round(d, 3),
         "trailing_pause_sec": round(trailing, 3),
