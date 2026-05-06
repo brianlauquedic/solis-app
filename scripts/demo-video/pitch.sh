@@ -75,39 +75,40 @@ ffmpeg -y -hide_banner -loglevel error \
   -c:v libx264 -pix_fmt yuv420p -crf 22 -preset medium \
   cache/pitch/sec-2.mp4
 
-# ── Section 4: SOLUTION (Wa-bijin + key claims) ──────────────────────
+# ── Section 4: SOLUTION (typography + 3 B-roll clips of live product) ─
+# Structure (32s):
+#   0:00–3s   typography  "Sakura erases the operator class."
+#   3:00–9s   B-roll #1   sakuraaai.com landing  + caption strip
+#   9:00–12s  typography  "One sentence → 32-byte Poseidon commitment"
+#   12:00–18s B-roll #2   IntentSigner UI         + caption strip
+#   18:00–21s typography  "Groth16 proof, atomic with DeFi instruction"
+#   21:00–27s B-roll #3   Solana Explorer · 206,325 CU · FINALIZED
+#   27:00–32s typography  "Out-of-bounds is unreachable.  Live on devnet."
 echo "▶ rendering SOLUTION (${DUR_SOLUTION}s)…"
+# Single-line filter graph (newlines confuse ffmpeg's parser).
+SOL_FILTER="[1:v]scale=1920:1080,setpts=PTS-STARTPTS+(3/TB)[broll1];[2:v]scale=1920:1080,setpts=PTS-STARTPTS+(12/TB)[broll2];[3:v]scale=1920:1080,setpts=PTS-STARTPTS+(21/TB)[broll3];[0:v][broll1]overlay=enable='between(t,3,9)':eof_action=pass[v1];[v1][broll2]overlay=enable='between(t,12,18)':eof_action=pass[v2];[v2][broll3]overlay=enable='between(t,21,27)':eof_action=pass[v3];[v3]drawtext=fontfile='${FONT_LATIN}':text='Sakura erases the operator class.':fontcolor=white:fontsize=64:x=(w-text_w)/2:y=(h-text_h)/2:alpha='if(lt(t,0.4),0,if(lt(t,1.2),(t-0.4)/0.8,if(lt(t,2.6),1,if(lt(t,3),(3-t)/0.4,0))))',drawtext=fontfile='${FONT_LATIN}':text='One sentence':fontcolor=white:fontsize=64:x=(w-text_w)/2:y=(h/2)-60:alpha='if(lt(t,9.4),0,if(lt(t,10),(t-9.4)/0.6,if(lt(t,11.6),1,if(lt(t,12),(12-t)/0.4,0))))',drawtext=fontfile='${FONT_LATIN}':text='→  32-byte Poseidon commitment, on-chain':fontcolor=#FF6A00:fontsize=44:x=(w-text_w)/2:y=(h/2)+30:alpha='if(lt(t,9.8),0,if(lt(t,10.4),(t-9.8)/0.6,if(lt(t,11.6),1,if(lt(t,12),(12-t)/0.4,0))))',drawtext=fontfile='${FONT_LATIN}':text='Every action — a Groth16 proof,':fontcolor=white:fontsize=58:x=(w-text_w)/2:y=(h/2)-50:alpha='if(lt(t,18.4),0,if(lt(t,19),(t-18.4)/0.6,if(lt(t,20.6),1,if(lt(t,21),(21-t)/0.4,0))))',drawtext=fontfile='${FONT_LATIN}':text='atomic with the DeFi instruction.':fontcolor=#cccccc:fontsize=44:x=(w-text_w)/2:y=(h/2)+30:alpha='if(lt(t,18.8),0,if(lt(t,19.4),(t-18.8)/0.6,if(lt(t,20.6),1,if(lt(t,21),(21-t)/0.4,0))))',drawtext=fontfile='${FONT_LATIN}':text='Out-of-bounds is not blocked.':fontcolor=white:fontsize=58:x=(w-text_w)/2:y=(h/2)-100:alpha='if(lt(t,27.4),0,if(lt(t,28),(t-27.4)/0.6,1))',drawtext=fontfile='${FONT_LATIN}':text='It is unreachable.':fontcolor=#FF6A00:fontsize=72:x=(w-text_w)/2:y=(h/2)+0:alpha='if(lt(t,28.4),0,if(lt(t,29),(t-28.4)/0.6,1))',drawtext=fontfile='${FONT_LATIN}':text='Live on devnet  ·  12 CPI cells  ·  Kamino · Jupiter · Jito · Raydium':fontcolor=#888888:fontsize=28:x=(w-text_w)/2:y=(h/2)+150:alpha='if(lt(t,29.4),0,if(lt(t,30),(t-29.4)/0.6,1))'"
 ffmpeg -y -hide_banner -loglevel error \
-  -f lavfi -i "color=c=#0d0805:s=${WIDTH}x${HEIGHT}:d=${DUR_SOLUTION}:r=${FPS}" \
-  -loop 1 -i ../../public/logo-bijin.png \
-  -filter_complex "
-    [1:v]scale=520:-1,format=rgba,colorchannelmixer=aa=0.85[bijin];
-    [0:v][bijin]overlay=x=120:y=(H-h)/2:enable='gte(t,0.5)',
-    drawtext=fontfile='${FONT_LATIN}':text='Sakura erases the operator class.':fontcolor=white:fontsize=58:x=720:y=200:alpha='if(lt(t,1),0,if(lt(t,1.8),(t-1)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='One sentence in your wallet.':fontcolor=#cccccc:fontsize=38:x=720:y=320:alpha='if(lt(t,5),0,if(lt(t,5.8),(t-5)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='→  32-byte Poseidon commitment on-chain.':fontcolor=#FF6A00:fontsize=38:x=720:y=380:alpha='if(lt(t,7),0,if(lt(t,7.8),(t-7)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='Every action ships a Groth16 proof.':fontcolor=#cccccc:fontsize=38:x=720:y=480:alpha='if(lt(t,11),0,if(lt(t,11.8),(t-11)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='Atomic with the DeFi instruction.':fontcolor=#cccccc:fontsize=38:x=720:y=540:alpha='if(lt(t,13),0,if(lt(t,13.8),(t-13)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='Out-of-bounds is not blocked.':fontcolor=white:fontsize=46:x=720:y=680:alpha='if(lt(t,18),0,if(lt(t,18.8),(t-18)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='It is unreachable.':fontcolor=#FF6A00:fontsize=58:x=720:y=750:alpha='if(lt(t,20),0,if(lt(t,20.8),(t-20)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='Live on devnet  ·  12 CPI cells  ·  Kamino · Jupiter · Jito · Raydium':fontcolor=#888888:fontsize=28:x=720:y=900:alpha='if(lt(t,26),0,if(lt(t,26.8),(t-26)/0.8,1))'
-  " \
+  -f lavfi -i "color=c=black:s=${WIDTH}x${HEIGHT}:d=${DUR_SOLUTION}:r=${FPS}" \
+  -i cache/pitch/broll-landing.mp4 \
+  -i cache/pitch/broll-intent.mp4 \
+  -i cache/pitch/broll-explorer.mp4 \
+  -filter_complex "$SOL_FILTER" \
   -c:v libx264 -pix_fmt yuv420p -crf 22 -preset medium \
   -t "$DUR_SOLUTION" \
   cache/pitch/sec-3.mp4
 
 # ── Section 5: WHYME ─────────────────────────────────────────────────
-# Avoid apostrophes (ffmpeg drawtext breaks on inner quotes).
+# Curly apostrophes (U+2019) so on-screen text matches voiceover exactly.
 echo "▶ rendering WHYME (${DUR_WHYME}s)…"
 ffmpeg -y -hide_banner -loglevel error \
   -f lavfi -i "color=c=black:s=${WIDTH}x${HEIGHT}:d=${DUR_WHYME}:r=${FPS}" \
   -vf "
     drawtext=fontfile='${FONT_LATIN}':text='Why me.':fontcolor=#FF6A00:fontsize=72:x=(w-text_w)/2:y=180:alpha='if(lt(t,0.4),0,if(lt(t,1.2),(t-0.4)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='I am Asian.':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=350:alpha='if(lt(t,2),0,if(lt(t,2.8),(t-2)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='I watched a generation pay the tuition in 2022.':fontcolor=#cccccc:fontsize=42:x=(w-text_w)/2:y=460:alpha='if(lt(t,5),0,if(lt(t,5.8),(t-5)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='Not building this for the technically curious.':fontcolor=#cccccc:fontsize=42:x=(w-text_w)/2:y=620:alpha='if(lt(t,8),0,if(lt(t,8.8),(t-8)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='Building it for the next round of retail users —':fontcolor=#cccccc:fontsize=42:x=(w-text_w)/2:y=720:alpha='if(lt(t,11),0,if(lt(t,11.8),(t-11)/0.8,1))',
-    drawtext=fontfile='${FONT_LATIN}':text='so when the agent goes off-script, the action does not land.':fontcolor=white:fontsize=42:x=(w-text_w)/2:y=800:alpha='if(lt(t,14),0,if(lt(t,14.8),(t-14)/0.8,1))'
+    drawtext=fontfile='${FONT_LATIN}':text='I’m Asian.':fontcolor=white:fontsize=60:x=(w-text_w)/2:y=350:alpha='if(lt(t,2),0,if(lt(t,2.8),(t-2)/0.8,1))',
+    drawtext=fontfile='${FONT_LATIN}':text='Watched a generation pay the tuition in 2022.':fontcolor=#cccccc:fontsize=42:x=(w-text_w)/2:y=460:alpha='if(lt(t,5),0,if(lt(t,5.8),(t-5)/0.8,1))',
+    drawtext=fontfile='${FONT_LATIN}':text='I’m not building this for the technically curious.':fontcolor=#cccccc:fontsize=42:x=(w-text_w)/2:y=620:alpha='if(lt(t,8),0,if(lt(t,8.8),(t-8)/0.8,1))',
+    drawtext=fontfile='${FONT_LATIN}':text='I’m building it for the next round of retail users —':fontcolor=#cccccc:fontsize=42:x=(w-text_w)/2:y=720:alpha='if(lt(t,11),0,if(lt(t,11.8),(t-11)/0.8,1))',
+    drawtext=fontfile='${FONT_LATIN}':text='so when their agent goes off-script, the action does not land.':fontcolor=white:fontsize=42:x=(w-text_w)/2:y=800:alpha='if(lt(t,14),0,if(lt(t,14.8),(t-14)/0.8,1))'
   " \
   -c:v libx264 -pix_fmt yuv420p -crf 22 -preset medium \
   cache/pitch/sec-4.mp4
