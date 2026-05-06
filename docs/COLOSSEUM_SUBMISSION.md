@@ -183,21 +183,27 @@ version on request.
 
 ## How do you know people actually need, or will need this product?
 
-> **Honest framing: we are betting on emerging demand, not pulling on saturated demand.** Three signals support the bet:
+**975 chars · 1000 limit**
+
+> Betting on emerging demand, not pulling on saturated demand. Three signals:
 >
-> - **Past harm is documented.** Six 2024-25 Solana incidents totaling **$42M** in user losses where AI-agent / bot-custody patterns directly caused the loss. Catalogued with per-incident counter-factual in `docs/INCIDENT-LIBRARY.md`. DEXX (8,620 wallets · $30M), Solareum, Banana Gun, etc. The harm is on the books.
-> - **Supply side is committing.** Phantom, Backpack, Abstract, and Infinex all announced agent modes shipping in 2026. The wallets that hold the assets are about to expose those assets to AI-agent delegation — whether or not bounded-intent verification exists.
-> - **The structurally most-exposed surface is concrete.** $1.62B outstanding borrow debt across Kamino + Jupiter Lend (DefiLlama, 2026-04-24) is where the loss-upper-bound under unbounded delegation diverges from the action amount. That's the population with the highest dollar-stakes asymmetry.
+> **Past harm is documented.** Six 2024-25 Solana incidents totaling **$42M** in user losses from AI-agent / bot-custody patterns. Per-incident counter-factuals in `docs/INCIDENT-LIBRARY.md` — DEXX alone drained 8,620 wallets ($30M).
 >
-> What we do **not** have: user interviews, waitlist sign-ups, paid pilots, or design-partner integrations. We are pre-customer. If agentic-DeFi adoption stalls, our market shrinks; if it takes off, we are positioned for it. A structural bet, not a demand-pull bet.
+> **Supply side is committing.** Phantom, Backpack, Abstract, Infinex all announced agent modes shipping in 2026. The wallets that hold the assets are about to expose them to AI-agent delegation — whether or not bounded-intent verification exists.
+>
+> **The exposed surface is concrete.** $1.62B outstanding borrow debt across Kamino + Jupiter Lend (DefiLlama, 2026-04-24). Loss-upper-bound under unbounded delegation diverges from the action amount on this surface — the highest dollar-stakes asymmetry.
+>
+> What we do **not** have: user interviews, waitlist sign-ups, paid pilots, design-partner integrations. Pre-customer. A structural bet, not a demand-pull bet.
 
 ---
 
 ## How far along are you? Do you have users?
 
+**955 chars · 1000 limit**
+
 > **Zero users. Zero revenue. Devnet only.**
 >
-> What is shipped and verifiable:
+> Shipped and verifiable:
 >
 > - Anchor program at `AnszeCRFsBKmT5fBY9WywxGsZZZob8ZPFYqboYXpuYLp` on Solana devnet
 > - **12 CPI cells** across Kamino, Jupiter v6 + Jupiter Lend, Jito Stake Pool, Raydium AMM router
@@ -206,74 +212,70 @@ version on request.
 > - **~204,460 CU** per gated tx (mean of 5/5 devnet runs, raw data in `docs/bench/2026-04-22-cfull-cu.json`)
 > - Live demo at `sakuraaai.com/?demo=true` (no wallet required)
 > - MIT-licensed, public source: `github.com/brianlauquedic/sakura-app`
-> - Two videos (demo + pitch) submitted with this application
 >
-> **Honest read**: this is hackathon-grade primitive. Working on devnet, no real funds at risk, no integrator shipping it yet. Mainnet deploy intentionally deferred until post-hackathon. The technical core is real; the go-to-market has not begun.
+> **Honest read**: hackathon-grade primitive. Working on devnet, no real funds at risk, no integrator shipping it yet. Mainnet deploy intentionally deferred until post-hackathon. The technical core is real; the go-to-market has not begun.
 
 ---
 
 ## Who else is building in this space, and what do you think they're getting wrong?
 
-> **Direct Solana comparables** (all submitted to Colosseum prior seasons):
+**925 chars · 1000 limit**
+
+> **Direct Solana comparables** (all Colosseum prior seasons):
 >
-> | Approach | What happens to an out-of-bounds action |
+> | Approach | Out-of-bounds → |
 > |---|---|
-> | Session-key rotation *(default wallet answer)* | Lands; the next session key is narrower |
-> | **Signed AI** (Breakout 2025) | Lands; a compressed-NFT receipt is minted |
-> | **AgentRunner** (Cypherpunk 2025) | Lands; rolled into the day's Merkle root |
-> | **AgentCred** (Cypherpunk 2025) | Lands up to the hot-key balance |
+> | Session-key rotation | Lands; next key narrower |
+> | Signed AI (Breakout 2025) | Lands; receipt minted |
+> | AgentRunner (Cypherpunk 2025) | Lands; rolled into Merkle root |
+> | AgentCred (Cypherpunk 2025) | Lands up to hot-key balance |
 >
-> **Adjacent (broader Web3 AI security):** Blowfish (tx simulation), GoPlus (token risk scoring), Goat (anomaly detection).
+> **What they're getting wrong**: every comparable treats the agent guardrail as a runtime policy check, **executed after the action lands**. The category default frames "containment" as "what do we do when out-of-bounds happens?"
 >
-> **What they're getting wrong**: every direct comparable treats the agent guardrail as a **runtime policy check, executed after the action lands**. Either the action lands and gets recorded (Signed AI, AgentRunner), or the action lands up to a policy ceiling (session keys, AgentCred). The category default frames "containment" as "what do we do when something out-of-bounds happens?"
+> Sakura's bet: the question is wrong. The right question is "**how do we make out-of-bounds actions structurally unconstructible?**" — by binding the proof-of-bounds atomically to the DeFi instruction in a single v0 transaction. No proof, no execution. Never submitted to Solana.
 >
-> Sakura's bet is that the question is wrong. The right question is "**how do we make out-of-bounds actions structurally unconstructible?**" — by binding the proof-of-bounds atomically to the DeFi instruction in a single v0 transaction. No proof, no execution. The transaction is never submitted.
->
-> The differentiator isn't a better policy. It's that we don't run a policy at all.
+> The differentiator isn't a better policy. We don't run a policy at all.
 
 ---
 
 ## How do you make money, or how do you plan to?
 
-> **Five priced operations, no token, fee flow only.** Full breakdown in `docs/VALUE_CAPTURE.md`. Summary:
+**489 chars · 500 limit**
+
+> **Five priced operations, no token, fee flow only.** Full breakdown in `docs/VALUE_CAPTURE.md`.
 >
-> | Op | Price | Margin |
-> |---|---|---|
-> | `sign_intent` | 0.1% × max_usd_value | ~85% |
-> | `execute_with_intent_proof` | $0.01 flat / action | ~99% |
-> | `revoke_intent` | $0.05 flat (friction tax — discourage churn) | ~95% |
-> | MCP `/api/mcp/x402` agent endpoint | $1 / call (x402 micropayments) | ~95% |
-> | Integrator notional override | 0.1% after $10M rebate | n/a |
+> Pricing: `sign_intent` 0.1% × max_usd_value (~85%) · `execute` $0.01/action (~99%) · MCP `/api/mcp/x402` $1/call (~95%).
 >
 > **Current revenue: $0** (devnet only).
 >
-> **Phased path:**
-> 1. **Mainnet launch (post-hackathon):** sign_intent fees from any user signing directly through `sakuraaai.com`
-> 2. **Integrator partnerships (6–12 months):** when Phantom / Backpack / Abstract / Infinex ship a Sakura-gated agent mode, the 0.1% override accrues to the protocol fee vault automatically — zero ongoing BD overhead
-> 3. **MCP/x402 endpoint (12+ months):** agent providers pay per-call to use Sakura as an execution gate — agent-callable Sakura-execution-as-a-service
+> **Path:** mainnet `sign_intent` post-hackathon → integrator overrides (Phantom/Backpack/Abstract/Infinex, 0.1% notional after $10M rebate) at 6-12mo → MCP/x402 endpoint at 12+mo.
 >
-> No token. No emissions. No yield promises. No claim that Sakura will "decentralize" through governance later. The math gate is the math gate; the fees flow to the protocol vault; the protocol vault is multisig-controlled.
+> No token. No emissions. No yield promises.
 
 ---
 
 ## How long have you each been working on this? Have you been working on it full time?
 
+**470 chars · 500 limit**
+
 > **Solo founder · Brian Lau · currently full-time.**
 >
 > - **Sakura the codebase**: ~3 months.
-> - **The conviction underneath it predates this build by years** — watching the self-custody-vs-software-veto trade play out across Mt.Gox (2014) → OKEx (2019) → FTX (2022). The technical idea (bounded-intent + Groth16 as a Solana-native primitive) became cost-feasible only after Solana 1.17's `alt_bn128_pairing` syscall — part of why the build started when it did, not earlier.
 > - **Pre-Sakura**: Solana DeFi engineering background — protocol-level work, comfortable with Anchor, IDLs, CPI composition, and the Solana account model.
-> - **Full-time**: yes. Sakura is the entire bandwidth — not splitting attention with another role.
+> - **Why now**: bounded-intent + Groth16 became cost-feasible only after Solana 1.17's `alt_bn128_pairing` syscall. Build started when the syscall opened, not earlier.
+> - **Full-time**: yes. Sakura is the entire bandwidth.
 
 ---
 
 ## Where is each member of the team currently based, and do you work in-person together?
 
+**489 chars · 500 limit**
+
 > **Solo founder.** No team to coordinate in-person.
 >
 > **Currently based: Hong Kong.** The repo runs on Solana devnet (public RPC) and Vercel — geographically agnostic; nothing in the build depends on physical co-location.
 >
-> **Post-funding plan:** hire 1–2 senior Solana / ZK engineers within 6 months of seed close. Whether to co-locate the team depends on candidate location and preference — no hard hub requirement. Strong remote hire from anywhere wouldn't be deprioritized over a local one. Hong Kong gives reasonable timezone overlap with both Asia DeFi (Singapore, Tokyo, Seoul) and US west coast for late-evening calls — a useful middle for a globally-distributed early team.
+> **Post-funding plan:** hire 1–2 senior Solana / ZK engineers within 6 months of seed close. Whether to co-locate depends on candidate location and preference — no hard hub requirement. Strong remote hire from anywhere wouldn't be deprioritized over a local one.
 
 ---
 
