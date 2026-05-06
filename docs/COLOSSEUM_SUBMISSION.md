@@ -62,6 +62,22 @@ established for Sakura.
 
 ---
 
+## What technologies are you using or integrating with to build your product?
+
+**994 chars · 1000 limit**
+
+> **On-chain (Solana-native):** Anchor + Rust on devnet · Solana `alt_bn128_pairing` syscall for on-chain Groth16 verification (~204k CU/tx) · 12 CPI integrations: Kamino Lend, Jupiter v6 + Jupiter Lend, Jito Stake Pool, Raydium Router · Pyth (PriceUpdateV2) + Switchboard On-Demand dual-oracle median gate · @solana/web3.js + @coral-xyz/anchor + Solana Wallet Adapter (Phantom + OKX).
+>
+> **Zero-knowledge:** Circom (bounded-intent circuit) · Poseidon (commitment) · Groth16 / BN128 · snarkjs (browser proof gen).
+>
+> **Frontend + distribution:** Next.js 16 App Router · React 19 · TypeScript · Vercel (sakuraaai.com) · tri-lingual i18n (zh/en/ja).
+>
+> **AI:** Claude Code (Opus/Sonnet 4.x) drove program code, tests, docs, analysis scripts, copy · Anthropic Agent SDK + MCP server (x402-monetized endpoint at /api/mcp/x402).
+>
+> **Dev + test:** Vitest (121/121 unit + 8 invariant + 15/15 adversarial revert) · DefiLlama + publicnode RPC for SOM scripts · Squads (3-of-5 governance, planned).
+
+---
+
 ## Pending fields
 
 User will paste each remaining Colosseum form question + char limit.
