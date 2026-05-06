@@ -1,0 +1,23 @@
+[INTRO · 0:00–0:12 · over Sakura logo lock-up]
+
+Hi, I'm Brian Lau. I'm building Sakura — a Solana-native execution-bounds verifier for AI agents.
+
+[STAKES · 0:12–0:42 · over Mt.Gox / OKEx / FTX cards]
+
+Self-custody is a right retail users have been losing for two decades. Asia paid the tuition three times — Mt.Gox in 2014, OKEx in 2019, FTX in 2022. Same structure each time. Any rule a software operator can override, will be overridden.
+
+[PATTERN · 0:42–1:08 · over typed editorial text]
+
+Agentic DeFi is the fourth iteration of the same trade. The agent promises convenience. The operator behind it quietly reclaims the ground retail surrendered in the 1990s. "My money, my rules" becomes marketing — while the rules answer to session-key rotation, not to the user.
+
+[SOLUTION · 1:08–1:40 · over Wa-bijin SVG + 32-byte hash visualization]
+
+Sakura erases the operator class entirely. A user signs one sentence in their wallet — that sentence folds through Poseidon into a 32-byte commitment on-chain. Every agent action ships a Groth16 proof, atomic with the DeFi instruction. A failing proof reverts the entire transaction. Out-of-bounds is not blocked. It is unreachable. Live on devnet today — twelve CPI cells across Kamino, Jupiter, Jito, Raydium.
+
+[WHY ME · 1:40–1:55 · over text + facts]
+
+Why me — I'm Asian. I watched a generation pay the tuition in 2022. I'm not building this for the technically curious. I'm building it for the next round of retail users — so when their agent goes off-script, the action does not land.
+
+[CLOSE · 1:55–2:05 · over closing card]
+
+Sakura. MIT-licensed. Permissionless. Live, at sakuraaai.com.
