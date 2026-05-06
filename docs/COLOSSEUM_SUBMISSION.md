@@ -240,17 +240,17 @@ version on request.
 
 ## How do you make money, or how do you plan to?
 
-**489 chars · 500 limit**
+**495 chars · 500 limit**
 
-> **Five priced operations, no token, fee flow only.** Full breakdown in `docs/VALUE_CAPTURE.md`.
+> **Five priced operations, no token, fee flow only.** See `docs/VALUE_CAPTURE.md`.
 >
 > Pricing: `sign_intent` 0.1% × max_usd_value (~85%) · `execute` $0.01/action (~99%) · MCP `/api/mcp/x402` $1/call (~95%).
 >
-> **Current revenue: $0** (devnet only).
+> **Why no sales team:** integrator overrides (0.1% notional, $10M rebate) accrue **automatically** when any wallet ships a Sakura-gated mode — zero BD overhead.
 >
-> **Path:** mainnet `sign_intent` post-hackathon → integrator overrides (Phantom/Backpack/Abstract/Infinex, 0.1% notional after $10M rebate) at 6-12mo → MCP/x402 endpoint at 12+mo.
+> Path: mainnet `sign_intent` post-hackathon → integrators 6-12mo → MCP 12+mo.
 >
-> No token. No emissions. No yield promises.
+> $0 revenue today. No token. No emissions.
 
 ---
 
@@ -269,13 +269,15 @@ version on request.
 
 ## Where is each member of the team currently based, and do you work in-person together?
 
-**489 chars · 500 limit**
+**494 chars · 500 limit**
 
 > **Solo founder.** No team to coordinate in-person.
 >
-> **Currently based: Hong Kong.** The repo runs on Solana devnet (public RPC) and Vercel — geographically agnostic; nothing in the build depends on physical co-location.
+> **Based in Hong Kong** — within the Asian retail population that paid the tuition three times (Mt.Gox 2014 / OKEx 2019 / FTX 2022) and is now most exposed to agent-DeFi as the fourth iteration. Founder-market overlap by location, not by accident.
 >
-> **Post-funding plan:** hire 1–2 senior Solana / ZK engineers within 6 months of seed close. Whether to co-locate depends on candidate location and preference — no hard hub requirement. Strong remote hire from anywhere wouldn't be deprioritized over a local one.
+> The repo runs on devnet (public RPC) + Vercel — nothing depends on physical co-location.
+>
+> **Post-funding:** hire 1–2 senior Solana / ZK engineers within 6mo. Remote-friendly, no hard hub.
 
 ---
 
