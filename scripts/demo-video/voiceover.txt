@@ -1,0 +1,23 @@
+[INTRO · 0:00–0:08 · over Sakura landing hero]
+
+Sakura is a Solana-native execution-bounds verifier for AI agents. Where every other approach lets the out-of-bounds action land, then records or limits — Sakura reverts before the DeFi instruction executes.
+
+[SHOT 1 · 0:08–0:35 · over IntentSigner UI]
+
+A user signs one sentence in their wallet — for instance, "lend up to one thousand USDC into Kamino, ten thousand max per action, one week". Seven private values fold through a two-layer Poseidon hash into a thirty-two-byte commitment, anchored on Solana. The values stay in the browser. Only the hash reaches the chain.
+
+[SHOT 2 · 0:35–1:30 · over terminal e2e flow]
+
+Now the agent acts. The Sakura execute-with-intent-proof handler takes the user-signed commitment, a fresh Pyth price, a Switchboard cross-check, and a Groth16 proof generated in the browser. Six checks land atomically. The DeFi instruction either passes the gate with a valid proof — or the entire transaction reverts. Two hundred four thousand compute units, on-chain, via the alt-bn128 pairing syscall.
+
+[SHOT 3 · 1:30–2:10 · over Solscan tx view]
+
+The proof and the DeFi action share a single atomic version-zero transaction. They both land, or they both revert — inseparably. Every action writes a permanent ActionRecord PDA. Lawyers, auditors, counterparties — anyone can reconstruct the execution from public chain data alone. No off-chain monitor in the loop.
+
+[SHOT 4 · 2:10–2:35 · over ActionHistory feed]
+
+Inside the app, the same execution renders as a human-readable line — action type, target protocol, amount, oracle price, slot, and keccak-256 fingerprint. The user sees what their agent did. Always.
+
+[SHOT 5 · 2:35–3:00 · over closing card]
+
+Six twenty-twenty-four to twenty-twenty-five Solana agent incidents. Forty-two million dollars in user losses. Thirty-three million of that — seventy-eight percent — structurally impossible in the Sakura model. Live on devnet today. Twelve CPI cells across Kamino, Jupiter, Jito, and Raydium. MIT-licensed, permissionless integration. Sakura — at sakuraaai.com.

@@ -65,3 +65,8 @@ coverage/
 screenshot_debug.js
 screenshot_demo.js
 
+# Demo video build artefacts (large MP4s/WebMs)
+dist/
+scripts/demo-video/dist/
+scripts/demo-video/cache/
+
